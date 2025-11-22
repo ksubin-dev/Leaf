@@ -10,8 +10,6 @@ fun NavGraphBuilder.noteNavGraph(
     navController: NavController
 ){
     composable<MainNavigationRoute.NoteTab>{
-        NoteScreen(
-            navController = navController
-        )
+        NoteScreen()
     }
 }
