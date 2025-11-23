@@ -1,6 +1,9 @@
 package com.leafy.features.note.screen
 
+
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,12 +22,10 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,24 +44,37 @@ import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyGreen
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.theme.LeafyWhite
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.ui.draw.clip
+
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 
 /**
  * New Brewing Note 입력 화면
  * - 상단 AppBar
  * - Photos 섹션 (Dry Leaf / Tea Liquor / Teaware / Additional)
  * - Basic Info 작업
- * - 나머지 섹션(Tasting Context, Sensory...)는 이후 단계에서 추가 예정
+ * - Tasting Context 작업 + 첫번째 아이콘 선택시 오른쪽 테두리 옅은문제 해결 필요
+ * - 나머지 섹션(Sensory...)는 이후 단계에서 추가 예정
  */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun NoteScreen() {
+    // 🌟 1. Basic Tea Information 상태 관리 (Hoisted States)
     var teaName by remember { mutableStateOf("Enter Tea Name") }
     var brandName by remember { mutableStateOf("Enter brand name") }
     var teaType by remember { mutableStateOf("Black") }
     var leafStyle by remember { mutableStateOf("Loose Leaf") }
     var leafProcessing by remember { mutableStateOf("Whole Leaf") }
     var teaGrade by remember { mutableStateOf("OP") }
+
 
     LeafyTheme {
         Scaffold(
@@ -131,8 +145,14 @@ fun NoteScreen() {
                     onTeaGradeChange = { teaGrade = it }
                 )
 
-                // 이 아래에 나중에 Tasting Context, Sensory Evaluation, Final Rating 순서대로 추가
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 3) Tasting Context (Date & Time + Weather)
+                TastingContextSection()
+
+                // 이후 Sensory Evaluation, Final Rating 추가 예정
                 Spacer(modifier = Modifier.height(32.dp))
+
             }
         }
     }
@@ -217,7 +237,7 @@ private fun PhotosSection(
     }
 }
 
-// 2. Basic Tea Information 섹션 (Hoisting 적용)
+/* ----------------- Basic Tea Information 섹션 ----------------- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BasicTeaInformationSection(
@@ -294,8 +314,173 @@ fun BasicTeaInformationSection(
         )
     }
 }
+/* ----------------- Tasting Context 섹션 (날씨 포함) ----------------- */
 
-// ---------------- 분리된 하위 컴포넌트 ----------------
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TastingContextSection(
+    modifier: Modifier = Modifier
+) {
+    var dateTime by remember { mutableStateOf("") }
+    var selectedWeather by remember { mutableStateOf(WeatherType.CLEAR) }
+
+    // ⬇️ DatePicker 상태
+    val datePickerState = rememberDatePickerState()
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier) {
+
+        // 섹션 타이틀
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = SharedR.drawable.ic_note_section_context),
+                contentDescription = "Tasting Context",
+                tint = LeafyGreen,
+                modifier = Modifier
+                    .height(18.dp)
+                    .padding(end = 6.dp)
+            )
+            Text(
+                text = "Tasting Context",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = Color(0xFF303437)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Date & Time
+        LeafyFieldLabel(text = "Date & Time")
+        OutlinedTextField(
+            value = dateTime,
+            onValueChange = { /* readOnly */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .clickable { showDatePicker = true },   // ⬅️ 필드 눌러도 열리게
+            readOnly = true,
+            singleLine = true,
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker = true }) {  // ⬅️ 아이콘 눌러도 열림
+                    Icon(
+                        painter = painterResource(id = SharedR.drawable.ic_calendar),
+                        contentDescription = "Pick date",
+                        tint = LeafyGreen
+                    )
+                }
+            }
+        )
+
+        // ⬇️ 작은 캘린더 다이얼로그
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDatePicker = false
+                            val millis = datePickerState.selectedDateMillis
+                            if (millis != null) {
+                                val date = Date(millis)
+                                val formatter = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+                                dateTime = formatter.format(date)
+                            }
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Cancel")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Weather
+        LeafyFieldLabel(text = "Weather")
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            WeatherOptionButton(
+                type = WeatherType.CLEAR,
+                label = "Clear",
+                iconRes = SharedR.drawable.ic_weather_clear,
+                selectedWeather = selectedWeather,
+                onSelected = { selectedWeather = it },
+                modifier = Modifier.weight(1f)
+            )
+            WeatherOptionButton(
+                type = WeatherType.CLOUDY,
+                label = "Cloudy",
+                iconRes = SharedR.drawable.ic_weather_cloudy,
+                selectedWeather = selectedWeather,
+                onSelected = { selectedWeather = it },
+                modifier = Modifier.weight(1f)
+            )
+            WeatherOptionButton(
+                type = WeatherType.RAINY,
+                label = "Rainy",
+                iconRes = SharedR.drawable.ic_weather_rainy,
+                selectedWeather = selectedWeather,
+                onSelected = { selectedWeather = it },
+                modifier = Modifier.weight(1f)
+            )
+            WeatherOptionButton(
+                type = WeatherType.SNOWY,
+                label = "Snowy",
+                iconRes = SharedR.drawable.ic_weather_snowy,
+                selectedWeather = selectedWeather,
+                onSelected = { selectedWeather = it },
+                modifier = Modifier.weight(1f)
+            )
+            WeatherOptionButton(
+                type = WeatherType.INDOOR,
+                label = "Indoor",
+                iconRes = SharedR.drawable.ic_weather_indoor,
+                selectedWeather = selectedWeather,
+                onSelected = { selectedWeather = it },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LeafyFieldLabel(text = "With")
+
+        var withPeople by remember { mutableStateOf("") }
+
+        OutlinedTextField(
+            value = withPeople,
+            onValueChange = { withPeople = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            singleLine = true,
+            placeholder = {
+                Text(
+                    text = "e.g. Minjae, Subin",
+                    color = Color(0xFFB8BCC2)
+                )
+            }
+        )
+
+    }
+}
+
+// ---------------- 공용 및 하위 컴포넌트 ----------------
 
 @Composable
 private fun LeafyFieldLabel(text: String) {
@@ -307,6 +492,66 @@ private fun LeafyFieldLabel(text: String) {
         color = Color(0xFF7A7F86)
     )
 }
+
+// ---------------- LeafyDropdownField ----------------
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LeafyDropdownField(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelectedChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier) {
+        LeafyFieldLabel(text = label)
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+        ) {
+            OutlinedTextField(
+                value = selected,
+                onValueChange = { /* readOnly이므로 비워둠 */ },
+                // 🟢 기능 작동을 위해 .menuAnchor()를 유지합니다.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                readOnly = true,
+                singleLine = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = LeafyGreen
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            onSelectedChange(option)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ---------------- 기타 필드 컴포넌트 ----------------
 
 @Composable
 private fun TeaNameField(
@@ -397,62 +642,51 @@ private fun LeafProcessingAndGradeRow(
         )
     }
 }
+/* ---------------- Weather 버튼 ---------------- */
 
-
-// ---------------- LeafyDropdownField  ----------------
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LeafyDropdownField(
-    label: String,
-    options: List<String>,
-    selected: String,
-    onSelectedChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier) {
-        LeafyFieldLabel(text = label)
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-        ) {
-            OutlinedTextField(
-                value = selected,
-                onValueChange = { /* readOnly이므로 비워둠 */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                readOnly = true,
-                singleLine = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = LeafyGreen
-                )
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            onSelectedChange(option)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
+private enum class WeatherType {
+    CLEAR, CLOUDY, RAINY, SNOWY, INDOOR
 }
 
+@Composable
+private fun WeatherOptionButton(
+    type: WeatherType,
+    label: String,
+    iconRes: Int,
+    selectedWeather: WeatherType,
+    onSelected: (WeatherType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isSelected = selectedWeather == type
+
+    val borderColor = if (isSelected) LeafyGreen else Color(0xFFE1E4EA)
+
+    Column(
+        modifier = modifier
+            .height(60.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .background(LeafyWhite, RoundedCornerShape(12.dp))
+            .clickable { onSelected(type) }
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(id = iconRes),
+            contentDescription = label,
+            tint = Color.Unspecified,
+            modifier = Modifier.height(20.dp)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF7A7F86)
+        )
+    }
+}
