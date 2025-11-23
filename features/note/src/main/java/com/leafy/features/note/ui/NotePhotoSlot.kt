@@ -135,7 +135,7 @@ fun NotePhotoSlotPreview() {
         ) {
             NotePhotoSlot(
                 title = "Dry Leaf",
-                iconRes = SharedR.drawable.ic_note_photo_dry_leaf, // or NoteR.xxx
+                iconRes = SharedR.drawable.ic_leaf, // or NoteR.xxx
                 onClick = {}
             )
         }
