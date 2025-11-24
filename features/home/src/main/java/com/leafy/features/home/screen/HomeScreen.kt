@@ -162,19 +162,19 @@ private fun QuickBrewingGuideSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             BrewingInfoCard(
-                iconRes = R.drawable.ic_brewing_temper,
+                iconRes = R.drawable.ic_temp,
                 title = "Temperature",
                 value = "85℃",
                 modifier = Modifier.weight(1f)
             )
             BrewingInfoCard(
-                iconRes = R.drawable.ic_brewing_time,
+                iconRes = R.drawable.ic_timer,
                 title = "Steeping",
                 value = "3 min",
                 modifier = Modifier.weight(1f)
             )
             BrewingInfoCard(
-                iconRes = R.drawable.ic_brewing_amount,
+                iconRes = R.drawable.ic_leaf,
                 title = "Amount",
                 value = "2g",
                 modifier = Modifier.weight(1f)

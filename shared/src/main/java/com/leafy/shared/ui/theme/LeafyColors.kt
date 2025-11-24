@@ -3,7 +3,7 @@ package com.leafy.shared.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // 메인 컬러
-val LeafyGreen = Color(0xFF7A8C6F)
+val LeafyGreen = Color(0xFF7A8C6F)//leafyMainGreen
 
 // 서브 컬러
 val LeafyBrown = Color(0xFF8E735B)
