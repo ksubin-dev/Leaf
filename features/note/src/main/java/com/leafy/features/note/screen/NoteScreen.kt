@@ -39,7 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.ui.NotePhotoSlot
+import com.leafy.features.note.ui.common.NotePhotoSlot
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyGreen
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -241,6 +241,7 @@ private fun PhotosSection(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BasicTeaInformationSection(
+    modifier: Modifier = Modifier,
     teaName: String,
     onTeaNameChange: (String) -> Unit,
     brandName: String,
@@ -252,8 +253,7 @@ fun BasicTeaInformationSection(
     leafProcessing: String,
     onLeafProcessingChange: (String) -> Unit,
     teaGrade: String,
-    onTeaGradeChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onTeaGradeChange: (String) -> Unit
 ) {
     Column(modifier = modifier) {
         // 섹션 타이틀
@@ -498,11 +498,11 @@ private fun LeafyFieldLabel(text: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LeafyDropdownField(
+    modifier: Modifier = Modifier,
     label: String,
     options: List<String>,
     selected: String,
-    onSelectedChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onSelectedChange: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -516,6 +516,7 @@ private fun LeafyDropdownField(
                 .fillMaxWidth()
                 .padding(top = 4.dp)
         ) {
+            //드롭다운 강사님 환율 예제코드의 드롭다운 활용해서 수정!!!!!!!!!!!!!!!
             OutlinedTextField(
                 value = selected,
                 onValueChange = { /* readOnly이므로 비워둠 */ },
@@ -650,12 +651,12 @@ private enum class WeatherType {
 
 @Composable
 private fun WeatherOptionButton(
+    modifier: Modifier = Modifier,
     type: WeatherType,
     label: String,
     iconRes: Int,
     selectedWeather: WeatherType,
-    onSelected: (WeatherType) -> Unit,
-    modifier: Modifier = Modifier
+    onSelected: (WeatherType) -> Unit
 ) {
     val isSelected = selectedWeather == type
 

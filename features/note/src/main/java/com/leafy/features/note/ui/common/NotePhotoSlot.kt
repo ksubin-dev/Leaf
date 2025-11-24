@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui
+package com.leafy.features.note.ui.common
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Canvas
@@ -44,10 +44,10 @@ import com.leafy.shared.R as SharedR
  */
 @Composable
 fun NotePhotoSlot(
+    modifier: Modifier = Modifier,
     title: String,
     @DrawableRes iconRes: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     DottedRoundedBox(
         modifier = modifier
