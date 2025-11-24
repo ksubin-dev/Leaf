@@ -1,10 +1,12 @@
 package com.leafy.features.note.screen
 
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,10 +50,24 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.draw.clip
-
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import com.leafy.shared.ui.theme.LeafyBrown
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import com.leafy.shared.ui.theme.LeafyAccentRed
 
 
 /**
@@ -60,7 +76,9 @@ import java.util.Locale
  * - Photos 섹션 (Dry Leaf / Tea Liquor / Teaware / Additional)
  * - Basic Info 작업
  * - Tasting Context 작업 + 첫번째 아이콘 선택시 오른쪽 테두리 옅은문제 해결 필요
- * - 나머지 섹션(Sensory...)는 이후 단계에서 추가 예정
+ * - 우림 조건 -> 타이머 버튼 연결?
+ * - SensoryEvaluation -> 슬라이더 버튼 해결
+ * - FinalRating
  */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,10 +165,25 @@ fun NoteScreen() {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // 3) Tasting Context (Date & Time + Weather)
+                // Tasting Context (Date & Time + Weather)
                 TastingContextSection()
 
-                // 이후 Sensory Evaluation, Final Rating 추가 예정
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 우림 조건
+                BrewingConditionSection()
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                //SensoryEvaluation
+                SensoryEvaluationSection()
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+
+                FinalRatingSection()
+
                 Spacer(modifier = Modifier.height(32.dp))
 
             }
@@ -689,5 +722,481 @@ private fun WeatherOptionButton(
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF7A7F86)
         )
+    }
+}
+
+@Composable
+private fun BrewingConditionSection(
+    modifier: Modifier = Modifier
+) {
+    var waterTemp by remember { mutableStateOf("85") }      // 물 온도
+    var leafAmount by remember { mutableStateOf("3") }      // 찻잎량 (g)
+    var brewTime by remember { mutableStateOf("2분 30초") } // 우림 시간
+    var brewCount by remember { mutableStateOf("1") }       // 우림 횟수
+    var teawareType by remember { mutableStateOf("찻주전자") } // 다기 종류
+
+    Column(modifier = modifier) {
+
+        // 섹션 타이틀 (우림 조건)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = SharedR.drawable.ic_temp),
+                contentDescription = "Brewing Conditions",
+                tint = LeafyGreen,
+                modifier = Modifier
+                    .height(18.dp)
+                    .padding(end = 6.dp)
+            )
+            Text(
+                text = "Brewing Conditions",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = Color(0xFF303437)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 물 온도 + 찻잎량
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LeafyFieldLabel(text = "Water Temp (℃)")
+                OutlinedTextField(
+                    value = waterTemp,
+                    onValueChange = { waterTemp = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    singleLine = true
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                LeafyFieldLabel(text = "Leaf Amount (g)")
+                OutlinedTextField(
+                    value = leafAmount,
+                    onValueChange = { leafAmount = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    singleLine = true
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 우림 시간
+        LeafyFieldLabel(text = "Brewing Time")
+        OutlinedTextField(
+            value = brewTime,
+            onValueChange = { brewTime = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            singleLine = true,
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(id = SharedR.drawable.ic_timer),
+                    contentDescription = "Brew timer",
+                    tint = LeafyGreen
+                )
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 우림 횟수 + 다기 종류
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LeafyFieldLabel(text = "Infusion Count")
+                OutlinedTextField(
+                    value = brewCount,
+                    onValueChange = { brewCount = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    singleLine = true
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                LeafyDropdownField(
+                    label = "Teaware",
+                    options = listOf("찻주전자", "개완", "머그", "다도 세트"),
+                    selected = teawareType,
+                    onSelectedChange = { teawareType = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SensoryEvaluationSection(
+    modifier: Modifier = Modifier
+) {
+    // Flavor tags 선택 상태 (여러 개 선택 가능)
+    var selectedTags by remember {
+        mutableStateOf(setOf("Sweet", "Smoky"))
+    }
+
+    // Taste intensity 슬라이더 값들 (0~5 정도로 가정)
+    var sweetIntensity by remember { mutableStateOf(4f) }
+    var sourIntensity by remember { mutableStateOf(1f) }
+    var bitterIntensity by remember { mutableStateOf(1f) }
+    var saltyIntensity by remember { mutableStateOf(3f) }
+    var umamiIntensity by remember { mutableStateOf(2f) }
+
+    // Body 드롭다운
+    var bodySelected by remember { mutableStateOf("Light") }
+
+    // Finish 슬라이더 (0 = Clean, 5 = Astringent)
+    var finishValue by remember { mutableStateOf(1.5f) }
+
+    // Notes
+    var notes by remember { mutableStateOf("") }
+
+    Column(modifier = modifier) {
+
+        // 섹션 타이틀
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = SharedR.drawable.ic_note_section_sensory),
+                contentDescription = "Sensory Evaluation",
+                tint = LeafyGreen,
+                modifier = Modifier
+                    .height(18.dp)
+                    .padding(end = 6.dp)
+            )
+            Text(
+                text = "Sensory Evaluation",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = Color(0xFF303437)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ---------- Flavor & Aroma Tags ----------
+        LeafyFieldLabel(text = "Flavor & Aroma Tags")
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val allTags = listOf("Floral", "Sweet", "Woody", "Nutty", "Smoky", "Herbal", "Fruity")
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            allTags.forEach { tag ->
+                val isSelected = tag in selectedTags
+                val backgroundColor =
+                    when {
+                        tag == "Smoky" && isSelected -> LeafyBrown
+                        isSelected -> LeafyGreen
+                        else -> LeafyWhite
+                    }
+                val borderColor =
+                    if (isSelected) backgroundColor else Color(0xFFE1E4EA)
+                val textColor =
+                    if (isSelected) LeafyWhite else Color(0xFF303437)
+
+                Box(
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .wrapContentHeight()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(backgroundColor)
+                        .border(1.dp, borderColor, RoundedCornerShape(20.dp))
+                        .clickable {
+                            selectedTags = if (isSelected) {
+                                selectedTags - tag
+                            } else {
+                                selectedTags + tag
+                            }
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = tag,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = textColor
+                    )
+                }
+            }
+        }
+
+        // ---------- Taste Intensity ----------
+        Spacer(modifier = Modifier.height(20.dp))
+        LeafyFieldLabel(text = "Taste Intensity")
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TasteSliderRow(
+            label = "Sweet",
+            value = sweetIntensity,
+            onValueChange = { sweetIntensity = it }
+        )
+        TasteSliderRow(
+            label = "Sour",
+            value = sourIntensity,
+            onValueChange = { sourIntensity = it }
+        )
+        TasteSliderRow(
+            label = "Bitter",
+            value = bitterIntensity,
+            onValueChange = { bitterIntensity = it }
+        )
+        TasteSliderRow(
+            label = "Salty",
+            value = saltyIntensity,
+            onValueChange = { saltyIntensity = it }
+        )
+        TasteSliderRow(
+            label = "Umami",
+            value = umamiIntensity,
+            onValueChange = { umamiIntensity = it }
+        )
+
+        // ---------- Body ----------
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LeafyFieldLabel(text = "Body")
+                LeafyDropdownField(
+                    label = "",
+                    options = listOf("Light", "Medium", "Full"),
+                    selected = bodySelected,
+                    onSelectedChange = { bodySelected = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Column(modifier = Modifier.weight(1.5f)) {
+                LeafyFieldLabel(text = "Finish")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Clean",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF7A7F86)
+                    )
+                    Slider(
+                        value = finishValue,
+                        onValueChange = { finishValue = it },
+                        valueRange = 0f..5f,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp),
+                        colors = SliderDefaults.colors(
+                            thumbColor = LeafyGreen,
+                            activeTrackColor = LeafyGreen
+                        )
+                    )
+                    Text(
+                        text = "Astringent",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF7A7F86)
+                    )
+                }
+            }
+        }
+
+        // ---------- Notes ----------
+        Spacer(modifier = Modifier.height(20.dp))
+        LeafyFieldLabel(text = "Notes")
+        OutlinedTextField(
+            value = notes,
+            onValueChange = { notes = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            singleLine = false,
+            minLines = 3,
+            maxLines = 6,
+            placeholder = {
+                Text(
+                    text = "Add your tasting notes...",
+                    color = Color(0xFFB8BCC2)
+                )
+            }
+        )
+    }
+}
+@Composable
+private fun TasteSliderRow(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.width(56.dp),
+            color = Color(0xFF303437)
+        )
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = 0f..5f,
+            modifier = Modifier.weight(1f),
+            colors = SliderDefaults.colors(
+                thumbColor = LeafyGreen,
+                activeTrackColor = LeafyGreen
+            )
+        )
+        Text(
+            text = value.toInt().toString(),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(start = 8.dp),
+            color = Color(0xFF7A7F86)
+        )
+    }
+}
+
+@Composable
+private fun FinalRatingSection(
+    modifier: Modifier = Modifier
+) {
+    var rating by remember { mutableStateOf(0) }
+    var purchaseAgain by remember { mutableStateOf<Boolean?>(null) } // Yes/No 선택 상태
+
+    Column(modifier = modifier) {
+
+        // 섹션 타이틀
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = SharedR.drawable.ic_note_section_final_rating),
+                contentDescription = "Final Rating",
+                tint = LeafyAccentRed,
+                modifier = Modifier
+                    .height(18.dp)
+                    .padding(end = 6.dp)
+            )
+            Text(
+                text = "Final Rating",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = Color(0xFF303437)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Overall Rating
+        LeafyFieldLabel(text = "Overall Rating")
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            (1..5).forEach { starIndex ->
+                val isFilled = starIndex <= rating
+                IconButton(
+                    onClick = { rating = starIndex }
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = if (isFilled) {
+                                SharedR.drawable.ic_star_filled
+                            } else {
+                                SharedR.drawable.ic_star_outline
+                            }
+                        ),
+                        contentDescription = "$starIndex stars",
+                        tint = Color.Unspecified,      // ✅ 원본 색 유지
+                        modifier = Modifier.height(24.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Would you purchase this tea again?
+        Text(
+            text = "Would you purchase this tea again?",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF7A7F86)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Yes 버튼
+            val yesSelected = purchaseAgain == true
+            Button(
+                onClick = { purchaseAgain = true },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(999.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (yesSelected) LeafyGreen else LeafyWhite,
+                    contentColor = if (yesSelected) LeafyWhite else LeafyGreen
+                ),
+                border = if (yesSelected) null else BorderStroke(1.dp, LeafyGreen)
+            ) {
+                Text(
+                    text = "Yes",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            // No 버튼
+            val noSelected = purchaseAgain == false
+            OutlinedButton(
+                onClick = { purchaseAgain = false },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(999.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (noSelected) Color(0xFFF5F6F8) else LeafyWhite,
+                    contentColor = Color(0xFF7A7F86)
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    if (noSelected) Color(0xFFB8BCC2) else Color(0xFFE1E4EA)
+                )
+            ) {
+                Text(
+                    text = "No",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
     }
 }
