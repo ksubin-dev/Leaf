@@ -2,6 +2,9 @@
 .idea/
 *.iml
 
+# Firebase Service Credentials
+app/google-services.json
+
 # --- Kotlin / IntelliJ 캐시 ---------------------------------------------------
 .kotlin/
 .kotlinc/
@@ -27,3 +30,4 @@ captures/
 .DS_Store
 Thumbs.db
 
+app/google-services.json

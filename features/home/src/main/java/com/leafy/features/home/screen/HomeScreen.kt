@@ -33,10 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.R
-import com.leafy.shared.ui.theme.LeafyAccentRed
-import com.leafy.shared.ui.theme.LeafyBrown
-import com.leafy.shared.ui.theme.LeafyGreen
-import com.leafy.shared.ui.theme.LeafyWhite
+
 
 /**
  * Leafy Home 화면
@@ -45,10 +42,11 @@ import com.leafy.shared.ui.theme.LeafyWhite
 @Composable
 fun HomeScreen() {
     LeafyTheme {
+        val colors = MaterialTheme.colorScheme
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(LeafyWhite)
+                .background(colors.background)
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp) // 바텀바 살짝 여유
         ) {
@@ -162,19 +160,19 @@ private fun QuickBrewingGuideSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             BrewingInfoCard(
-                iconRes = R.drawable.ic_brewing_temper,
+                iconRes = R.drawable.ic_temp,
                 title = "Temperature",
                 value = "85℃",
                 modifier = Modifier.weight(1f)
             )
             BrewingInfoCard(
-                iconRes = R.drawable.ic_brewing_time,
+                iconRes = R.drawable.ic_timer,
                 title = "Steeping",
                 value = "3 min",
                 modifier = Modifier.weight(1f)
             )
             BrewingInfoCard(
-                iconRes = R.drawable.ic_brewing_amount,
+                iconRes = R.drawable.ic_leaf,
                 title = "Amount",
                 value = "2g",
                 modifier = Modifier.weight(1f)
@@ -185,15 +183,17 @@ private fun QuickBrewingGuideSection(
 
 @Composable
 private fun BrewingInfoCard(
+    modifier: Modifier = Modifier,
     @DrawableRes iconRes: Int,
     title: String,
-    value: String,
-    modifier: Modifier = Modifier
+    value: String
 ) {
+
+    val colors = MaterialTheme.colorScheme
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = LeafyWhite,
+        color = colors.surface,
         shadowElevation = 2.dp
     ) {
         Column(
@@ -204,14 +204,14 @@ private fun BrewingInfoCard(
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = title,
-                tint = LeafyGreen,
+                tint = colors.primary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF8D9295)
+                color = colors.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -241,6 +241,8 @@ private data class TeaRankingItem(
 private fun PopularTop3Section(
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     val items = listOf(
         TeaRankingItem(
             rank = 1,
@@ -249,7 +251,7 @@ private fun PopularTop3Section(
             rating = 4.8,
             ratingCount = 234,
             imageRes = R.drawable.img_rank_1,
-            badgeColor = LeafyGreen
+            badgeColor = colors.primary
         ),
         TeaRankingItem(
             rank = 2,
@@ -258,7 +260,7 @@ private fun PopularTop3Section(
             rating = 4.7,
             ratingCount = 189,
             imageRes = R.drawable.img_rank_2,
-            badgeColor = LeafyBrown
+            badgeColor = colors.secondary
         ),
         TeaRankingItem(
             rank = 3,
@@ -267,7 +269,7 @@ private fun PopularTop3Section(
             rating = 4.6,
             ratingCount = 156,
             imageRes = R.drawable.img_rank_3,
-            badgeColor = LeafyBrown
+            badgeColor = colors.secondary
         )
     )
 
@@ -317,8 +319,10 @@ private fun LeafyFilterChip(
     text: String,
     selected: Boolean
 ) {
-    val bg = if (selected) LeafyGreen else Color(0xFFF0F1F4)
-    val fg = if (selected) Color.White else Color(0xFF61656A)
+    val colors = MaterialTheme.colorScheme
+
+    val bg = if (selected) colors.primary else colors.surfaceVariant
+    val fg = if (selected) colors.onPrimary else colors.onSurfaceVariant
 
     Surface(
         shape = RoundedCornerShape(50),
@@ -340,6 +344,9 @@ private fun LeafyFilterChip(
 private fun RankedTeaRow(
     item: TeaRankingItem
 ) {
+
+    val colors = MaterialTheme.colorScheme
+
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = Color.White,
@@ -393,7 +400,6 @@ private fun RankedTeaRow(
                 Text(
                     text = item.typeCountry,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF7A7E80)
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
@@ -402,7 +408,7 @@ private fun RankedTeaRow(
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "rating",
-                        tint = LeafyAccentRed,
+                        tint = colors.error,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -416,7 +422,7 @@ private fun RankedTeaRow(
                     Text(
                         text = "(${item.ratingCount})",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF9A9EA2)
+                        color = colors.onSurfaceVariant
                     )
                 }
             }
@@ -438,6 +444,8 @@ private data class RecentNoteItem(
 private fun RecentMyRecordsSection(
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     val items = listOf(
         RecentNoteItem(
             title = "Earl Grey Supreme",
@@ -466,11 +474,12 @@ private fun RecentMyRecordsSection(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 20.sp
                 ),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                color = colors.onBackground
             )
             Text(
                 text = "More +",
-                color = LeafyGreen,
+                color = colors.primary,
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -496,12 +505,14 @@ private fun RecentMyRecordsSection(
 private fun RecentNoteCard(
     item: RecentNoteItem
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier
             .width(260.dp),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = colors.surface)
     ) {
         Column {
             Image(
@@ -527,20 +538,22 @@ private fun RecentNoteCard(
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "rating",
-                        tint = LeafyAccentRed,
+                        tint = colors.error,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "${item.rating}",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurface
+
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = item.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF7A7E80),
+                    color = colors.onSurfaceVariant,
                     maxLines = 2
                 )
             }
