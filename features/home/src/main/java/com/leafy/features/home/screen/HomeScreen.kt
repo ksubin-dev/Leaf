@@ -321,7 +321,7 @@ private fun LeafyFilterChip(
 ) {
     val colors = MaterialTheme.colorScheme
 
-    val bg = if (selected) colors.primary else colors.surfaceVariant
+    val bg = if (selected) colors.primary else colors.tertiaryContainer
     val fg = if (selected) colors.onPrimary else colors.onSurfaceVariant
 
     Surface(

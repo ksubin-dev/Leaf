@@ -30,9 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.ui.theme.LeafyGreen
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.theme.LeafyWhite
 import com.leafy.shared.R as SharedR
 
 /**
@@ -49,6 +47,8 @@ fun NotePhotoSlot(
     @DrawableRes iconRes: Int,
     onClick: () -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     DottedRoundedBox(
         modifier = modifier
             .aspectRatio(1f)               // 정사각형 유지
@@ -65,7 +65,7 @@ fun NotePhotoSlot(
                 painter = painterResource(id = iconRes),
                 contentDescription = title,
                 modifier = Modifier.height(28.dp),
-                tint = Color.Unspecified      // 아이콘 원본 색상 유지
+                tint = Color.Unspecified
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
@@ -73,7 +73,7 @@ fun NotePhotoSlot(
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Normal
                 ),
-                color = Color(0xFF686D72)
+                color = colors.onSurfaceVariant
             )
         }
     }
@@ -88,11 +88,14 @@ fun NotePhotoSlot(
 @Composable
 fun DottedRoundedBox(
     modifier: Modifier = Modifier,
-    borderColor: Color = LeafyGreen,
     cornerRadiusDp: Float = 16f,
     borderWidthDp: Float = 3f,
     content: @Composable BoxScope.() -> Unit
 ) {
+
+    val colors = MaterialTheme.colorScheme
+    val borderColor = colors.primary
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadiusDp.dp))
@@ -128,9 +131,12 @@ fun DottedRoundedBox(
 @Composable
 fun NotePhotoSlotPreview() {
     LeafyTheme {
+
+        val colors = MaterialTheme.colorScheme
+
         Box(
             modifier = Modifier
-                .background(LeafyWhite)
+                .background(colors.background)
                 .padding(16.dp)
         ) {
             NotePhotoSlot(

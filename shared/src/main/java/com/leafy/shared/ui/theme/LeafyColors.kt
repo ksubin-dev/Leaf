@@ -3,18 +3,18 @@ package com.leafy.shared.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // 메인 컬러
-val LeafyGreen = Color(0xFF7A8C6F)//leafyMainGreen
-
-// 서브 컬러
-val LeafyBrown = Color(0xFF8E735B)
-val LeafyAccentRed = Color(0xFFC06E52)
-
-// 공통 베이스 컬러
-val LeafyWhite = Color(0xFFFFFFFF)
-val LeafyGray = Color(0xFFB0B6BF)
-
-// 바텀바 등 배경용 (화이트 재활용)
-val LeafyBottomBarBackground = LeafyWhite
+//val LeafyGreen = Color(0xFF7A8C6F)//leafyMainGreen
+//
+//// 서브 컬러
+//val LeafyBrown = Color(0xFF8E735B)
+//val LeafyAccentRed = Color(0xFFC06E52)
+//
+//// 공통 베이스 컬러
+//val LeafyWhite = Color(0xFFFFFFFF)
+//val LeafyGray = Color(0xFFB0B6BF)
+//
+//// 바텀바 등 배경용 (화이트 재활용)
+//val LeafyBottomBarBackground = LeafyWhite
 
 // Material 3 Light Color Palette
 // ============ Light Theme ============
@@ -34,7 +34,7 @@ val onSecondaryContainerLight = Color(0xFF2F1E10)
 // Tertiary (보조 포인트 – 살짝 푸른 톤)
 val tertiaryLight = Color(0xFF5F748D)
 val onTertiaryLight = Color(0xFFFFFFFF)
-val tertiaryContainerLight = Color(0xFFCED8E6)
+val tertiaryContainerLight = Color(0xFFB8BCC2)
 val onTertiaryContainerLight = Color(0xFF102238)
 
 // Error
@@ -48,7 +48,7 @@ val backgroundLight = Color(0xFFFFFFFF)       // 배경 White
 val onBackgroundLight = Color(0xFF161D16)
 val surfaceLight = Color(0xFFFFFFFF)      // 또는 살짝 아이보리
 val onSurfaceLight = Color(0xFF161D16)
-val surfaceVariantLight = Color(0xFFF0F1F4) // 회색 카드/칩 배경용
+val surfaceVariantLight = Color(0xFFB8BCC2) // 회색 카드/칩 배경용
 val onSurfaceVariantLight = Color(0xFF61656A) // 칩 텍스트 회색
 
 // Outline
@@ -57,7 +57,7 @@ val outlineVariantLight = Color(0xFFC3CBC0)
 
 // 기타
 val scrimLight = Color(0xFF000000)
-val inverseSurfaceLight = Color(0xFF2D312A)
+val inverseSurfaceLight = Color(0xFF303437)
 val inverseOnSurfaceLight = Color(0xFFEEF3ED)
 val inversePrimaryLight = Color(0xFF9EB291)   // Primary의 밝은 톤
 

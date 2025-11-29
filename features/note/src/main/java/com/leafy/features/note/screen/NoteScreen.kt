@@ -43,9 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.features.note.ui.common.NotePhotoSlot
 import com.leafy.shared.R as SharedR
-import com.leafy.shared.ui.theme.LeafyGreen
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.theme.LeafyWhite
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
@@ -60,14 +58,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import com.leafy.shared.ui.theme.LeafyBrown
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuAnchorType.Companion.PrimaryNotEditable
 import androidx.compose.material3.OutlinedButton
-import com.leafy.shared.ui.theme.LeafyAccentRed
+import androidx.compose.material3.OutlinedTextFieldDefaults
+
+
+
 
 
 /**
@@ -85,7 +84,10 @@ import com.leafy.shared.ui.theme.LeafyAccentRed
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun NoteScreen() {
-    // 🌟 1. Basic Tea Information 상태 관리 (Hoisted States)
+
+    val colors = MaterialTheme.colorScheme
+
+    // Basic Tea Information 상태 관리 (Hoisted States)
     var teaName by remember { mutableStateOf("Enter Tea Name") }
     var brandName by remember { mutableStateOf("Enter brand name") }
     var teaType by remember { mutableStateOf("Black") }
@@ -112,7 +114,7 @@ fun NoteScreen() {
                                 contentDescription = "Back",
                                 modifier = Modifier
                                     .height(20.dp),
-                                tint = LeafyGreen
+                                tint = colors.primary
                             )
                         }
                     },
@@ -120,7 +122,7 @@ fun NoteScreen() {
                         TextButton(onClick = { /* TODO: Save action (여기서 상태 변수들을 사용) */ }) {
                             Text(
                                 text = "Save",
-                                color = LeafyGreen,
+                                color = colors.primary,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -132,7 +134,7 @@ fun NoteScreen() {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(LeafyWhite)
+                    .background(colors.background)
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 20.dp)
@@ -205,6 +207,9 @@ private fun PhotosSection(
     onClickAdditional: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    val colors = MaterialTheme.colorScheme
+
     Column(modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -212,7 +217,7 @@ private fun PhotosSection(
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_note_section_photos),
                 contentDescription = "Photos",
-                tint = LeafyGreen,
+                tint = colors.primary,
                 modifier = Modifier
                     .height(18.dp)
                     .padding(end = 6.dp)
@@ -222,7 +227,7 @@ private fun PhotosSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Color(0xFF303437)
+                color = colors.onSurface
             )
         }
 
@@ -288,6 +293,8 @@ fun BasicTeaInformationSection(
     teaGrade: String,
     onTeaGradeChange: (String) -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Column(modifier = modifier) {
         // 섹션 타이틀
         Row(
@@ -296,7 +303,7 @@ fun BasicTeaInformationSection(
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_leaf),
                 contentDescription = "Basic Tea Information",
-                tint = LeafyGreen,
+                tint = colors.primary,
                 modifier = Modifier
                     .height(18.dp)
                     .padding(end = 6.dp)
@@ -306,7 +313,7 @@ fun BasicTeaInformationSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Color(0xFF303437)
+                color = colors.onSurface
             )
         }
 
@@ -354,6 +361,9 @@ fun BasicTeaInformationSection(
 private fun TastingContextSection(
     modifier: Modifier = Modifier
 ) {
+
+    val colors = MaterialTheme.colorScheme
+
     var dateTime by remember { mutableStateOf("") }
     var selectedWeather by remember { mutableStateOf(WeatherType.CLEAR) }
 
@@ -370,7 +380,7 @@ private fun TastingContextSection(
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_note_section_context),
                 contentDescription = "Tasting Context",
-                tint = LeafyGreen,
+                tint = colors.primary,
                 modifier = Modifier
                     .height(18.dp)
                     .padding(end = 6.dp)
@@ -380,7 +390,7 @@ private fun TastingContextSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Color(0xFF303437)
+                color = colors.onSurface
             )
         }
 
@@ -402,7 +412,7 @@ private fun TastingContextSection(
                     Icon(
                         painter = painterResource(id = SharedR.drawable.ic_calendar),
                         contentDescription = "Pick date",
-                        tint = LeafyGreen
+                        tint = colors.primary
                     )
                 }
             }
@@ -505,7 +515,7 @@ private fun TastingContextSection(
             placeholder = {
                 Text(
                     text = "e.g. Minjae, Subin",
-                    color = Color(0xFFB8BCC2)
+                    color = colors.tertiary
                 )
             }
         )
@@ -517,12 +527,14 @@ private fun TastingContextSection(
 
 @Composable
 private fun LeafyFieldLabel(text: String) {
+    val colors = MaterialTheme.colorScheme
+
     Text(
         text = text,
         style = MaterialTheme.typography.bodySmall.copy(
             fontWeight = FontWeight.Medium
         ),
-        color = Color(0xFF7A7F86)
+        color = colors.tertiary
     )
 }
 
@@ -537,33 +549,37 @@ private fun LeafyDropdownField(
     selected: String,
     onSelectedChange: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+
+    val colors = MaterialTheme.colorScheme
+    var expanded by remember { mutableStateOf(false) } // 드롭다운 상태
 
     Column(modifier = modifier) {
         LeafyFieldLabel(text = label)
 
+        Spacer(modifier = Modifier.height(4.dp))
+
         ExposedDropdownMenuBox(
             expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
+            onExpandedChange = { expanded = it }, // Box 클릭 시 상태 변경
+            modifier = Modifier.fillMaxWidth()
         ) {
-            //드롭다운 강사님 환율 예제코드의 드롭다운 활용해서 수정!!!!!!!!!!!!!!!
+            // 💡 Modifier 중복 선언 제거
             OutlinedTextField(
-                value = selected,
-                onValueChange = { /* readOnly이므로 비워둠 */ },
-                // 🟢 기능 작동을 위해 .menuAnchor()를 유지합니다.
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(PrimaryNotEditable, true),
+                value = selected,
+                onValueChange = { /* readOnly */ },
                 readOnly = true,
                 singleLine = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = LeafyGreen
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colors.primary,
+                    cursorColor = colors.primary,
+                    focusedTextColor = colors.onSurface,
+                    unfocusedTextColor = colors.onSurface,
+                    focusedContainerColor = colors.surface,
+                    unfocusedContainerColor = colors.surface
                 )
             )
 
@@ -576,8 +592,8 @@ private fun LeafyDropdownField(
                         text = { Text(option) },
                         onClick = {
                             onSelectedChange(option)
-                            expanded = false
-                        }
+                            expanded = false // 선택 후 닫기
+                        },
                     )
                 }
             }
@@ -691,9 +707,12 @@ private fun WeatherOptionButton(
     selectedWeather: WeatherType,
     onSelected: (WeatherType) -> Unit
 ) {
+
+    val colors = MaterialTheme.colorScheme
+
     val isSelected = selectedWeather == type
 
-    val borderColor = if (isSelected) LeafyGreen else Color(0xFFE1E4EA)
+    val borderColor = if (isSelected) colors.primary else colors.surfaceVariant
 
     Column(
         modifier = modifier
@@ -704,7 +723,7 @@ private fun WeatherOptionButton(
                 color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             )
-            .background(LeafyWhite, RoundedCornerShape(12.dp))
+            .background(colors.background, RoundedCornerShape(12.dp))
             .clickable { onSelected(type) }
             .padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -720,7 +739,7 @@ private fun WeatherOptionButton(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF7A7F86)
+            color = colors.onSurfaceVariant
         )
     }
 }
@@ -729,6 +748,8 @@ private fun WeatherOptionButton(
 private fun BrewingConditionSection(
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     var waterTemp by remember { mutableStateOf("85") }      // 물 온도
     var leafAmount by remember { mutableStateOf("3") }      // 찻잎량 (g)
     var brewTime by remember { mutableStateOf("2분 30초") } // 우림 시간
@@ -744,7 +765,7 @@ private fun BrewingConditionSection(
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_temp),
                 contentDescription = "Brewing Conditions",
-                tint = LeafyGreen,
+                tint = colors.primary,
                 modifier = Modifier
                     .height(18.dp)
                     .padding(end = 6.dp)
@@ -754,7 +775,7 @@ private fun BrewingConditionSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Color(0xFF303437)
+                color = colors.inverseSurface
             )
         }
 
@@ -805,7 +826,7 @@ private fun BrewingConditionSection(
                 Icon(
                     painter = painterResource(id = SharedR.drawable.ic_timer),
                     contentDescription = "Brew timer",
-                    tint = LeafyGreen
+                    tint = colors.primary
                 )
             }
         )
@@ -847,6 +868,8 @@ private fun BrewingConditionSection(
 private fun SensoryEvaluationSection(
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     // Flavor tags 선택 상태 (여러 개 선택 가능)
     var selectedTags by remember {
         mutableStateOf(setOf("Sweet", "Smoky"))
@@ -877,7 +900,7 @@ private fun SensoryEvaluationSection(
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_note_section_sensory),
                 contentDescription = "Sensory Evaluation",
-                tint = LeafyGreen,
+                tint = colors.primary,
                 modifier = Modifier
                     .height(18.dp)
                     .padding(end = 6.dp)
@@ -887,7 +910,7 @@ private fun SensoryEvaluationSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Color(0xFF303437)
+                color = colors.inverseSurface
             )
         }
 
@@ -908,14 +931,14 @@ private fun SensoryEvaluationSection(
                 val isSelected = tag in selectedTags
                 val backgroundColor =
                     when {
-                        tag == "Smoky" && isSelected -> LeafyBrown
-                        isSelected -> LeafyGreen
-                        else -> LeafyWhite
+                        tag == "Smoky" && isSelected -> colors.secondary
+                        isSelected -> colors.primary
+                        else -> colors.background
                     }
                 val borderColor =
-                    if (isSelected) backgroundColor else Color(0xFFE1E4EA)
+                    if (isSelected) backgroundColor else colors.tertiaryContainer
                 val textColor =
-                    if (isSelected) LeafyWhite else Color(0xFF303437)
+                    if (isSelected) colors.background else colors.inverseSurface
 
                 Box(
                     modifier = Modifier
@@ -1002,7 +1025,7 @@ private fun SensoryEvaluationSection(
                     Text(
                         text = "Clean",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF7A7F86)
+                        color = colors.onSurfaceVariant
                     )
                     Slider(
                         value = finishValue,
@@ -1012,14 +1035,14 @@ private fun SensoryEvaluationSection(
                             .weight(1f)
                             .padding(horizontal = 8.dp),
                         colors = SliderDefaults.colors(
-                            thumbColor = LeafyGreen,
-                            activeTrackColor = LeafyGreen
+                            thumbColor = colors.primary,
+                            activeTrackColor = colors.primary
                         )
                     )
                     Text(
                         text = "Astringent",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF7A7F86)
+                        color = colors.onSurfaceVariant
                     )
                 }
             }
@@ -1040,7 +1063,7 @@ private fun SensoryEvaluationSection(
             placeholder = {
                 Text(
                     text = "Add your tasting notes...",
-                    color = Color(0xFFB8BCC2)
+                    color = colors.onSurfaceVariant
                 )
             }
         )
@@ -1053,6 +1076,8 @@ private fun TasteSliderRow(
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -1061,7 +1086,7 @@ private fun TasteSliderRow(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.width(56.dp),
-            color = Color(0xFF303437)
+            color = colors.inverseSurface
         )
         Slider(
             value = value,
@@ -1069,15 +1094,15 @@ private fun TasteSliderRow(
             valueRange = 0f..5f,
             modifier = Modifier.weight(1f),
             colors = SliderDefaults.colors(
-                thumbColor = LeafyGreen,
-                activeTrackColor = LeafyGreen
+                thumbColor = colors.primary,
+                activeTrackColor = colors.primary
             )
         )
         Text(
             text = value.toInt().toString(),
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(start = 8.dp),
-            color = Color(0xFF7A7F86)
+            color = colors.onSurfaceVariant
         )
     }
 }
@@ -1086,6 +1111,8 @@ private fun TasteSliderRow(
 private fun FinalRatingSection(
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     var rating by remember { mutableStateOf(0) }
     var purchaseAgain by remember { mutableStateOf<Boolean?>(null) } // Yes/No 선택 상태
 
@@ -1098,7 +1125,7 @@ private fun FinalRatingSection(
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_note_section_final_rating),
                 contentDescription = "Final Rating",
-                tint = LeafyAccentRed,
+                tint = colors.error,
                 modifier = Modifier
                     .height(18.dp)
                     .padding(end = 6.dp)
@@ -1108,7 +1135,7 @@ private fun FinalRatingSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = Color(0xFF303437)
+                color = colors.inverseSurface
             )
         }
 
@@ -1135,7 +1162,7 @@ private fun FinalRatingSection(
                             }
                         ),
                         contentDescription = "$starIndex stars",
-                        tint = Color.Unspecified,      // ✅ 원본 색 유지
+                        tint = Color.Unspecified,
                         modifier = Modifier.height(24.dp)
                     )
                 }
@@ -1148,7 +1175,7 @@ private fun FinalRatingSection(
         Text(
             text = "Would you purchase this tea again?",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF7A7F86)
+            color = colors.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -1164,10 +1191,10 @@ private fun FinalRatingSection(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(999.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (yesSelected) LeafyGreen else LeafyWhite,
-                    contentColor = if (yesSelected) LeafyWhite else LeafyGreen
+                    containerColor = if (yesSelected) colors.primary else colors.background,
+                    contentColor = if (yesSelected) colors.background else colors.primary
                 ),
-                border = if (yesSelected) null else BorderStroke(1.dp, LeafyGreen)
+                border = if (yesSelected) null else BorderStroke(1.dp, colors.primary)
             ) {
                 Text(
                     text = "Yes",
@@ -1183,12 +1210,12 @@ private fun FinalRatingSection(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(999.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = if (noSelected) Color(0xFFF5F6F8) else LeafyWhite,
-                    contentColor = Color(0xFF7A7F86)
+                    containerColor = if (noSelected) colors.tertiaryContainer else colors.background,
+                    contentColor = colors.onSurfaceVariant
                 ),
                 border = BorderStroke(
                     1.dp,
-                    if (noSelected) Color(0xFFB8BCC2) else Color(0xFFE1E4EA)
+                    if (noSelected) colors.tertiaryContainer else colors.surfaceVariant
                 )
             ) {
                 Text(
