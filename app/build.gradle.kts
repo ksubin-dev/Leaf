@@ -60,8 +60,7 @@ dependencies {
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.core.splashscreen)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.compose.foundation.layout)
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

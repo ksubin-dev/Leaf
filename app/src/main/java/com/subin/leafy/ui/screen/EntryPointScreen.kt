@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -36,9 +37,6 @@ import com.leafy.features.note.navigation.noteNavGraph
 import com.leafy.features.timer.navigation.timerNavGraph
 import com.leafy.shared.navigation.LeafyNavigation
 import com.leafy.shared.navigation.MainNavigationRoute
-import com.leafy.shared.ui.theme.LeafyBottomBarBackground
-import com.leafy.shared.ui.theme.LeafyGray
-import com.leafy.shared.ui.theme.LeafyGreen
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.ui.component.LeafyBottomAppBarItem
 import com.subin.leafy.ui.component.LeafyTimerButton
@@ -49,6 +47,8 @@ import com.subin.leafy.ui.component.LeafyTimerButton
 @Composable
 fun EntryPointScreen() {
     LeafyTheme {
+
+        val colors = MaterialTheme.colorScheme
 
         val navController = rememberNavController()
 
@@ -82,7 +82,7 @@ fun EntryPointScreen() {
                     // 5개 칸을 모두 NavigationBar에 넣고, 가운데(Timer)는 투명 더미로 사용
                     NavigationBar(
                         modifier = Modifier.align(Alignment.BottomCenter),
-                        containerColor = LeafyBottomBarBackground
+                        containerColor = colors.background
                     ) {
                         allItems.forEach { item ->
                             val isTimer = item.destination == MainNavigationRoute.TimerTab
@@ -130,11 +130,11 @@ fun EntryPointScreen() {
                                     },
                                     label = { Text(text = item.tabName) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = LeafyGreen,
-                                        selectedTextColor = LeafyGreen,
-                                        unselectedIconColor = LeafyGray,
-                                        unselectedTextColor = LeafyGray,
-                                        indicatorColor = LeafyBottomBarBackground
+                                        selectedIconColor = colors.primary,
+                                        selectedTextColor = colors.primary,
+                                        unselectedIconColor = colors.tertiaryContainer,
+                                        unselectedTextColor = colors.tertiaryContainer,
+                                        indicatorColor = colors.background
                                     )
                                 )
                             }
