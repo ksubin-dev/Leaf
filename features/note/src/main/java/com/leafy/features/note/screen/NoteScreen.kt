@@ -1,6 +1,7 @@
 package com.leafy.features.note.screen
 
 
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -60,7 +61,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuAnchorType.Companion.PrimaryNotEditable
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -104,7 +104,8 @@ fun NoteScreen() {
                         Text(
                             text = "New Brewing Note",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.onBackground
                         )
                     },
                     navigationIcon = {
@@ -114,7 +115,7 @@ fun NoteScreen() {
                                 contentDescription = "Back",
                                 modifier = Modifier
                                     .height(20.dp),
-                                tint = colors.primary
+                                tint = colors.onSurface
                             )
                         }
                     },
@@ -227,7 +228,7 @@ private fun PhotosSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.onSurface
+                color = colors.primary
             )
         }
 
@@ -313,7 +314,7 @@ fun BasicTeaInformationSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.onSurface
+                color = colors.primary
             )
         }
 
@@ -390,7 +391,7 @@ private fun TastingContextSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.onSurface
+                color = colors.primary
             )
         }
 
@@ -534,7 +535,7 @@ private fun LeafyFieldLabel(text: String) {
         style = MaterialTheme.typography.bodySmall.copy(
             fontWeight = FontWeight.Medium
         ),
-        color = colors.tertiary
+        color = colors.secondary
     )
 }
 
@@ -615,7 +616,7 @@ private fun TeaNameField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 4.dp),
-        singleLine = true
+        singleLine = true,
     )
 }
 
@@ -712,7 +713,7 @@ private fun WeatherOptionButton(
 
     val isSelected = selectedWeather == type
 
-    val borderColor = if (isSelected) colors.primary else colors.surfaceVariant
+    val borderColor = if (isSelected) colors.outline else colors.outlineVariant
 
     Column(
         modifier = modifier
@@ -739,7 +740,7 @@ private fun WeatherOptionButton(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = colors.onSurfaceVariant
+            color = colors.onBackground
         )
     }
 }
@@ -775,7 +776,7 @@ private fun BrewingConditionSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.inverseSurface
+                color = colors.primary
             )
         }
 
@@ -910,7 +911,7 @@ private fun SensoryEvaluationSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.inverseSurface
+                color = colors.primary
             )
         }
 
@@ -936,9 +937,9 @@ private fun SensoryEvaluationSection(
                         else -> colors.background
                     }
                 val borderColor =
-                    if (isSelected) backgroundColor else colors.tertiaryContainer
+                    if (isSelected) backgroundColor else colors.outlineVariant
                 val textColor =
-                    if (isSelected) colors.background else colors.inverseSurface
+                    if (isSelected) colors.background else colors.onBackground
 
                 Box(
                     modifier = Modifier
@@ -1025,7 +1026,7 @@ private fun SensoryEvaluationSection(
                     Text(
                         text = "Clean",
                         style = MaterialTheme.typography.labelSmall,
-                        color = colors.onSurfaceVariant
+                        color = colors.onBackground
                     )
                     Slider(
                         value = finishValue,
@@ -1042,7 +1043,7 @@ private fun SensoryEvaluationSection(
                     Text(
                         text = "Astringent",
                         style = MaterialTheme.typography.labelSmall,
-                        color = colors.onSurfaceVariant
+                        color = colors.onBackground
                     )
                 }
             }
@@ -1063,7 +1064,7 @@ private fun SensoryEvaluationSection(
             placeholder = {
                 Text(
                     text = "Add your tasting notes...",
-                    color = colors.onSurfaceVariant
+                    color = colors.tertiary
                 )
             }
         )
@@ -1076,33 +1077,52 @@ private fun TasteSliderRow(
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     val colors = MaterialTheme.colorScheme
 
+    // 디자인에 맞는 색상 지정 (이미지 분석 기반)
+    val activeColor = colors.primary // 활성 트랙 및 엄지 색상 (짙은 초록 계열)
+    val inactiveColor = colors.outlineVariant // 비활성 트랙 색상 (매우 연한 회색/흰색 계열)
+    val textColor = colors.onBackground // 텍스트 색상 (어두운 색)
+
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().height(48.dp), // Row 높이를 적절히 조정
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // 왼쪽 텍스트 (Sweet / Sour …)
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.width(56.dp),
-            color = colors.inverseSurface
+            style = MaterialTheme.typography.bodyMedium.copy(color = textColor),
+            modifier = Modifier.width(72.dp) // 너비를 조금 더 넓게 조정
         )
+
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = 0f..5f,
-            modifier = Modifier.weight(1f),
+            steps = 4, // 0부터 5까지 정수만 선택 가능하도록
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp), // 양옆 패딩 추가
+
             colors = SliderDefaults.colors(
-                thumbColor = colors.primary,
-                activeTrackColor = colors.primary
+                // 원형 thumb 색상
+                thumbColor = activeColor,
+                // 활성 트랙 색상
+                activeTrackColor = activeColor,
+                // 비활성 트랙 색상 (회색 배경)
+                inactiveTrackColor = inactiveColor,
+                // 트랙이 thumb에 의해 가려지는 부분을 activeColor로 설정
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
             )
         )
+
+        // 오른쪽 숫자
         Text(
             text = value.toInt().toString(),
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(start = 8.dp),
-            color = colors.onSurfaceVariant
+            style = MaterialTheme.typography.bodyMedium.copy(color = textColor),
+            modifier = Modifier.padding(start = 8.dp).width(20.dp)
         )
     }
 }
@@ -1135,7 +1155,7 @@ private fun FinalRatingSection(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = colors.inverseSurface
+                color = colors.secondary
             )
         }
 
@@ -1175,7 +1195,7 @@ private fun FinalRatingSection(
         Text(
             text = "Would you purchase this tea again?",
             style = MaterialTheme.typography.bodySmall,
-            color = colors.onSurfaceVariant
+            color = colors.secondary
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -1194,7 +1214,7 @@ private fun FinalRatingSection(
                     containerColor = if (yesSelected) colors.primary else colors.background,
                     contentColor = if (yesSelected) colors.background else colors.primary
                 ),
-                border = if (yesSelected) null else BorderStroke(1.dp, colors.primary)
+                border = if (yesSelected) null else BorderStroke(1.dp, colors.outlineVariant)
             ) {
                 Text(
                     text = "Yes",
@@ -1210,12 +1230,12 @@ private fun FinalRatingSection(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(999.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = if (noSelected) colors.tertiaryContainer else colors.background,
-                    contentColor = colors.onSurfaceVariant
+                    containerColor = if (noSelected) colors.primaryContainer else colors.background,
+                    contentColor = colors.onBackground
                 ),
                 border = BorderStroke(
                     1.dp,
-                    if (noSelected) colors.tertiaryContainer else colors.surfaceVariant
+                    if (noSelected) colors.outlineVariant else colors.outlineVariant
                 )
             ) {
                 Text(
@@ -1227,3 +1247,4 @@ private fun FinalRatingSection(
         }
     }
 }
+
