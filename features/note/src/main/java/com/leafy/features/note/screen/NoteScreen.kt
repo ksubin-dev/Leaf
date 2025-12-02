@@ -64,9 +64,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExposedDropdownMenuAnchorType.Companion.PrimaryNotEditable
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
-
-
-
+import com.leafy.features.note.ui.common.CustomSlider
 
 
 /**
@@ -887,7 +885,7 @@ private fun SensoryEvaluationSection(
     var bodySelected by remember { mutableStateOf("Light") }
 
     // Finish 슬라이더 (0 = Clean, 5 = Astringent)
-    var finishValue by remember { mutableStateOf(1.5f) }
+    var finishValue by remember { mutableStateOf(0f) }
 
     // Notes
     var notes by remember { mutableStateOf("") }
@@ -1017,7 +1015,7 @@ private fun SensoryEvaluationSection(
                 )
             }
 
-            Column(modifier = Modifier.weight(1.5f)) {
+            Column(modifier = Modifier.weight(1f)) {
                 LeafyFieldLabel(text = "Finish")
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -1028,23 +1026,22 @@ private fun SensoryEvaluationSection(
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onBackground
                     )
-                    Slider(
+                    // CustomSlider 설정 적용
+                    CustomSlider(
                         value = finishValue,
                         onValueChange = { finishValue = it },
-                        valueRange = 0f..5f,
+                        maxValue = 1f,
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 8.dp),
-                        colors = SliderDefaults.colors(
-                            thumbColor = colors.primary,
-                            activeTrackColor = colors.primary
-                        )
+                            // width(120.dp)로 길이를 제한하여 짧게 만듭니다.
+                            .width(120.dp)
+                            .padding(horizontal = 4.dp)
                     )
                     Text(
                         text = "Astringent",
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onBackground
                     )
+
                 }
             }
         }
@@ -1079,43 +1076,27 @@ private fun TasteSliderRow(
 ) {
 
     val colors = MaterialTheme.colorScheme
-
-    // 디자인에 맞는 색상 지정 (이미지 분석 기반)
-    val activeColor = colors.primary // 활성 트랙 및 엄지 색상 (짙은 초록 계열)
-    val inactiveColor = colors.outlineVariant // 비활성 트랙 색상 (매우 연한 회색/흰색 계열)
-    val textColor = colors.onBackground // 텍스트 색상 (어두운 색)
+    val textColor = colors.onBackground // 텍스트 색상
 
     Row(
-        modifier = modifier.fillMaxWidth().height(48.dp), // Row 높이를 적절히 조정
+        modifier = modifier.fillMaxWidth().height(48.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 왼쪽 텍스트 (Sweet / Sour …)
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium.copy(color = textColor),
-            modifier = Modifier.width(72.dp) // 너비를 조금 더 넓게 조정
+            modifier = Modifier.width(72.dp)
         )
 
-        Slider(
+        //customslider 사용
+        CustomSlider(
             value = value,
             onValueChange = onValueChange,
-            valueRange = 0f..5f,
-            steps = 4, // 0부터 5까지 정수만 선택 가능하도록
+            // CustomSlider의 maxValue 기본값 5f를 사용합니다.
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 8.dp), // 양옆 패딩 추가
-
-            colors = SliderDefaults.colors(
-                // 원형 thumb 색상
-                thumbColor = activeColor,
-                // 활성 트랙 색상
-                activeTrackColor = activeColor,
-                // 비활성 트랙 색상 (회색 배경)
-                inactiveTrackColor = inactiveColor,
-                // 트랙이 thumb에 의해 가려지는 부분을 activeColor로 설정
-                activeTickColor = Color.Transparent,
-                inactiveTickColor = Color.Transparent
-            )
+                .padding(horizontal = 8.dp)
         )
 
         // 오른쪽 숫자
