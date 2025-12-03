@@ -57,13 +57,17 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExposedDropdownMenuAnchorType.Companion.PrimaryNotEditable
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import com.leafy.features.note.ui.common.CustomSlider
 
 
@@ -881,11 +885,11 @@ private fun SensoryEvaluationSection(
     var saltyIntensity by remember { mutableStateOf(3f) }
     var umamiIntensity by remember { mutableStateOf(2f) }
 
-    // Body 드롭다운
-    var bodySelected by remember { mutableStateOf("Light") }
+    // Body 인덱스 (0 = Light, 1 = Medium, 2 = Full)
+    var bodyIndex by remember { mutableIntStateOf(1) }
 
-    // Finish 슬라이더 (0 = Clean, 5 = Astringent)
-    var finishValue by remember { mutableStateOf(0f) }
+    // Finish 슬라이더 (0.0 = Clean, 1.0 = Astringent)
+    var finishValue by remember { mutableFloatStateOf(0.5f) }
 
     // Notes
     var notes by remember { mutableStateOf("") }
@@ -996,77 +1000,50 @@ private fun SensoryEvaluationSection(
             onValueChange = { umamiIntensity = it }
         )
 
-        // ---------- Body ----------
+        // ---------- Body & Finish (세로 배치) ----------
         Spacer(modifier = Modifier.height(20.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                LeafyFieldLabel(text = "Body")
-                LeafyDropdownField(
-                    label = "",
-                    options = listOf("Light", "Medium", "Full"),
-                    selected = bodySelected,
-                    onSelectedChange = { bodySelected = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        // Body (바디감)
+        LeafyFieldLabel(text = "Body (바디감)")
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                LeafyFieldLabel(text = "Finish")
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Clean",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.onBackground
-                    )
-                    // CustomSlider 설정 적용
-                    CustomSlider(
-                        value = finishValue,
-                        onValueChange = { finishValue = it },
-                        maxValue = 1f,
-                        modifier = Modifier
-                            // width(120.dp)로 길이를 제한하여 짧게 만듭니다.
-                            .width(120.dp)
-                            .padding(horizontal = 4.dp)
-                    )
-                    Text(
-                        text = "Astringent",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.onBackground
-                    )
+        BodySelectionSegmentedRow(
+            selectedIndex = bodyIndex,
+            onSelect = { bodyIndex = it }
+        )
 
-                }
-            }
-        }
-
-        // ---------- Notes ----------
         Spacer(modifier = Modifier.height(20.dp))
-        LeafyFieldLabel(text = "Notes")
-        OutlinedTextField(
-            value = notes,
-            onValueChange = { notes = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            singleLine = false,
-            minLines = 3,
-            maxLines = 6,
-            placeholder = {
-                Text(
-                    text = "Add your tasting notes...",
-                    color = colors.tertiary
-                )
-            }
+
+
+        // Finish (후미)
+        FinishSliderRow(
+            level = finishValue,
+            onLevelChange = { finishValue = it }
         )
     }
+
+
+    // ---------- Notes ----------
+    Spacer(modifier = Modifier.height(20.dp))
+    LeafyFieldLabel(text = "Notes")
+    OutlinedTextField(
+        value = notes,
+        onValueChange = { notes = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        singleLine = false,
+        minLines = 3,
+        maxLines = 6,
+        placeholder = {
+            Text(
+                text = "Add your tasting notes...",
+                color = colors.tertiary
+            )
+        }
+    )
 }
+
 @Composable
 private fun TasteSliderRow(
     label: String,
@@ -1107,6 +1084,96 @@ private fun TasteSliderRow(
         )
     }
 }
+@Composable
+private fun FinishSliderRow(
+    level: Float,
+    onLevelChange: (Float) -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+
+        // 제목 + 상태 텍스트 (Balanced 등)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            LeafyFieldLabel(text = "Finish (후미)")
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = when {
+                    level < 0.3f -> "Clean (깔끔)"
+                    level > 0.7f -> "Astringent (떫음)"
+                    else -> "Balanced (균형 잡힘)"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.primary,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        // 0.0f..1.0f 범위 슬라이더 (CustomSlider 재사용)
+        CustomSlider(
+            value = level,
+            onValueChange = onLevelChange,
+            maxValue = 1f,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Clean", style = MaterialTheme.typography.bodySmall, color = colors.onBackground)
+            Text("Astringent", style = MaterialTheme.typography.bodySmall, color = colors.onBackground)
+        }
+    }
+}
+@Composable
+private fun BodySelectionSegmentedRow(
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val options = listOf("Light", "Medium", "Full")
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .clip(RoundedCornerShape(999.dp)) // 둥근 전체 배경
+            .border(1.dp, colors.outlineVariant, RoundedCornerShape(20.dp))
+            .background(colors.background),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        options.forEachIndexed { index, text ->
+            val isSelected = selectedIndex == index
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(
+                        if (isSelected) colors.primaryContainer else Color.Transparent
+                    )
+                    .clickable { onSelect(index) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                    ),
+                    color = if (isSelected) colors.primary
+                    else colors.onPrimaryContainer
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun FinalRatingSection(
