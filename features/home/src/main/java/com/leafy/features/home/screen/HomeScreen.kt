@@ -144,13 +144,16 @@ private fun HeroTeaImage(
 private fun QuickBrewingGuideSection(
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Column(modifier = modifier) {
         Text(
             text = "빠른 브루잉 가이드",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp
-            )
+            ),
+            color = colors.primary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -218,7 +221,8 @@ private fun BrewingInfoCard(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold
-                )
+                ),
+                color = colors.onBackground
             )
         }
     }
@@ -279,7 +283,8 @@ private fun PopularTop3Section(
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp
-            )
+            ),
+            color = colors.onBackground
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -321,7 +326,7 @@ private fun LeafyFilterChip(
 ) {
     val colors = MaterialTheme.colorScheme
 
-    val bg = if (selected) colors.primary else colors.tertiaryContainer
+    val bg = if (selected) colors.primary else colors.surfaceVariant
     val fg = if (selected) colors.onPrimary else colors.onSurfaceVariant
 
     Surface(
@@ -394,12 +399,14 @@ private fun RankedTeaRow(
                     text = item.name,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold
-                    )
+                    ),
+                    color = colors.onBackground
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = item.typeCountry,
                     style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(
@@ -416,7 +423,8 @@ private fun RankedTeaRow(
                         text = "${item.rating}",
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.SemiBold
-                        )
+                        ),
+                        color = colors.onTertiaryContainer
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -531,7 +539,8 @@ private fun RecentNoteCard(
                     text = item.title,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold
-                    )
+                    ),
+                    color = colors.onBackground
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -545,7 +554,7 @@ private fun RecentNoteCard(
                     Text(
                         text = "${item.rating}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurface
+                        color = colors.onSurfaceVariant
 
                     )
                 }
@@ -553,7 +562,7 @@ private fun RecentNoteCard(
                 Text(
                     text = item.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant,
+                    color = colors.onSurface,
                     maxLines = 2
                 )
             }

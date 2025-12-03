@@ -73,7 +73,7 @@ fun NotePhotoSlot(
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Normal
                 ),
-                color = colors.onSurfaceVariant
+                color = colors.onSurface
             )
         }
     }
