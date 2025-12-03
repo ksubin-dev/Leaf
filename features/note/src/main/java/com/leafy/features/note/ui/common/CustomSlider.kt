@@ -19,7 +19,6 @@ fun CustomSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
-    // ⭐ 새로 추가된 파라미터: 최대값을 설정합니다. (기본값 5f)
     maxValue: Float = 5f
 ) {
     val colors = MaterialTheme.colorScheme
@@ -32,19 +31,13 @@ fun CustomSlider(
 
     val interactionSource = remember { MutableInteractionSource() }
 
-    // ⭐ 동적 계산 로직 ⭐
     val range = 0f..maxValue
-    // steps 계산: maxValue가 1이면 steps는 0, 아니면 maxValue - 1. (steps = 지점의 개수 - 2)
-    // 0~1 (2 지점) -> steps 1, 0~5 (6 지점) -> steps 4
-    // 0f..1f (양자택일)은 steps를 0으로 하면 연속적이 되므로, discrete하게 1을 사용합니다.
     val steps = if (maxValue.toInt() == 1) 1 else maxValue.toInt() - 1
 
-    // ⭐ 눈금 숨김 로직: maxValue가 1일 때만 눈금을 숨깁니다.
     val hideTicks = maxValue.toInt() == 1
     val tickColorToUse = if (hideTicks) Color.Transparent else tickColor
 
 
-    // Slider 컴포넌트
     Slider(
         value = value,
         onValueChange = onValueChange,
@@ -88,7 +81,7 @@ fun CustomSlider(
 
 
 // ----------------------------------------------------------------------
-// 2. TasteSliderRow 컴포넌트 (수정 필요 없음, maxValue 기본값 사용)
+// 2. TasteSliderRow 컴포넌트
 // ----------------------------------------------------------------------
 
 @Composable
@@ -115,7 +108,6 @@ private fun TasteSliderRow(
         CustomSlider(
             value = value,
             onValueChange = { value = it },
-            // ⭐ maxValue를 지정하지 않아 기본값 5f가 사용됩니다. (0~5 스케일)
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 8.dp)
