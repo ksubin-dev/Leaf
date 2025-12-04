@@ -10,8 +10,6 @@ fun NavGraphBuilder.communityNavGraph(
     navController: NavController
 ){
     composable<MainNavigationRoute.CommunityTab>{
-        CommunityScreen(
-            navController = navController
-        )
+        CommunityScreen()
     }
 }
