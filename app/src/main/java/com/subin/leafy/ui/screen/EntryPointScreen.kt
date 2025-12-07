@@ -69,11 +69,6 @@ fun EntryPointScreen() {
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            topBar = {
-                TopAppBar(
-                    title = { Text(text = currentTabName) }
-                )
-            },
             bottomBar = {
                 // 바텀바 + 가운데 타이머 버튼을 함께 배치하는 영역
                 Box(
@@ -167,7 +162,7 @@ fun EntryPointScreen() {
             NavHost(
                 navController = navController,
                 startDestination = MainNavigationRoute.HomeTab,
-                modifier = Modifier.padding(paddingValues)
+                modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
             ) {
                 homeNavGraph(navController)
                 noteNavGraph(navController)
