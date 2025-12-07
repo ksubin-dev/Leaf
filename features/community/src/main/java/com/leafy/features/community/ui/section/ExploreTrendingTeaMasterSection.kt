@@ -1,4 +1,4 @@
-package com.leafy.features.community.screen
+package com.leafy.features.community.ui.section
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

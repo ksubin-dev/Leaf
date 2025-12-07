@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,41 +24,39 @@ import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.R as SharedR
 
 /**
- * 공통 노트 카드
- * - showProfile: 프로필 영역 표시 여부
- * - showHotBadge: 썸네일 위에 '급상승' 같은 뱃지 표시 여부
+ * 노트 요약 카드 - 간결한 버전 (제목, 서브타이틀, 텍스트 별점, 옵션으로 프로필 사진만 표시)
+ * 이 카드는 '이번 주 인기 노트'에 사용됩니다.
  */
 @Composable
-fun ExploreNoteSmallCard(
+fun ExploreSummaryNoteCard(
     note: ExploreNoteSummaryUi,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
-    showProfile: Boolean = true,
     showHotBadge: Boolean = false,
-    hotLabel: String = "급상승"
+    hotLabel: String = "인기"
 ) {
     val colors = MaterialTheme.colorScheme
 
     Card(
         modifier = modifier
-            .width(220.dp)              // 가로 스크롤용 카드 폭
+            .width(220.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = colors.surface
+            containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
+            defaultElevation = 4.dp
         )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // 🔹 썸네일 + (옵션) 급상 뱃지
+            // 🔹 썸네일 + (옵션) 뱃지
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
+                    .height(180.dp)
             ) {
                 Image(
                     painter = painterResource(id = note.imageRes),
@@ -87,15 +86,14 @@ fun ExploreNoteSmallCard(
                 }
             }
 
-            // 텍스트 + 별점 영역
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Text(
                     text = note.title,
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = colors.onSurface
@@ -105,55 +103,35 @@ fun ExploreNoteSmallCard(
 
                 Text(
                     text = note.subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                     maxLines = 1
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // 별점
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        val filledCount = note.rating.toInt().coerceIn(0, 5)
-                        (1..5).forEach { index ->
-                            val isFilled = index <= filledCount
-                            Image(
-                                painter = painterResource(
-                                    id = if (isFilled)
-                                        SharedR.drawable.ic_star_filled
-                                    else
-                                        SharedR.drawable.ic_star_outline
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                            )
-                            if (index < 5) {
-                                Spacer(modifier = Modifier.width(2.dp))
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
+                        val filledStars = note.rating.toInt().coerceIn(0, 5)
 
                         Text(
-                            text = String.format("%.1f", note.rating),
-                            style = MaterialTheme.typography.labelSmall,
+                            text = "★".repeat(filledStars),
+                            style = MaterialTheme.typography.titleMedium,
                             color = colors.error
                         )
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // 🔹 프로필 아이콘 (옵션)
-                    if (showProfile && note.profileImageRes != null) {
+                    if (note.profileImageRes != null) {
                         Image(
                             painter = painterResource(id = note.profileImageRes),
-                            contentDescription = note.authorName ?: "Author avatar",
+                            contentDescription = "Author avatar",
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(30.dp)
                                 .clip(RoundedCornerShape(50)),
                             contentScale = ContentScale.Crop
                         )
@@ -164,26 +142,20 @@ fun ExploreNoteSmallCard(
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
-private fun ExploreNoteSmallCardPreview() {
+private fun ExploreSummaryNoteCardWithProfilePreview() {
     LeafyTheme {
-        Box(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp)
-        ) {
-            ExploreNoteSmallCard(
-                note = ExploreNoteSummaryUi(
-                    title = "프리미엄 제주 녹차",
-                    subtitle = "깔끔하고 상쾌한 맛의 일품",
-                    imageRes = SharedR.drawable.ic_sample_tea_1,
-                    rating = 4.8f,
-                    reviewCount = 234,
-                    profileImageRes = SharedR.drawable.ic_profile_1,
-                    authorName = "Subin"
-                )
+        ExploreSummaryNoteCard(
+            note = ExploreNoteSummaryUi(
+                title = "프리미엄 제주 녹차",
+                subtitle = "깔끔하고 상쾌한 맛의 일품",
+                imageRes = SharedR.drawable.ic_sample_tea_1,
+                rating = 4.8f,
+                savedCount = 234,
+                profileImageRes = SharedR.drawable.ic_profile_1
             )
-        }
+        )
     }
 }

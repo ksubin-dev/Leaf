@@ -77,7 +77,7 @@ fun ExploreSavedNoteCard(
                 )
             }
 
-            // 👉 오른쪽 북마크 아이콘 + 저장 수
+
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -89,7 +89,7 @@ fun ExploreSavedNoteCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = note.reviewCount.toKiloFormat(),  // 나중에 savedCount로 필드 이름 바꿔도 됨
+                    text = note.savedCount.toKiloFormat(),
                     style = MaterialTheme.typography.labelLarge,
                     color = colors.onSurfaceVariant,
                     modifier = Modifier.widthIn(min = 32.dp)
