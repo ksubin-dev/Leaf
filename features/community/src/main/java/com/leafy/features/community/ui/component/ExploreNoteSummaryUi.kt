@@ -7,7 +7,9 @@ data class ExploreNoteSummaryUi(
     val subtitle: String,
     @DrawableRes val imageRes: Int,
     val rating: Float,
-    val reviewCount: Int,
+    val savedCount: Int,
     @DrawableRes val profileImageRes: Int? = null,
-    val authorName: String? = null
+    val authorName: String? = null,
+    val likeCount: Int? = null,
+    val isLiked: Boolean = false
 )

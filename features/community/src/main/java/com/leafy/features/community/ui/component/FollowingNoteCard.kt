@@ -39,7 +39,7 @@ fun ExploreFollowingNoteCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),          // ✅ 카드 전체 클릭
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = colors.surface

@@ -1,4 +1,4 @@
-package com.leafy.features.community.screen
+package com.leafy.features.community.ui.section
 
 
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +24,7 @@ fun ExploreFollowingFeedSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 💡 수정된 부분: forEach 대신 LazyColumn의 items 람다 사용
+
         items(notes) { note ->
             ExploreFollowingNoteCard(
                 note = note,
