@@ -1,4 +1,4 @@
-package com.leafy.features.community.screen
+package com.leafy.features.community.ui.section
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
@@ -55,21 +55,21 @@ private fun ExploreTrendingSavedSectionPreview() {
                 subtitle = "인도 | 홍차",
                 imageRes = SharedR.drawable.ic_sample_tea_4,
                 rating = 4.1f,
-                reviewCount = 1200
+                savedCount = 1200
             ),
             ExploreNoteSummaryUi(
                 title = "백모단 화이트티",
                 subtitle = "중국 | 백차",
                 imageRes = SharedR.drawable.ic_sample_tea_5,
                 rating = 4.3f,
-                reviewCount = 987
+                savedCount = 987
             ),
             ExploreNoteSummaryUi(
                 title = "루이보스 바닐라",
                 subtitle = "남아공 | 허브티",
                 imageRes = SharedR.drawable.ic_sample_tea_6,
                 rating = 4.2f,
-                reviewCount = 854
+                savedCount = 854
             ),
         )
         ExploreTrendingSavedSection(sample, modifier = Modifier.padding(16.dp))
