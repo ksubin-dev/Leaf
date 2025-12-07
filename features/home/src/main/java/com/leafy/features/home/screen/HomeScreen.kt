@@ -42,6 +42,16 @@ fun HomeScreen() {
                     .fillMaxWidth()
                     .height(200.dp)
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 빠른 브루잉 가이드
+            QuickBrewingGuideSection(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
 
 
@@ -52,15 +62,6 @@ fun HomeScreen() {
                 rating = 4.2,
                 imageRes = R.drawable.img_recent_1, // 실제 사용할 이미지 리소스로 변경 필요
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 빠른 브루잉 가이드
-            QuickBrewingGuideSection(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
