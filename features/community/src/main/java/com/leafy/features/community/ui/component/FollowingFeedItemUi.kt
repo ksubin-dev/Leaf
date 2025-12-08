@@ -11,37 +11,16 @@ data class ExploreFollowingNoteUi(
     val authorName: String,
     @DrawableRes val authorAvatarRes: Int,
     val timeAgo: String,
-
-    // 상단 배지 (예: "Oolong", "Green Tea")
     val tagLabel: String,
-
     @DrawableRes val imageRes: Int,
-
-    // 제목 (차 이름)
     val title: String,
-
-    // 제목 아래 메타 정보 (예: "대만 · 중배화 · 반구형")
     val meta: String,
-
-    // 짧은 설명 문장
     val description: String,
-
-    // 온도/시간/그램/우림차수 칩
     val brewingChips: List<String>,
-
-    // 별점
     val rating: Float,
-
-    // 별점 오른쪽의 칩 (예: "Rebrew 가능")
     val reviewLabel: String,
-
-    // 말풍선 안에 들어갈 코멘트
     val comment: String,
-
-    // 하단에 겹쳐 보일 좋아요한 사람들의 아바타
     val likerAvatarResList: List<Int>,
-
-    // "23명이 좋아합니다" 문구
     val likeCountText: String
 ) {
     companion object {

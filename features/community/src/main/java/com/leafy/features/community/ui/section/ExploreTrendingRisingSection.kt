@@ -16,7 +16,6 @@ import com.leafy.shared.ui.theme.LeafyTheme
 /**
  * Explore - Trending 탭
  * "지금 급상승 중" 섹션 (제목 + 더보기 + 가로 스크롤 카드 리스트)
- * 💡 ExploreRisingNoteCard를 사용하여 프로필 및 좋아요 정보를 표시합니다.
  */
 @Composable
 fun ExploreTrendingRisingSection(

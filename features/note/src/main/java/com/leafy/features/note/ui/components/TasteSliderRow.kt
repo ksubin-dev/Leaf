@@ -36,8 +36,6 @@ fun TasteSliderRow(
             style = MaterialTheme.typography.bodyMedium.copy(color = textColor),
             modifier = Modifier.width(72.dp)
         )
-
-        // CustomSlider 컴포넌트 사용 (CustomSlider는 shared.ui.common에 이미 있다고 가정)
         CustomSlider(
             value = value,
             onValueChange = onValueChange,

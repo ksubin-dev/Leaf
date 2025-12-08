@@ -1,10 +1,9 @@
 package com.leafy.features.home.data
 
 import androidx.annotation.DrawableRes
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-@Immutable
+
 data class TeaRankingItem(
     val rank: Int,
     val name: String,

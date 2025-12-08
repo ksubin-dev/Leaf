@@ -22,8 +22,8 @@ fun CustomSlider(
     maxValue: Float = 5f
 ) {
     val colors = MaterialTheme.colorScheme
-    val activeTrackColor = colors.primary // 활성 트랙 및 thumb 색상
-    val inactiveTrackColor = colors.outlineVariant // 비활성 트랙 색상
+    val activeTrackColor = colors.primary
+    val inactiveTrackColor = colors.outlineVariant
     val tickColor = colors.outline
 
     val trackHeight = 10.dp
@@ -41,8 +41,8 @@ fun CustomSlider(
     Slider(
         value = value,
         onValueChange = onValueChange,
-        valueRange = range, // ⭐ 동적 범위 적용
-        steps = steps,       // ⭐ 동적 steps 적용
+        valueRange = range,
+        steps = steps,
         modifier = modifier.height(48.dp),
 
         colors = SliderDefaults.colors(
@@ -51,14 +51,12 @@ fun CustomSlider(
             inactiveTrackColor = inactiveTrackColor,
         ),
 
-        // 1. 트랙 커스텀: SliderDefaults.Track 사용
         track = { sliderState ->
             SliderDefaults.Track(
                 sliderState = sliderState,
                 colors = SliderDefaults.colors(
                     activeTrackColor = activeTrackColor,
                     inactiveTrackColor = inactiveTrackColor,
-                    // ⭐ 동적 눈금 색상 적용
                     activeTickColor = tickColorToUse,
                     inactiveTickColor = tickColorToUse,
                 ),
@@ -68,7 +66,6 @@ fun CustomSlider(
             )
         },
 
-        // 2. Thumb 커스텀: SliderDefaults.Thumb 사용
         thumb = {
             SliderDefaults.Thumb(
                 interactionSource = interactionSource,
@@ -87,7 +84,7 @@ fun CustomSlider(
 @Composable
 private fun TasteSliderRow(
     label: String,
-    initialValue: Float, // 초기값 설정용
+    initialValue: Float,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
