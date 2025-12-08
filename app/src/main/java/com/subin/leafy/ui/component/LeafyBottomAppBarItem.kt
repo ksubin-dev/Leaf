@@ -6,8 +6,8 @@ import com.leafy.shared.R as SharedR
 
 data class LeafyBottomAppBarItem(
     val tabName: String,
-    val iconRes: Int,                 // 🔹 shared drawable resource id
-    val destination: LeafyNavigation  // 🔹 이동할 타입 기반 Route
+    val iconRes: Int,
+    val destination: LeafyNavigation
 ) {
     companion object {
 
