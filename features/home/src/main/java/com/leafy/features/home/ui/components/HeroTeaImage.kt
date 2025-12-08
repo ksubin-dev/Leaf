@@ -1,6 +1,7 @@
 package com.leafy.features.home.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,10 +30,11 @@ import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun HeroTeaImage(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onImageClick: () -> Unit = {}
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable(onClick = onImageClick),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {

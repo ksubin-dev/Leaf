@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.leafy.features.home.ui.components.HeroTeaImage
 import com.leafy.features.home.ui.components.HomeTopAppBar
 import com.leafy.features.home.ui.section.PopularTop3Section
@@ -29,9 +30,13 @@ import com.leafy.shared.ui.theme.LeafyTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    navController: NavController? = null
+){
     LeafyTheme {
         val colors = MaterialTheme.colorScheme
+
+        val HERO_IMAGE_DETAIL_ROUTE = "hero_image_detail_screen"
 
         Scaffold(
             topBar = {
@@ -57,7 +62,10 @@ fun HomeScreen() {
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 16.dp)
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(200.dp),
+                    onImageClick = {
+                        navController?.navigate(HERO_IMAGE_DETAIL_ROUTE)
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
