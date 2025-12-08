@@ -1,4 +1,4 @@
-package com.leafy.features.home.components
+package com.leafy.features.home.ui.section
 
 import BrewingInfoCard
 import androidx.compose.foundation.layout.Arrangement

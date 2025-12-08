@@ -16,12 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.home.components.HeroTeaImage
-import com.leafy.features.home.components.HomeTopAppBar
-import com.leafy.features.home.components.PopularTop3Section
-import com.leafy.features.home.components.QuickBrewingGuideSection
-import com.leafy.features.home.components.RecentMyRecordsSection
-import com.leafy.features.home.components.TodayPickCard
+import com.leafy.features.home.ui.components.HeroTeaImage
+import com.leafy.features.home.ui.components.HomeTopAppBar
+import com.leafy.features.home.ui.section.PopularTop3Section
+import com.leafy.features.home.ui.section.QuickBrewingGuideSection
+import com.leafy.features.home.ui.section.RecentMyRecordsSection
+import com.leafy.features.home.ui.components.TodayPickCard
 import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
 

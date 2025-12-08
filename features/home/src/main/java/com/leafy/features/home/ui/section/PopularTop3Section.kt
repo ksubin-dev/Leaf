@@ -1,4 +1,4 @@
-package com.leafy.features.home.components
+package com.leafy.features.home.ui.section
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.features.home.data.TeaRankingItem
+import com.leafy.features.home.ui.components.LeafyFilterChip
+import com.leafy.features.home.ui.components.RankedTeaRow
 
 
 @Composable
