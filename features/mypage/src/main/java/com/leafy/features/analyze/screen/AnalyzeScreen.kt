@@ -3,7 +3,6 @@ package com.leafy.features.analyze.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,6 +15,7 @@ import com.leafy.features.analyze.data.TopTeaRanking
 import com.leafy.features.analyze.ui.components.RecommendationSection
 import com.leafy.features.analyze.ui.components.TeaTypeRecordSection
 import com.leafy.features.analyze.ui.components.TopTeaRankingSection
+import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun AnalyzeScreen(
@@ -67,22 +67,20 @@ fun AnalyzeScreen(
 }
 
 // -----------------------------------------------------------
-// Preview를 위한 가짜(Dummy) 데이터
+// Preview를 위한 가짜(Dummy) 데이터 (순수한 데이터 사용)
 // -----------------------------------------------------------
 
 @Preview(showBackground = true)
 @Composable
 private fun AnalyzeScreenPreview() {
 
-    val colors = MaterialTheme.colorScheme
-
     val dummyTeaRecords = listOf(
-        TeaTypeRecord("녹차", 28, colors.primary),
-        TeaTypeRecord("홍차", 35, colors.error),
-        TeaTypeRecord("우롱차", 18, colors.secondary),
-        TeaTypeRecord("백차", 12, colors.errorContainer),
-        TeaTypeRecord("말차", 5, colors.primaryContainer),
-        TeaTypeRecord("황차", 2, colors.secondaryContainer)
+        TeaTypeRecord("녹차", 28),
+        TeaTypeRecord("홍차", 35),
+        TeaTypeRecord("우롱차", 18),
+        TeaTypeRecord("백차", 12),
+        TeaTypeRecord("말차", 5),
+        TeaTypeRecord("황차", 2)
     )
 
     val dummyRecommendations = listOf(
@@ -96,11 +94,13 @@ private fun AnalyzeScreenPreview() {
         TopTeaRanking(3, "Darjeeling First Flush", 7, 4.6f, "")
     )
 
-    AnalyzeScreen(
-        modifier = Modifier.fillMaxSize(),
-        brewingData = BrewingPatternData("85°C", "3분 30초", "4회", "오후 (14:00 - 17:00)"),
-        teaTypeRecords = dummyTeaRecords,
-        recommendations = dummyRecommendations,
-        topTeas = dummyTopTeas
-    )
+    LeafyTheme {
+        AnalyzeScreen(
+            modifier = Modifier.fillMaxSize(),
+            brewingData = BrewingPatternData("85°C", "3분 30초", "4회", "오후 (14:00 - 17:00)"),
+            teaTypeRecords = dummyTeaRecords,
+            recommendations = dummyRecommendations,
+            topTeas = dummyTopTeas
+        )
+    }
 }

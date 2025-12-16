@@ -11,8 +11,8 @@ import com.leafy.features.analyze.data.TopTeaRanking
 
 @Composable
 fun TopTeaRankingSection(
-    rankings: List<TopTeaRanking>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    rankings: List<TopTeaRanking>
 ) {
     Column(modifier = modifier) {
         Text(
