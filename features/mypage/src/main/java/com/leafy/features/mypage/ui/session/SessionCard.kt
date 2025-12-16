@@ -12,10 +12,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.leafy.features.mypage.data.TeaSession
+import com.leafy.features.calendar.data.TeaSession
 import com.leafy.shared.R as SharedR
 
-// 당일 세션 카드 UI만 담당
 @Composable
 fun SessionCard(
     session: TeaSession,

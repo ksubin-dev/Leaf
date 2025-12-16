@@ -1,4 +1,4 @@
-package com.leafy.features.mypage.ui.component
+package com.leafy.features.calendar.screen
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -10,33 +10,33 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.leafy.features.mypage.ui.calendar.CalendarView
-import com.leafy.features.mypage.data.DefaultDaysWithSessions
-import com.leafy.features.mypage.data.DefaultTeaSessions
-import com.leafy.features.mypage.data.DefaultRecentNotes
-import com.leafy.features.mypage.data.*
+import com.leafy.features.calendar.ui.component.CalendarView
+import com.leafy.features.calendar.data.RecentNote
+import com.leafy.features.calendar.data.TeaSession
+import com.leafy.features.calendar.data.CalendarDataSource
 import com.leafy.features.mypage.ui.session.NoteCard
 import com.leafy.features.mypage.ui.session.SessionCard
 import java.time.LocalDate
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MyPageCalendarTab(
+fun CalendarScreen(
     modifier: Modifier = Modifier,
     initialDate: LocalDate = LocalDate.of(2025, 12, 6),
-    daysWithSessions: Set<Int> = DefaultDaysWithSessions,
-    sessions: List<TeaSession> = DefaultTeaSessions,
-    notes: List<RecentNote> = DefaultRecentNotes,
+    daysWithSessions: Set<Int> = CalendarDataSource.DefaultDaysWithSessions,
+    sessions: List<TeaSession> = CalendarDataSource.DefaultTeaSessions,
+    notes: List<RecentNote> = CalendarDataSource.DefaultRecentNotes,
     onDateSelected: (LocalDate) -> Unit = {},
     onViewSessionClicked: (String) -> Unit = {}
 ) {
+    val colors = MaterialTheme.colorScheme
+
+    // 현재 월 및 선택된 날짜 상태 관리
     var currentMonth by remember { mutableStateOf(LocalDate.of(initialDate.year, initialDate.month, 1)) }
     var selectedDate by remember { mutableStateOf(initialDate) }
 
     val onSelect: (LocalDate) -> Unit = { date ->
         selectedDate = date
-
         onDateSelected(date)
     }
 
@@ -44,7 +44,6 @@ fun MyPageCalendarTab(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 60.dp)
     ) {
-
         item {
             CalendarView(
                 currentMonth = currentMonth,
@@ -55,16 +54,14 @@ fun MyPageCalendarTab(
             )
         }
 
-
         item {
             Text(
                 text = "Today's Sessions",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                color = MaterialTheme.colorScheme.onBackground
+                color = colors.onBackground
             )
         }
-
 
         if (sessions.isNotEmpty()) {
             items(sessions, key = { it.id }) { session ->
@@ -80,7 +77,7 @@ fun MyPageCalendarTab(
                     "선택하신 날짜에 세션이 없습니다.",
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = colors.onSurfaceVariant
                 )
             }
         }
@@ -91,13 +88,14 @@ fun MyPageCalendarTab(
                 text = "Recent Notes",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                color = MaterialTheme.colorScheme.onBackground
+                color = colors.onBackground
             )
         }
 
 
         items(notes, key = { it.id }) { note ->
             NoteCard(note = note)
+            Spacer(Modifier.height(8.dp))
         }
     }
 }

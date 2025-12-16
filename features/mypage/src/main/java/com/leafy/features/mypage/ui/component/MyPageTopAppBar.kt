@@ -14,14 +14,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 
-/**
- * 마이페이지의 상단 앱 바 컴포넌트
- */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyPageTopAppBar(
-    onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSettingsClick: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 

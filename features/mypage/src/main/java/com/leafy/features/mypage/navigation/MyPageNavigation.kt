@@ -12,7 +12,10 @@ fun NavGraphBuilder.mypageNavGraph(
     composable<MainNavigationRoute.MyPageTab>{
         MyPageScreen(
             onSettingsClick = {
-                navController.navigate("settings_screen_route")
+                navController.navigate(MyPageRoute.Settings)
+            },
+            onEditProfileClick = {
+                navController.navigate(MyPageRoute.EditProfile)
             }
         )
     }

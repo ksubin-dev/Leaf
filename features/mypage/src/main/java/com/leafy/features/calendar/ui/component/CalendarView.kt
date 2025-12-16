@@ -1,4 +1,4 @@
-package com.leafy.features.mypage.ui.calendar
+package com.leafy.features.calendar.ui.component
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -23,12 +23,12 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarView(
+    modifier: Modifier = Modifier,
     currentMonth: LocalDate,
     selectedDate: LocalDate,
     daysWithSessions: Set<Int>,
     onDateSelected: (LocalDate) -> Unit,
-    onMonthChanged: (LocalDate) -> Unit,
-    modifier: Modifier = Modifier
+    onMonthChanged: (LocalDate) -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
     val firstDayOfMonth = currentMonth.withDayOfMonth(1)

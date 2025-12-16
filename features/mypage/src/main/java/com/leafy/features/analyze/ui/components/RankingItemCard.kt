@@ -21,8 +21,8 @@ import com.leafy.features.analyze.data.TopTeaRanking
 
 @Composable
 fun RankingItemCard(
-    ranking: TopTeaRanking,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    ranking: TopTeaRanking
 ) {
 
     val colors = MaterialTheme.colorScheme

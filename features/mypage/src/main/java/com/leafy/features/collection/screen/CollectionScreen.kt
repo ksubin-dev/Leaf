@@ -1,4 +1,4 @@
-package com.leafy.features.collection.ui.screen
+package com.leafy.features.collection.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,37 +11,54 @@ import com.leafy.features.collection.data.TeaCollectionItem
 import com.leafy.features.collection.ui.components.TeaFilterSection
 import com.leafy.features.collection.ui.components.CollectionItemCard
 import com.leafy.shared.R as SharedR
+import com.leafy.shared.ui.theme.LeafyTheme
+import com.leafy.features.collection.data.TeaFilterType
+import com.leafy.features.collection.data.DefaultTeaFilters
 
 @Composable
 fun CollectionScreen(
-    items: List<TeaCollectionItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    items: List<TeaCollectionItem>
 ) {
-    var selectedFilter by remember { mutableStateOf("All") }
+    var filterStates by remember {
+        mutableStateOf(
+            DefaultTeaFilters.mapIndexed { index, type ->
+                TeaFilterType(type = type, isSelected = index == 0)
+            }
+        )
+    }
 
-    val filteredItems = remember(items, selectedFilter) {
-        if (selectedFilter == "All") {
+    val selectedFilterName = remember(filterStates) {
+        filterStates.first { it.isSelected }.type
+    }
+
+    val filteredItems = remember(items, selectedFilterName) {
+        if (selectedFilterName == "All") {
             items
         } else {
             items.filter {
-                it.name.contains(selectedFilter, ignoreCase = true) ||
-                        it.brand.contains(selectedFilter, ignoreCase = true)
+                it.name.contains(selectedFilterName, ignoreCase = true) ||
+                        it.brand.contains(selectedFilterName, ignoreCase = true)
             }
+        }
+    }
+
+    val onFilterSelected: (String) -> Unit = { newFilterName ->
+        filterStates = filterStates.map {
+            it.copy(isSelected = it.type == newFilterName)
         }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
 
-
         TeaFilterSection(
-            filters = DefaultTeaFilters,
-            selectedType = selectedFilter,
-            onFilterSelected = { newFilter -> selectedFilter = newFilter },
+            filters = filterStates,
+            onFilterSelected = onFilterSelected,
             modifier = Modifier.padding(vertical = 12.dp)
         )
 
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -49,7 +66,6 @@ fun CollectionScreen(
                 CollectionItemCard(
                     item = item,
                     onRecordClick = { itemId ->
-                        // TODO: 기록 화면으로 이동 로직
                         println("Record clicked for item ID: $itemId")
                     }
                 )
@@ -59,12 +75,8 @@ fun CollectionScreen(
 }
 
 // -----------------------------------------------------------
-// Preview를 위한 가짜(Dummy) 데이터 및 구조
+// Preview를 위한 가짜(Dummy) 데이터
 // -----------------------------------------------------------
-
-private val DefaultTeaFilters = listOf(
-    "All", "Black", "Green", "Oolong", "White", "Herbal"
-)
 
 private val dummyCollectionItems = listOf(
     TeaCollectionItem("1", "Earl Grey Supreme", "Twinings", "Plenty", SharedR.drawable.ic_sample_collection_tea_1),
@@ -79,5 +91,7 @@ private val dummyCollectionItems = listOf(
 @Preview(showBackground = true)
 @Composable
 private fun CollectionScreenPreview() {
-    CollectionScreen(items = dummyCollectionItems)
+    LeafyTheme {
+        CollectionScreen(items = dummyCollectionItems)
+    }
 }

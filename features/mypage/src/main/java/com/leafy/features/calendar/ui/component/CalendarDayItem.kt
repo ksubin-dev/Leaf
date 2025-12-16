@@ -1,4 +1,4 @@
-package com.leafy.features.mypage.ui.calendar
+package com.leafy.features.calendar.ui.component
 
 import android.os.Build
 import androidx.annotation.RequiresApi

@@ -20,8 +20,8 @@ data class MetricItem(
 
 @Composable
 fun PatternMetricItem(
-    item: MetricItem,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    item: MetricItem
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
