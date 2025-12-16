@@ -12,8 +12,8 @@ import com.leafy.shared.R as SharedR
 
 @Composable
 fun BrewingPatternSection(
-    data: BrewingPatternData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    data: BrewingPatternData
 ) {
     Column(modifier = modifier) {
         Text(

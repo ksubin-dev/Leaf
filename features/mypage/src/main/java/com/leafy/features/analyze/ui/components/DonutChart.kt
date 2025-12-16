@@ -9,17 +9,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.leafy.features.analyze.data.TeaTypeRecord
+
+data class DonutChartRecord(
+    val percentage: Int,
+    val color: Color
+)
+
 
 @Composable
 fun DonutChart(
-    records: List<TeaTypeRecord>,
     modifier: Modifier = Modifier,
     chartSize: Dp = 150.dp,
-    strokeWidth: Dp = 30.dp
+    strokeWidth: Dp = 30.dp,
+    records: List<DonutChartRecord>
 ) {
     Box(
         modifier = modifier.size(chartSize),

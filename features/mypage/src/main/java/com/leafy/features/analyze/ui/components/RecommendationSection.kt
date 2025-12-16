@@ -11,8 +11,8 @@ import com.leafy.features.analyze.data.TeaRecommendation
 
 @Composable
 fun RecommendationSection(
-    recommendations: List<TeaRecommendation>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    recommendations: List<TeaRecommendation>
 ) {
     Column(modifier = modifier) {
         Text(

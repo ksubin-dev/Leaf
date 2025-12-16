@@ -6,13 +6,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.leafy.features.collection.data.TeaFilterType
 
 @Composable
 fun TeaFilterSection(
-    filters: List<String>,
-    selectedType: String,
-    onFilterSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    filters: List<TeaFilterType>,
+    onFilterSelected: (String) -> Unit
 ) {
     Row(
         modifier = modifier
@@ -21,10 +21,10 @@ fun TeaFilterSection(
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        filters.forEach { type ->
+        filters.forEach { filterItem ->
             TeaTypeFilterChip(
-                type = type,
-                isSelected = type == selectedType,
+                type = filterItem.type,
+                isSelected = filterItem.isSelected,
                 onChipClicked = onFilterSelected
             )
         }

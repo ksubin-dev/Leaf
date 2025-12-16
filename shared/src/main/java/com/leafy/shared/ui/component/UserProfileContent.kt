@@ -22,22 +22,20 @@ import androidx.compose.ui.unit.dp
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 
-/**
- * 마이페이지 상단에 표시되는 사용자 프로필 정보 및 통계 영역 (설정 버튼 제외)
- */
+
 @Composable
 fun UserProfileContent(
+    modifier: Modifier = Modifier,
     username: String,
     bio: String,
-    sessionsCount: Int,
     notesCount: Int,
+    postsCount: Int,
     followerCount: Int,
     followingCount: Int,
     rating: Double,
     badgesCount: Int,
     profileImageRes: Int,
-    onEditProfileClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onEditProfileClick: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -46,12 +44,12 @@ fun UserProfileContent(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // 1. 프로필 이미지, 이름 Row
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 1-1. 프로필 이미지
+
             Image(
                 painter = painterResource(id = profileImageRes),
                 contentDescription = "Profile Picture",
@@ -64,7 +62,7 @@ fun UserProfileContent(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // 1-2. 이름 및 소개
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = username,
@@ -92,14 +90,14 @@ fun UserProfileContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 2. 통계 Row
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ProfileStatItem(label = "Sessions", value = sessionsCount.toString(), modifier = Modifier.weight(1f))
+            ProfileStatItem(label = "Brewing Notes", value = notesCount.toString(), modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.width(10.dp))
-            ProfileStatItem(label = "Teas", value = notesCount.toString(), modifier = Modifier.weight(1f))
+            ProfileStatItem(label = "Posts", value = postsCount.toString(), modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.width(10.dp))
             ProfileStatItem(label = "Avg Rating", value = String.format("%.1f", rating), modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.width(10.dp))
@@ -108,7 +106,7 @@ fun UserProfileContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 3. 프로필 수정 버튼
+
         OutlinedButton(
             onClick = onEditProfileClick,
             modifier = Modifier.fillMaxWidth().height(40.dp),
@@ -124,13 +122,11 @@ fun UserProfileContent(
     }
 }
 
-/**
- * 통계 항목 (Sessions, Teas, Rating, Badges) 카드 스타일을 표시하는 서브 컴포넌트
- */
+
 @Composable
 private fun ProfileStatItem(label: String, value: String, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(68.dp),
+        modifier = modifier.height(74.dp),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
@@ -138,8 +134,7 @@ private fun ProfileStatItem(label: String, value: String, modifier: Modifier = M
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = value,
@@ -148,10 +143,14 @@ private fun ProfileStatItem(label: String, value: String, modifier: Modifier = M
                     color = MaterialTheme.colorScheme.primary
                 )
             )
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                maxLines = 2
             )
         }
     }
@@ -165,8 +164,8 @@ private fun UserProfileContentPreview() {
             UserProfileContent(
                 username = "TeaLover_Jane",
                 bio = "Tea Enthusiast",
-                sessionsCount = 127,
-                notesCount = 43,
+                notesCount = 127,
+                postsCount = 43,
                 followerCount = 120,
                 followingCount = 45,
                 rating = 4.2,

@@ -21,8 +21,8 @@ import com.leafy.features.analyze.data.TeaRecommendation
 
 @Composable
 fun RecommendationCard(
-    recommendation: TeaRecommendation,
     modifier: Modifier = Modifier,
+    recommendation: TeaRecommendation,
     onCardClick: (String) -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
@@ -46,7 +46,6 @@ fun RecommendationCard(
                 contentDescription = recommendation.name,
                 modifier = Modifier
                     .size(60.dp)
-                // .clip(CircleShape) // 원하는 모양으로 클립
             )
 
             Spacer(Modifier.width(16.dp))
