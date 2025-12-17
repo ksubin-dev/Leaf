@@ -22,26 +22,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.BodyType
 
 @Composable
 fun BodySelectionSegmentedRow(
-    selectedIndex: Int,
-    onSelect: (Int) -> Unit
+    selectedBody: BodyType,
+    onSelect: (BodyType) -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
-    val options = listOf("Light", "Medium", "Full")
+
+    val options = BodyType.entries
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(40.dp)
-            .clip(RoundedCornerShape(999.dp)) // 둥근 전체 배경
-            .border(1.dp, colors.outlineVariant, RoundedCornerShape(999.dp)) // border 수정
+            .clip(RoundedCornerShape(999.dp))
+            .border(1.dp, colors.outlineVariant, RoundedCornerShape(999.dp))
             .background(colors.background),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        options.forEachIndexed { index, text ->
-            val isSelected = selectedIndex == index
+        options.forEach { bodyType ->
+            // 현재 그리는 항목이 선택된 항목인지 비교
+            val isSelected = selectedBody == bodyType
+
+            val label = bodyType.name.lowercase().replaceFirstChar { it.uppercase() }
 
             Box(
                 modifier = Modifier
@@ -52,16 +57,16 @@ fun BodySelectionSegmentedRow(
                     .background(
                         if (isSelected) colors.primaryContainer else Color.Transparent
                     )
-                    .clickable { onSelect(index) },
+                    .clickable { onSelect(bodyType) }, // Enum 자체를 전달
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = text,
+                    text = label,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     ),
                     color = if (isSelected) colors.primary
-                    else colors.onPrimaryContainer
+                    else colors.onSurfaceVariant
                 )
             }
         }
@@ -73,7 +78,10 @@ fun BodySelectionSegmentedRow(
 private fun BodySelectionSegmentedRowPreview() {
     LeafyTheme {
         Column(modifier = Modifier.padding(16.dp)) {
-            BodySelectionSegmentedRow(selectedIndex = 1, onSelect = {})
+            BodySelectionSegmentedRow(
+                selectedBody = BodyType.MEDIUM,
+                onSelect = {}
+            )
         }
     }
 }

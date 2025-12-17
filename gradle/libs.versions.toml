@@ -16,6 +16,7 @@ appcompat = "1.7.1"
 material = "1.13.0"
 jetbrainsKotlinJvm = "2.2.21"
 navigationCompose = "2.9.6"
+kotlinxCoroutinesCore = "1.10.2"
 
 
 kotlinxSerializationJson = "1.9.0"
@@ -51,6 +52,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

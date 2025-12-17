@@ -45,6 +45,8 @@ kotlin{
 
 dependencies {
     implementation(project(":shared"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
     implementation(project(":features:note"))
     implementation(project(":features:home"))
     implementation(project(":features:community"))
