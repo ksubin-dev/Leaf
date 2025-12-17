@@ -23,11 +23,11 @@ import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun PhotosSection(
+    modifier: Modifier = Modifier,
     onClickDryLeaf: () -> Unit,
     onClickTeaLiquor: () -> Unit,
     onClickTeaware: () -> Unit,
-    onClickAdditional: () -> Unit,
-    modifier: Modifier = Modifier
+    onClickAdditional: () -> Unit
 ) {
 
     val colors = MaterialTheme.colorScheme

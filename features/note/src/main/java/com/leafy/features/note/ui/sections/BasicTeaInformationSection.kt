@@ -26,16 +26,16 @@ import androidx.compose.runtime.remember
 fun BasicTeaInformationSection(
     modifier: Modifier = Modifier,
     teaName: String,
-    onTeaNameChange: (String) -> Unit,
     brandName: String,
-    onBrandNameChange: (String) -> Unit,
     teaType: String,
-    onTeaTypeChange: (String) -> Unit,
     leafStyle: String,
-    onLeafStyleChange: (String) -> Unit,
     leafProcessing: String,
-    onLeafProcessingChange: (String) -> Unit,
     teaGrade: String,
+    onTeaNameChange: (String) -> Unit,
+    onBrandNameChange: (String) -> Unit,
+    onTeaTypeChange: (String) -> Unit,
+    onLeafStyleChange: (String) -> Unit,
+    onLeafProcessingChange: (String) -> Unit,
     onTeaGradeChange: (String) -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
