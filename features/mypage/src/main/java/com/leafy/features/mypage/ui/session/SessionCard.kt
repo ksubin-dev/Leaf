@@ -12,7 +12,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.leafy.features.calendar.data.TeaSession
+import com.leafy.features.mypage.presentation.calendar.data.TeaSession
 import com.leafy.shared.R as SharedR
 
 @Composable

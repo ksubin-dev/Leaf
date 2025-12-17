@@ -1,13 +1,13 @@
 package com.leafy.features.mypage.model
 
-import com.leafy.features.analyze.data.BrewingPatternData
-import com.leafy.features.analyze.data.TeaTypeRecord
-import com.leafy.features.analyze.data.TeaRecommendation
-import com.leafy.features.analyze.data.TopTeaRanking
-import com.leafy.features.badges.data.BadgeItem
-import com.leafy.features.collection.data.TeaCollectionItem
-import com.leafy.features.wishlist.data.WishlistItem
-import com.leafy.features.wishlist.data.SavedCommunityNote
+import com.leafy.features.mypage.presentation.analyze.data.BrewingPatternData
+import com.leafy.features.mypage.presentation.analyze.data.TeaTypeRecord
+import com.leafy.features.mypage.presentation.analyze.data.TeaRecommendation
+import com.leafy.features.mypage.presentation.analyze.data.TopTeaRanking
+import com.leafy.features.mypage.presentation.badges.data.BadgeItem
+import com.leafy.features.mypage.presentation.collection.data.TeaCollectionItem
+import com.leafy.features.mypage.presentation.wishlist.data.WishlistItem
+import com.leafy.features.mypage.presentation.wishlist.data.SavedCommunityNote
 import com.leafy.shared.R as SharedR
 
 
