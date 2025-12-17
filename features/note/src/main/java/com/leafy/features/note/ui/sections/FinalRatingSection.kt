@@ -1,20 +1,9 @@
 package com.leafy.features.note.ui.sections
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,26 +12,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.ui.components.LeafyFieldLabel // Import
+import com.leafy.features.note.ui.components.LeafyFieldLabel
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun FinalRatingSection(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    rating: Int,
+    purchaseAgain: Boolean?,
+    onRatingChange: (Int) -> Unit,
+    onPurchaseAgainChange: (Boolean) -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
-    var rating by remember { mutableStateOf(0) }
-    var purchaseAgain by remember { mutableStateOf<Boolean?>(null) }
-
     Column(modifier = modifier) {
-
         // 섹션 타이틀
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_note_section_final_rating),
                 contentDescription = "Final Rating",
@@ -66,21 +52,16 @@ fun FinalRatingSection(
         LeafyFieldLabel(text = "Overall Rating")
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             (1..5).forEach { starIndex ->
                 val isFilled = starIndex <= rating
                 IconButton(
-                    onClick = { rating = starIndex }
+                    onClick = { onRatingChange(starIndex) }
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = if (isFilled) {
-                                SharedR.drawable.ic_star_filled
-                            } else {
-                                SharedR.drawable.ic_star_outline
-                            }
+                            id = if (isFilled) SharedR.drawable.ic_star_filled
+                            else SharedR.drawable.ic_star_outline
                         ),
                         contentDescription = "$starIndex stars",
                         tint = Color.Unspecified,
@@ -108,7 +89,7 @@ fun FinalRatingSection(
             // Yes 버튼
             val yesSelected = purchaseAgain == true
             Button(
-                onClick = { purchaseAgain = true },
+                onClick = { onPurchaseAgainChange(true) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(999.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -127,17 +108,14 @@ fun FinalRatingSection(
             // No 버튼
             val noSelected = purchaseAgain == false
             OutlinedButton(
-                onClick = { purchaseAgain = false },
+                onClick = { onPurchaseAgainChange(false) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(999.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = if (noSelected) colors.primaryContainer else colors.background,
                     contentColor = colors.onBackground
                 ),
-                border = BorderStroke(
-                    1.dp,
-                    if (noSelected) colors.outlineVariant else colors.outlineVariant
-                )
+                border = BorderStroke(1.dp, colors.outlineVariant)
             ) {
                 Text(
                     text = "No",
@@ -154,6 +132,10 @@ fun FinalRatingSection(
 private fun FinalRatingSectionPreview() {
     LeafyTheme {
         FinalRatingSection(
+            rating = 4,
+            purchaseAgain = true,
+            onRatingChange = {},
+            onPurchaseAgainChange = {},
             modifier = Modifier.padding(16.dp)
         )
     }

@@ -10,6 +10,8 @@ fun NavGraphBuilder.noteNavGraph(
     navController: NavController
 ){
     composable<MainNavigationRoute.NoteTab>{
-        NoteScreen()
+        NoteScreen(onNavigateBack = {
+            navController.popBackStack()
+        })
     }
 }
