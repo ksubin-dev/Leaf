@@ -14,11 +14,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leafy.features.mypage.data.MyPageTab
 import com.leafy.features.mypage.ui.component.MyPageTopAppBar
-import com.leafy.features.analyze.screen.AnalyzeScreen
-import com.leafy.features.badges.screen.BadgesScreen
-import com.leafy.features.calendar.screen.CalendarScreen
-import com.leafy.features.wishlist.screen.WishlistScreen
-import com.leafy.features.collection.screen.CollectionScreen
+import com.leafy.features.mypage.presentation.analyze.screen.AnalyzeScreen
+import com.leafy.features.mypage.presentation.badges.screen.BadgesScreen
+import com.leafy.features.mypage.presentation.calendar.screen.CalendarScreen
+import com.leafy.features.mypage.presentation.wishlist.screen.WishlistScreen
+import com.leafy.features.mypage.presentation.collection.screen.CollectionScreen
 import com.leafy.shared.ui.component.UserProfileContent
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.features.mypage.viewmodel.MyPageViewModel
