@@ -1,5 +1,6 @@
 package com.leafy.features.note.ui
 
+import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.WeatherType
 
 /**
@@ -33,7 +34,7 @@ data class NoteUiState(
     val bitterness: Int = 0,
     val saltiness: Int = 0,
     val umami: Int = 0,
-    val bodyIndex: Int = 1,
+    val bodyType: BodyType = BodyType.MEDIUM,
     val finishLevel: Float = 0.5f,
 
     val rating: Int = 0,

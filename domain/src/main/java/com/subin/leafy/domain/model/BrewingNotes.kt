@@ -40,7 +40,7 @@ data class SensoryEvaluation(
     val bitterness: Int = 0,
     val saltiness: Int = 0,
     val umami: Int = 0,
-    val bodyIndex: Int = 1,    // 0:Light, 1:Medium, 2:Full
+    val bodyType: BodyType = BodyType.MEDIUM,
     val finishLevel: Float = 0.5f,
     val memo: String = ""
 )
@@ -60,11 +60,3 @@ data class NoteContext(
     val teawareUri: String? = null,
     val additionalUri: String? = null
 )
-
-enum class WeatherType {
-    CLEAR, CLOUDY, RAINY, SNOWY, INDOOR
-}
-
-enum class BodyType {
-    LIGHT, MEDIUM, FULL
-}
