@@ -18,29 +18,30 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.ui.components.LeafyDropdownField // Import
-import com.leafy.features.note.ui.components.LeafyFieldLabel // Import
+import com.leafy.features.note.ui.components.LeafyDropdownField
+import com.leafy.features.note.ui.components.LeafyFieldLabel
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun BrewingConditionSection(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    waterTemp: String,
+    leafAmount: String,
+    brewTime: String,
+    brewCount: String,
+    teawareType: String,
+    onWaterTempChange: (String) -> Unit,
+    onLeafAmountChange: (String) -> Unit,
+    onBrewTimeChange: (String) -> Unit,
+    onBrewCountChange: (String) -> Unit,
+    onTeawareTypeChange: (String) -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
-    var waterTemp by remember { mutableStateOf("85") }
-    var leafAmount by remember { mutableStateOf("3") }
-    var brewTime by remember { mutableStateOf("2분 30초") }
-    var brewCount by remember { mutableStateOf("1") }
-    var teawareType by remember { mutableStateOf("찻주전자") }
-
     Column(modifier = modifier) {
-
         // 섹션 타이틀
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_temp),
                 contentDescription = "Brewing Conditions",
@@ -69,7 +70,7 @@ fun BrewingConditionSection(
                 LeafyFieldLabel(text = "Water Temp (℃)")
                 OutlinedTextField(
                     value = waterTemp,
-                    onValueChange = { waterTemp = it },
+                    onValueChange = onWaterTempChange,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 4.dp),
@@ -81,7 +82,7 @@ fun BrewingConditionSection(
                 LeafyFieldLabel(text = "Leaf Amount (g)")
                 OutlinedTextField(
                     value = leafAmount,
-                    onValueChange = { leafAmount = it },
+                    onValueChange = onLeafAmountChange,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 4.dp),
@@ -96,7 +97,7 @@ fun BrewingConditionSection(
         LeafyFieldLabel(text = "Brewing Time")
         OutlinedTextField(
             value = brewTime,
-            onValueChange = { brewTime = it },
+            onValueChange = onBrewTimeChange,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 4.dp),
@@ -121,7 +122,7 @@ fun BrewingConditionSection(
                 LeafyFieldLabel(text = "Infusion Count")
                 OutlinedTextField(
                     value = brewCount,
-                    onValueChange = { brewCount = it },
+                    onValueChange = onBrewCountChange,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 4.dp),
@@ -133,7 +134,7 @@ fun BrewingConditionSection(
                 label = "Teaware",
                 options = listOf("찻주전자", "개완", "머그", "다도 세트"),
                 selected = teawareType,
-                onSelectedChange = { teawareType = it },
+                onSelectedChange = onTeawareTypeChange,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -145,6 +146,16 @@ fun BrewingConditionSection(
 private fun BrewingConditionSectionPreview() {
     LeafyTheme {
         BrewingConditionSection(
+            waterTemp = "85",
+            leafAmount = "3",
+            brewTime = "2분 30초",
+            brewCount = "1",
+            teawareType = "찻주전자",
+            onWaterTempChange = {},
+            onLeafAmountChange = {},
+            onBrewTimeChange = {},
+            onBrewCountChange = {},
+            onTeawareTypeChange = {},
             modifier = Modifier.padding(16.dp)
         )
     }

@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.data.WeatherType // 분리된 enum Import
+import com.subin.leafy.domain.model.WeatherType
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 
