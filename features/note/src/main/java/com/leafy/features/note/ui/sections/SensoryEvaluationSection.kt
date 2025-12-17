@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.leafy.features.note.ui.components.*
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.BodyType
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -31,7 +32,7 @@ fun SensoryEvaluationSection(
     bitterIntensity: Float,
     saltyIntensity: Float,
     umamiIntensity: Float,
-    bodyIndex: Int,
+    bodyType: BodyType,
     finishValue: Float,
     notes: String,
     onTagsChange: (Set<String>) -> Unit,
@@ -40,7 +41,7 @@ fun SensoryEvaluationSection(
     onBitternessChange: (Float) -> Unit,
     onSaltyChange: (Float) -> Unit,
     onUmamiChange: (Float) -> Unit,
-    onBodyIndexChange: (Int) -> Unit,
+    onBodyTypeChange: (BodyType) -> Unit,
     onFinishValueChange: (Float) -> Unit,
     onNotesChange: (String) -> Unit
 ) {
@@ -116,7 +117,10 @@ fun SensoryEvaluationSection(
         LeafyFieldLabel(text = "Body (바디감)")
         Spacer(modifier = Modifier.height(8.dp))
 
-        BodySelectionSegmentedRow(selectedIndex = bodyIndex, onSelect = onBodyIndexChange)
+        BodySelectionSegmentedRow(
+            selectedBody = bodyType,
+            onSelect = onBodyTypeChange
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -148,7 +152,7 @@ private fun SensoryEvaluationSectionPreview() {
             bitterIntensity = 2f,
             saltyIntensity = 0f,
             umamiIntensity = 3f,
-            bodyIndex = 1,
+            bodyType = BodyType.MEDIUM,
             finishValue = 0.5f,
             notes = "Very smooth tea.",
             onTagsChange = {},
@@ -157,7 +161,7 @@ private fun SensoryEvaluationSectionPreview() {
             onBitternessChange = {},
             onSaltyChange = {},
             onUmamiChange = {},
-            onBodyIndexChange = {},
+            onBodyTypeChange = {},
             onFinishValueChange = {},
             onNotesChange = {},
             modifier = Modifier.padding(16.dp)

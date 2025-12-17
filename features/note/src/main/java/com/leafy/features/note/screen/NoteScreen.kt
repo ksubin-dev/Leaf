@@ -18,21 +18,32 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leafy.features.note.ui.NoteUiEffect
 import com.leafy.features.note.ui.NoteUiState
 import com.leafy.features.note.ui.NoteViewModel
+import com.leafy.features.note.ui.factory.NoteViewModelFactory
 import com.leafy.features.note.ui.sections.*
+import com.leafy.shared.di.ApplicationContainerProvider
+import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.WeatherType
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun NoteScreen(
-    viewModel: NoteViewModel = viewModel(),
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+
+    val noteUseCases = (context.applicationContext as ApplicationContainerProvider)
+        .provideAppContainer()
+        .noteUseCases
+
+    val viewModel: NoteViewModel = viewModel(
+        factory = NoteViewModelFactory(noteUseCases)
+    )
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
 
-    // 일회성 이벤트
+    // 일회성 이벤트(Effect) 처리
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -46,7 +57,6 @@ fun NoteScreen(
         }
     }
 
-    // 실제 화면 구성
     NoteContent(
         uiState = uiState,
         isProcessing = isProcessing,
@@ -80,7 +90,7 @@ private fun NoteContent(
     onUpdateTeaInfo: (String?, String?, String?, String?, String?, String?) -> Unit,
     onUpdateContext: (String?, WeatherType?, String?) -> Unit,
     onUpdateCondition: (String?, String?, String?, String?, String?) -> Unit,
-    onUpdateSensory: (Set<String>?, Int?, Int?, Int?, Int?, Int?, Int?, Float?, String?) -> Unit,
+    onUpdateSensory: (Set<String>?, Int?, Int?, Int?, Int?, Int?, BodyType?, Float?, String?) -> Unit,
     onUpdateRating: (Int?, Boolean?) -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
@@ -131,7 +141,6 @@ private fun NoteContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
-            // 1. Photos
             PhotosSection(
                 onClickDryLeaf = {}, onClickTeaLiquor = {},
                 onClickTeaware = {}, onClickAdditional = {}
@@ -139,7 +148,6 @@ private fun NoteContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 2. Basic Tea Information
             BasicTeaInformationSection(
                 teaName = uiState.teaName,
                 onTeaNameChange = { onUpdateTeaInfo(it, null, null, null, null, null) },
@@ -157,7 +165,6 @@ private fun NoteContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 3. Tasting Context
             TastingContextSection(
                 dateTime = uiState.dateTime,
                 selectedWeather = uiState.weather,
@@ -169,7 +176,6 @@ private fun NoteContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 4. Brewing Condition
             BrewingConditionSection(
                 waterTemp = uiState.waterTemp,
                 leafAmount = uiState.leafAmount,
@@ -185,7 +191,6 @@ private fun NoteContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 5. Sensory Evaluation
             SensoryEvaluationSection(
                 selectedTags = uiState.selectedTags,
                 sweetIntensity = uiState.sweetness.toFloat(),
@@ -193,7 +198,7 @@ private fun NoteContent(
                 bitterIntensity = uiState.bitterness.toFloat(),
                 saltyIntensity = uiState.saltiness.toFloat(),
                 umamiIntensity = uiState.umami.toFloat(),
-                bodyIndex = uiState.bodyIndex,
+                bodyType = uiState.bodyType,
                 finishValue = uiState.finishLevel,
                 notes = uiState.memo,
                 onTagsChange = { onUpdateSensory(it, null, null, null, null, null, null, null, null) },
@@ -202,14 +207,13 @@ private fun NoteContent(
                 onBitternessChange = { onUpdateSensory(null, null, null, it.toInt(), null, null, null, null, null) },
                 onSaltyChange = { onUpdateSensory(null, null, null, null, it.toInt(), null, null, null, null) },
                 onUmamiChange = { onUpdateSensory(null, null, null, null, null, it.toInt(), null, null, null) },
-                onBodyIndexChange = { onUpdateSensory(null, null, null, null, null, null, it, null, null) },
+                onBodyTypeChange = { onUpdateSensory(null, null, null, null, null, null, it, null, null) },
                 onFinishValueChange = { onUpdateSensory(null, null, null, null, null, null, null, it, null) },
                 onNotesChange = { onUpdateSensory(null, null, null, null, null, null, null, null, it) }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 6. Final Rating
             FinalRatingSection(
                 rating = uiState.rating,
                 purchaseAgain = uiState.purchaseAgain,
@@ -227,15 +231,10 @@ private fun NoteContent(
 private fun NoteScreenPreview() {
     LeafyTheme {
         val mockUiState = NoteUiState(
-            teaName = "Dragon Well (Longjing)",
-            brandName = "West Lake Tea",
+            teaName = "Dragon Well",
             dateTime = "12/17/2025",
             weather = WeatherType.CLEAR,
-            waterTemp = "85",
-            brewTime = "2:30",
-            rating = 4,
-            purchaseAgain = true,
-            selectedTags = setOf("Sweet", "Floral")
+            bodyType = BodyType.MEDIUM
         )
 
         NoteContent(
