@@ -28,6 +28,7 @@ fun TimerScreen(
     if (uiState.isBottomSheetOpen) {
         PresetBottomSheet(
             presets = uiState.presets,
+            selectedPresetId = uiState.selectedPreset.id,
             onPresetClick = { preset ->
                 viewModel.selectPreset(preset)
             },
