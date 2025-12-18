@@ -5,7 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object HomeTab : MainNavigationRoute
-    @Serializable data object NoteTab : MainNavigationRoute
+    @Serializable
+    data class NoteTab(
+        val initialRecords: String? = null
+    ) : MainNavigationRoute
     @Serializable data object CommunityTab : MainNavigationRoute
     @Serializable data object TimerTab : MainNavigationRoute
     @Serializable data object MyPageTab : MainNavigationRoute

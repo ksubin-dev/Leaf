@@ -28,22 +28,14 @@ import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun NoteScreen(
+    viewModel: NoteViewModel,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
 
-    val noteUseCases = (context.applicationContext as ApplicationContainerProvider)
-        .provideAppContainer()
-        .noteUseCases
-
-    val viewModel: NoteViewModel = viewModel(
-        factory = NoteViewModelFactory(noteUseCases)
-    )
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
 
-    // 일회성 이벤트(Effect) 처리
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {

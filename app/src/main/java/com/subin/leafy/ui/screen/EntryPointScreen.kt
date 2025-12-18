@@ -35,17 +35,18 @@ import com.leafy.features.home.navigation.homeNavGraph
 import com.leafy.features.mypage.navigation.mypageNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
 import com.leafy.features.timer.navigation.timerNavGraph
+import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.LeafyNavigation
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.di.ApplicationContainerImpl
 import com.subin.leafy.ui.component.LeafyBottomAppBarItem
 import com.subin.leafy.ui.component.LeafyTimerButton
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun EntryPointScreen() {
+fun EntryPointScreen(container: ApplicationContainer) {
     LeafyTheme {
 
         val colors = MaterialTheme.colorScheme
@@ -165,9 +166,15 @@ fun EntryPointScreen() {
                 modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
             ) {
                 homeNavGraph(navController)
-                noteNavGraph(navController)
+                noteNavGraph(
+                    container = container,
+                    onNavigateBack = { navController.popBackStack() }
+                )
                 communityNavGraph(navController)
-                timerNavGraph(navController)
+                timerNavGraph(
+                    navController = navController,
+                    container = container
+                )
                 mypageNavGraph(navController)
             }
         }
@@ -185,4 +192,15 @@ private fun isDestinationSelected(
     return currentDestination
         ?.hierarchy
         ?.any { it.route == targetRoute } == true
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun EntryPointScreenPreview() {
+    LeafyTheme {
+        // 프리뷰를 위해 빈 구현체를 임시로 생성하거나,
+        // 테스트용 MockContainer를 넣어줍니다.
+        val dummyContainer = ApplicationContainerImpl()
+        EntryPointScreen(container = dummyContainer)
+    }
 }

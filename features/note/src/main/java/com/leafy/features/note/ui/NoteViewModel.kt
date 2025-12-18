@@ -16,20 +16,45 @@ sealed interface NoteUiEffect {
 }
 
 class NoteViewModel(
-    private val noteUseCases: NoteUseCases
+    private val noteUseCases: NoteUseCases,
+    initialRecords: List<InfusionRecord>?
 ) : ViewModel() {
 
-    // 1. 입력 폼 상태 관리 (입력할 때마다 업데이트)
+    // 1. 입력 폼 상태 관리
     private val _uiState = MutableStateFlow(NoteUiState())
     val uiState = _uiState.asStateFlow()
 
-    // 2. 저장/수정/삭제 진행 상태 (버튼 비활성화 및 로딩용)
+    // 2. 진행 상태
     private val _isProcessing = MutableStateFlow(false)
     val isProcessing = _isProcessing.asStateFlow()
 
     // 3. 일회성 이벤트 통로
     private val _effect = Channel<NoteUiEffect>()
     val effect = _effect.receiveAsFlow()
+
+    init {
+        initialRecords?.let { records ->
+            applyTimerRecords(records)
+        }
+    }
+
+    /**
+     *타이머 기록을 UI 폼(UiState)에 매핑하는 로직
+     */
+    private fun applyTimerRecords(records: List<InfusionRecord>) {
+        if (records.isEmpty()) return
+
+        // 가장 최근(리스트의 첫 번째) 우림 기록을 기준으로 시간 설정
+        val lastBrew = records.first()
+
+        _uiState.update { state ->
+            state.copy(
+                brewTime = lastBrew.formattedTime, // 마지막 우림 시간 (예: "02:00")
+                brewCount = records.size.toString(), // 총 우림 횟수 (예: "3")
+                memo = "타이머 세션 기록이 성공적으로 불러와졌습니다. (${records.size}회 우림)"
+            )
+        }
+    }
 
     /**
      * CUD 작업을 일괄 처리하는 공통 함수
@@ -65,12 +90,11 @@ class NoteViewModel(
             }
             return
         }
-        // UI State -> Domain Model 변환 후 UseCase 실행
         val domainNote = _uiState.value.toDomain()
         handleOperation(noteUseCases.insertNote(domainNote))
     }
 
-    // --- UI 상태 업데이트 함수들 (State Hoisting) ---
+    // --- UI 상태 업데이트 함수들 ---
 
     fun updateTeaInfo(
         name: String? = null,
