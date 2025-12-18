@@ -26,7 +26,7 @@ fun NavGraphBuilder.timerNavGraph(
                 }
             },
             onNavigateToSettings = {
-                // 프리셋 설정 페이지 이동 로직 (추후 구현)
+                /* 바텀시트 방식이므로 여기서는 아무것도 하지 않음 */
             }
         )
     }
