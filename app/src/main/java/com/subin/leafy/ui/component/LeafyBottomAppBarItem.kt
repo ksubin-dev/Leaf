@@ -33,7 +33,7 @@ data class LeafyBottomAppBarItem(
             LeafyBottomAppBarItem(
                 tabName = "Note",
                 iconRes = SharedR.drawable.ic_nav_note,
-                destination = MainNavigationRoute.NoteTab
+                destination = MainNavigationRoute.NoteTab()
             ),
             LeafyBottomAppBarItem(
                 tabName = "My",
