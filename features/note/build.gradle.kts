@@ -49,6 +49,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
+
+    implementation(libs.kotlinx.serialization.json)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
