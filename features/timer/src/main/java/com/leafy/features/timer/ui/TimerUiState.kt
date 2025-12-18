@@ -5,6 +5,7 @@ import com.subin.leafy.domain.model.TimerPreset
 
 data class TimerUiState(
     val isLoading: Boolean = false,
+    val isBottomSheetOpen: Boolean = false,
     val selectedPreset: TimerPreset = TimerPreset(name = "Loading...", baseTimeSeconds = 0),
     val timeLeft: Int = 0,
     val initialTime: Int = 0,
@@ -14,10 +15,11 @@ data class TimerUiState(
     val presets: List<TimerPreset> = emptyList(),
     val errorMessage: String? = null
 ) {
-
+    // 진행률 계산
     val progress: Float
         get() = if (initialTime > 0) timeLeft.toFloat() / initialTime else 0f
 
+    // "02:00" 형태의 시간 포맷
     val formattedTime: String
         get() {
             val m = timeLeft / 60

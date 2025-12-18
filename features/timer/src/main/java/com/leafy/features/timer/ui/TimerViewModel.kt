@@ -28,6 +28,9 @@ class TimerViewModel(
         loadPresets()
     }
 
+    /**
+     * Repository(Mock)로부터 프리셋 목록을 가져와 초기 상태를 설정합니다.
+     */
     private fun loadPresets() {
         viewModelScope.launch {
             timerUseCases.getPresets().collectLatest { result ->
@@ -58,6 +61,33 @@ class TimerViewModel(
         }
     }
 
+    // --- 바텀시트 제어 로직 ---
+
+    fun openPresetSheet() {
+        _uiState.update { it.copy(isBottomSheetOpen = true) }
+    }
+
+    fun closePresetSheet() {
+        _uiState.update { it.copy(isBottomSheetOpen = false) }
+    }
+
+    /**
+     * 사용자가 리스트에서 프리셋을 선택했을 때 호출됩니다.
+     */
+    fun selectPreset(preset: TimerPreset) {
+        pauseTimer() // 새로운 시간 설정 시 타이머 정지
+        _uiState.update {
+            it.copy(
+                selectedPreset = preset,
+                timeLeft = preset.baseTimeSeconds,
+                initialTime = preset.baseTimeSeconds,
+                isBottomSheetOpen = false // 선택 후 시트 닫기
+            )
+        }
+    }
+
+    // --- 타이머 핵심 로직 ---
+
     fun toggleTimer() {
         if (_uiState.value.isRunning) pauseTimer() else startTimer()
     }
@@ -74,7 +104,7 @@ class TimerViewModel(
         }
     }
 
-    private fun pauseTimer() {
+    fun pauseTimer() {
         timerJob?.cancel()
         _uiState.update { it.copy(isRunning = false) }
     }
@@ -84,6 +114,9 @@ class TimerViewModel(
         _uiState.update { it.copy(timeLeft = it.initialTime) }
     }
 
+    /**
+     * 현재 우림 세션을 기록합니다.
+     */
     fun recordInfusion() {
         pauseTimer()
 
@@ -107,8 +140,10 @@ class TimerViewModel(
         }
     }
 
+    /**
+     * 기록된 데이터를 JSON 문자열로 변환하여 Note 화면으로 전달할 준비를 합니다.
+     */
     fun getRecordsAsJson(): String {
-        // [1, 2, 3] 형태의 리스트를 "[{"count":1, "time":60}, ...]" 형태의 문자열로 변환
         return Json.encodeToString(_uiState.value.records)
     }
 }
