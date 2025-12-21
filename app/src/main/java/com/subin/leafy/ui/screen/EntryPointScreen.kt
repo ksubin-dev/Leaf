@@ -175,7 +175,10 @@ fun EntryPointScreen(container: ApplicationContainer) {
                     navController = navController,
                     container = container
                 )
-                mypageNavGraph(navController)
+                mypageNavGraph(
+                    container = container,
+                    navController = navController
+                )
             }
         }
     }

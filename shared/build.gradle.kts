@@ -35,6 +35,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures{
@@ -59,6 +61,7 @@ dependencies {
     implementation(libs.bundles.compose.libraries)
 
     testImplementation(libs.junit)
+    coreLibraryDesugaring(libs.android.desugarJdkLibs)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

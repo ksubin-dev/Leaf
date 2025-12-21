@@ -31,6 +31,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures{
         compose = true
@@ -41,6 +43,7 @@ kotlin{
 }
 
 dependencies {
+    implementation(project(":domain"))
     implementation(project(":shared"))
 
     implementation(libs.androidx.core.ktx)
@@ -48,10 +51,11 @@ dependencies {
     implementation(libs.material)
 
 
+    implementation(libs.coil.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
-
+    coreLibraryDesugaring(libs.android.desugarJdkLibs)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
