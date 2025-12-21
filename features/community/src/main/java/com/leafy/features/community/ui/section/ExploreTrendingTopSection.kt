@@ -19,8 +19,8 @@ import com.leafy.shared.ui.theme.LeafyTheme
  */
 @Composable
 fun ExploreTrendingTopSection(
-    notes: List<ExploreNoteSummaryUi>,
     modifier: Modifier = Modifier,
+    notes: List<ExploreNoteSummaryUi>,
     onNoteClick: (ExploreNoteSummaryUi) -> Unit = {}
 ) {
     Column(modifier = modifier) {
