@@ -11,7 +11,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,9 +31,7 @@ fun ExploreTeaMasterCard(
     onFollowToggle: (Boolean) -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
-
-    // 로컬 팔로우 상태 (서버 연동 전까지는 UI 전용)
-    var isFollowing by remember { mutableStateOf(master.isFollowing) }
+    val isFollowing = master.isFollowing
 
     Row(
         modifier = modifier
@@ -56,7 +54,7 @@ fun ExploreTeaMasterCard(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // 이름 + 타이틀 + 한 줄 소개
+        // 이름 + 타이틀
         Column(
             modifier = Modifier.weight(1f)
         ) {
@@ -69,35 +67,24 @@ fun ExploreTeaMasterCard(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = master.title,                 // 예: "녹차 & 블렌딩 전문가"
+                text = master.title,
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
                 maxLines = 1
             )
-//            Spacer(modifier = Modifier.height(2.dp))
-//            Text(
-//                text = master.description,          // 한 줄 소개
-//                style = MaterialTheme.typography.bodySmall,
-//                color = colors.onSurfaceVariant,
-//                maxLines = 1
-//            )
         }
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // 팔로우 / 팔로잉 버튼
+        // 팔로우 / 팔로잉 버튼 디자인 계산
         val buttonText = if (isFollowing) "팔로잉" else "+ 팔로우"
-        val containerColor =
-            if (isFollowing) colors.primary.copy(alpha = 0.08f) else colors.background
-        val contentColor =
-            if (isFollowing) colors.primary else colors.primary
-        val borderColor =
-            if (isFollowing) colors.primary.copy(alpha = 0.4f) else colors.outlineVariant
+        val containerColor = if (isFollowing) colors.primary.copy(alpha = 0.08f) else colors.background
+        val contentColor = colors.primary
+        val borderColor = if (isFollowing) colors.primary.copy(alpha = 0.4f) else colors.outlineVariant
 
         OutlinedButton(
             onClick = {
-                isFollowing = !isFollowing
-                onFollowToggle(isFollowing)
+                onFollowToggle(!isFollowing)
             },
             shape = RoundedCornerShape(999.dp),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
@@ -121,11 +108,7 @@ fun ExploreTeaMasterCard(
 @Composable
 private fun ExploreTeaMasterCardPreview() {
     LeafyTheme {
-        Box(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp)
-        ) {
+        Box(modifier = Modifier.padding(16.dp)) {
             ExploreTeaMasterCard(
                 master = ExploreTeaMasterUi(
                     name = "그린티 마니아",

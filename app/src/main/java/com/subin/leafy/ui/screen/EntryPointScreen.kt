@@ -170,7 +170,11 @@ fun EntryPointScreen(container: ApplicationContainer) {
                     container = container,
                     onNavigateBack = { navController.popBackStack() }
                 )
-                communityNavGraph(navController)
+                // 🎯 container를 추가로 전달하도록 수정
+                communityNavGraph(
+                    navController = navController,
+                    container = container
+                )
                 timerNavGraph(
                     navController = navController,
                     container = container

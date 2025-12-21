@@ -17,8 +17,8 @@ import com.leafy.shared.ui.theme.LeafyTheme
  */
 @Composable
 fun ExploreTrendingSavedSection(
-    notes: List<ExploreNoteSummaryUi>,
     modifier: Modifier = Modifier,
+    notes: List<ExploreNoteSummaryUi>,
     onNoteClick: (ExploreNoteSummaryUi) -> Unit = {}
 ) {
     Column(modifier = modifier) {
@@ -72,6 +72,6 @@ private fun ExploreTrendingSavedSectionPreview() {
                 savedCount = 854
             ),
         )
-        ExploreTrendingSavedSection(sample, modifier = Modifier.padding(16.dp))
+        ExploreTrendingSavedSection( modifier = Modifier.padding(16.dp),sample)
     }
 }
