@@ -16,8 +16,8 @@ import com.leafy.features.community.ui.component.ExploreFollowingNoteUi
  */
 @Composable
 fun ExploreFollowingFeedSection(
-    notes: List<ExploreFollowingNoteUi>,
     modifier: Modifier = Modifier,
+    notes: List<ExploreFollowingNoteUi>,
     onNoteClick: (ExploreFollowingNoteUi) -> Unit = {}
 ) {
     LazyColumn(

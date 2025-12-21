@@ -1,241 +1,158 @@
 package com.leafy.features.community.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import android.widget.Toast
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.data.ExploreTab
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.leafy.features.community.ui.CommunityUiEffect
+import com.leafy.features.community.ui.CommunityUiState
+import com.leafy.features.community.ui.CommunityViewModel
 import com.leafy.features.community.ui.component.CustomExploreTabRow
-import com.leafy.features.community.ui.component.ExploreFollowingNoteUi
-import com.leafy.features.community.ui.component.ExploreNoteSummaryUi
-import com.leafy.features.community.ui.component.ExploreTeaMasterUi
-import com.leafy.features.community.ui.section.ExploreFollowingFeedSection
-import com.leafy.features.community.ui.section.ExploreTrendingRisingSection
-import com.leafy.features.community.ui.section.ExploreTrendingSavedSection
-import com.leafy.features.community.ui.section.ExploreTrendingTeaMasterSection
-import com.leafy.features.community.ui.section.ExploreTrendingTopSection
-import com.leafy.shared.R as SharedR
-import com.leafy.shared.ui.theme.LeafyTheme
+import com.leafy.features.community.ui.section.*
+import com.subin.leafy.domain.model.ExploreTab
 
-
-/**
- * Community 탭 메인 화면
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CommunityScreen(
-    modifier: Modifier = Modifier
+    viewModel: CommunityViewModel,
+    onNoteClick: (String) -> Unit,
+    onMasterClick: (String) -> Unit
 ) {
-    LeafyTheme {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val colors = MaterialTheme.colorScheme
-    // ───── 탭 상태 ─────
-    var selectedTab by remember { mutableStateOf(ExploreTab.TRENDING) }
-
-    // ───── 더미 데이터  ─────
-        val trendingTopNotes = remember {
-            listOf(
-                ExploreNoteSummaryUi(
-                    title = "프리미엄 제주 녹차",
-                    subtitle = "깔끔하고 상쾌한 맛의 일품",
-                    imageRes = SharedR.drawable.ic_sample_tea_1,
-                    rating = 4.8f,
-                    savedCount = 234,
-                    profileImageRes = SharedR.drawable.ic_profile_1,
-
-                ),
-                ExploreNoteSummaryUi(
-                    title = "다즐링 퍼스트 플러시",
-                    subtitle = "인도 | 홍차",
-                    imageRes = SharedR.drawable.ic_sample_tea_2,
-                    rating = 4.6f,
-                    savedCount = 189,
-                    profileImageRes = SharedR.drawable.ic_profile_2
-                ),
-                ExploreNoteSummaryUi(
-                    title = "카모마일 허브티",
-                    subtitle = "부드러운 꽃향과 허브 향",
-                    imageRes = SharedR.drawable.ic_sample_tea_3,
-                    rating = 4.5f,
-                    savedCount = 142,
-                    profileImageRes = SharedR.drawable.ic_profile_3
-                )
-            )
+    // 1. 일회성 이벤트(Effect) 처리: 토스트 등
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is CommunityUiEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
-
-        val trendingRisingNotes = remember {
-            listOf(
-                ExploreNoteSummaryUi(
-                    title = "자스민 그린티",
-                    subtitle = "은은한 꽃향이 매력적",
-                    imageRes = SharedR.drawable.ic_sample_tea_2,
-                    rating = 4.7f,
-                    savedCount = 120,
-                    profileImageRes = SharedR.drawable.ic_profile_4,
-                    authorName = "TeaLover",
-                    likeCount = 35,
-                    isLiked = true
-                ),
-                ExploreNoteSummaryUi(
-                    title = "카모마일 허브티",
-                    subtitle = "편안한 밤을 위한 한 잔",
-                    imageRes = SharedR.drawable.ic_sample_tea_3,
-                    rating = 4.6f,
-                    savedCount = 98,
-                    profileImageRes = SharedR.drawable.ic_profile_5,
-                    authorName = "ZenMaster",
-                    likeCount = 18,
-                    isLiked = false
-                ),
-                ExploreNoteSummaryUi(
-                    title = "루이보스 바닐라",
-                    subtitle = "부드러운 루이보스 · 허브티",
-                    imageRes = SharedR.drawable.ic_sample_tea_1,
-                    rating = 4.5f,
-                    savedCount = 87,
-                    profileImageRes = SharedR.drawable.ic_profile_1,
-                    authorName = "RooibosFan",
-                    likeCount = 22,
-                    isLiked = true
-                )
-            )
-        }
-
-    val trendingSavedNotes = remember {
-        listOf(
-            ExploreNoteSummaryUi(
-                title = "다즐링 퍼스트 플러시",
-                subtitle = "인도 | 홍차",
-                imageRes = SharedR.drawable.ic_sample_tea_2,
-                rating = 4.8f,
-                savedCount = 1200
-            ),
-            ExploreNoteSummaryUi(
-                title = "백모단 화이트티",
-                subtitle = "중국 | 백차",
-                imageRes = SharedR.drawable.ic_sample_tea_7,
-                rating = 4.7f,
-                savedCount = 987
-            ),
-            ExploreNoteSummaryUi(
-                title = "루이보스 바닐라",
-                subtitle = "남아공 | 허브티",
-                imageRes = SharedR.drawable.ic_sample_tea_6,
-                rating = 4.2f,
-                savedCount = 854
-            ),
-        )
-    }
-
-    val trendingMasters = remember {
-        listOf(
-            ExploreTeaMasterUi(
-                profileImageRes = SharedR.drawable.ic_profile_4,
-                name = "그린티 마니아",
-                title = "녹차 & 말차 전문가",
-                isFollowing = false
-            ),
-            ExploreTeaMasterUi(
-                profileImageRes = SharedR.drawable.ic_profile_5,
-                name = "허브티 큐레이터",
-                title = "허브티 & 웰니스 컨설턴트",
-                isFollowing = false
-            )
-        )
-    }
-
-    val followingFeed = remember {
-        listOf(
-            ExploreFollowingNoteUi.sample1(),
-            ExploreFollowingNoteUi.sample2(),
-            ExploreFollowingNoteUi.sample3()
-        )
     }
 
     Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.background),
-        topBar = {
-            Column {
-                // ───── 상단 바 (Explore + 검색 아이콘) ─────
-                androidx.compose.material3.TopAppBar(
-                    title = {
-                        Text(
-                            text = "Explore",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = colors.primary
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = { /* TODO: 검색 */ }) {
-                            Icon(
-                                painter = painterResource(id = SharedR.drawable.ic_search),
-                                contentDescription = "Search",
-                                tint = colors.primary
-                            )
-                        }
-                    }
-                )
+        modifier = Modifier.fillMaxSize()
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // 2. 탭 바
+            CustomExploreTabRow(
+                selectedTab = uiState.selectedTab,
+                onTabSelected = { viewModel.onTabSelected(it) }
+            )
 
-                // ───── 탭 바 ─────
-                CustomExploreTabRow(
-                    selectedTab = selectedTab,
-                    onTabSelected = { newTab -> selectedTab = newTab }
-                )
-            }
-        }
-    ) { paddingValues ->
-        // 💡 콘텐츠 영역에 Scaffold가 제공하는 패딩(Top/Bottom)을 적용
-        when (selectedTab) {
-            ExploreTab.TRENDING -> {
-                // Trending 탭: LazyColumn 하나만 스크롤 담당
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(vertical = 20.dp), // 상하 내부 패딩
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp), // 좌우 내부 패딩
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    item { ExploreTrendingTopSection(notes = trendingTopNotes) }
-                    item { ExploreTrendingRisingSection(notes = trendingRisingNotes) }
-                    item { ExploreTrendingSavedSection(notes = trendingSavedNotes) }
-                    item { ExploreTrendingTeaMasterSection(masters = trendingMasters) }
+            // 3. 메인 컨텐츠
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (uiState.isLoading && uiState.popularNotes.isEmpty()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else {
+                    when (uiState.selectedTab) {
+                        ExploreTab.TRENDING -> TrendingTabContent(
+                            uiState = uiState,
+                            onNoteClick = { onNoteClick(it.title) },
+                            onMasterClick = { onMasterClick(it.name) },
+                            onFollowToggle = { master, isFollowing ->
+                                // TODO: viewModel.toggleFollow(master.name) 호출
+                            }
+                        )
+                        ExploreTab.FOLLOWING -> ExploreFollowingFeedSection(
+                            notes = uiState.followingFeed,
+                            onNoteClick = { onNoteClick(it.title) },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
-
-            ExploreTab.FOLLOWING -> {
-                ExploreFollowingFeedSection(
-                    notes = followingFeed,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(horizontal = 16.dp, vertical = 20.dp)
-                )
-            }
-         }
         }
+    }
+}
+
+/**
+ * Trending 탭 레이아웃: 유저님이 만든 모든 섹션 컴포넌트 통합
+ */
+@Composable
+private fun TrendingTabContent(
+    uiState: CommunityUiState,
+    onNoteClick: (com.leafy.features.community.ui.component.ExploreNoteSummaryUi) -> Unit,
+    onMasterClick: (com.leafy.features.community.ui.component.ExploreTeaMasterUi) -> Unit,
+    onFollowToggle: (com.leafy.features.community.ui.component.ExploreTeaMasterUi, Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(36.dp) // 섹션 사이 간격
+    ) {
+        // 섹션 1: 이번 주 인기 노트
+        ExploreTrendingTopSection(
+            notes = uiState.popularNotes,
+            onNoteClick = onNoteClick,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        // 섹션 2: 지금 급상승 중
+        ExploreTrendingRisingSection(
+            notes = uiState.risingNotes,
+            onNoteClick = onNoteClick,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        // 섹션 3: 인기 태그
+        ExploreTrendingPopularTagsSection(
+            tags = uiState.popularTags,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        // 섹션 4: 많이 저장된 노트
+        ExploreTrendingSavedSection(
+            notes = uiState.mostSavedNotes,
+            onNoteClick = onNoteClick,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        // 섹션 5: 티 마스터 추천 (수정된 람다 연결)
+        ExploreTrendingTeaMasterSection(
+            masters = uiState.teaMasters,
+            onMasterClick = onMasterClick,
+            onFollowToggle = onFollowToggle,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+/**
+ * [Following 탭] - 팔로잉 피드 리스트
+ */
+@Composable
+private fun FollowingTabContent(
+    uiState: CommunityUiState,
+    onNoteClick: (com.leafy.features.community.ui.component.ExploreFollowingNoteUi) -> Unit
+) {
+    if (uiState.followingFeed.isEmpty()) {
+        // 팔로잉 데이터가 없을 때의 처리
+        // EmptyFollowingView()
+    } else {
+        ExploreFollowingFeedSection(
+            notes = uiState.followingFeed,
+            onNoteClick = onNoteClick,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

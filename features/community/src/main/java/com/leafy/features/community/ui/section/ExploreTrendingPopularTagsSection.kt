@@ -18,8 +18,8 @@ import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun ExploreTrendingPopularTagsSection(
-    tags: List<ExploreTagUi>,
     modifier: Modifier = Modifier,
+    tags: List<ExploreTagUi>,
     onTagClick: (ExploreTagUi) -> Unit = {}
 ) {
     Column(modifier = modifier) {

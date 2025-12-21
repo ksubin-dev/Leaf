@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.data.ExploreTab
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.ExploreTab
 
 
 @Composable

@@ -19,17 +19,17 @@ import com.leafy.shared.ui.theme.LeafyTheme
  */
 @Composable
 fun ExploreTrendingTeaMasterSection(
-    masters: List<ExploreTeaMasterUi>,
     modifier: Modifier = Modifier,
+    masters: List<ExploreTeaMasterUi>,
     onMasterClick: (ExploreTeaMasterUi) -> Unit = {},
     onFollowToggle: (ExploreTeaMasterUi, Boolean) -> Unit = { _, _ -> }
 ) {
     Column(modifier = modifier) {
-
+        // 유저님이 만드신 공통 헤더 사용
         ExploreSectionHeader(
             title = "이번 달 티 마스터 추천",
             showMore = true,
-            onMoreClick = { /* TODO: 티 마스터 전체 보기 */ }
+            onMoreClick = { /* TODO */ }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -37,7 +37,6 @@ fun ExploreTrendingTeaMasterSection(
         masters.forEachIndexed { index, master ->
             ExploreTeaMasterCard(
                 master = master,
-                modifier = Modifier,
                 onClick = { onMasterClick(master) },
                 onFollowToggle = { isFollowing ->
                     onFollowToggle(master, isFollowing)

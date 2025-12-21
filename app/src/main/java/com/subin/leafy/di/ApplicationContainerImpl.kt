@@ -1,26 +1,30 @@
 package com.subin.leafy.di
 
+import com.subin.leafy.data.remote.fakes.*
+import com.subin.leafy.data.repository.*
+import com.subin.leafy.domain.usecase.*
+import com.subin.leafy.domain.usecase.community.*
 import com.subin.leafy.domain.usecase.note.*
-import com.leafy.shared.di.ApplicationContainer
-import com.subin.leafy.data.repository.FakeUserRepository
-import com.subin.leafy.data.repository.FakeUserStatsRepository
-import com.subin.leafy.data.repository.MockNoteRepositoryImpl
-import com.subin.leafy.data.repository.MockTimerRepositoryImpl
-import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.timer.GetPresetsUseCase
-import com.subin.leafy.domain.usecase.TimerUseCases
-import com.subin.leafy.domain.usecase.UserUseCases
-import com.subin.leafy.domain.usecase.user.GetCurrentUserIdUseCase
-import com.subin.leafy.domain.usecase.user.GetUserStatsUseCase
-import com.subin.leafy.domain.usecase.user.GetUserUseCase
+import com.subin.leafy.domain.usecase.user.*
+import com.leafy.shared.di.ApplicationContainer
 
 class ApplicationContainerImpl : ApplicationContainer {
-    private val noteRepository = MockNoteRepositoryImpl()
-    private val timerRepository = MockTimerRepositoryImpl()
-    private val userRepository = FakeUserRepository()
-    private val userStatsRepository = FakeUserStatsRepository()
 
-    // 2. Note UseCases
+    // 1. DataSources (가짜 데이터 소스들)
+    private val communityDataSource = FakeCommunityDataSourceImpl()
+    private val noteDataSource = FakeNoteDataSourceImpl()
+    private val timerDataSource = FakeTimerDataSourceImpl()
+    private val userDataSource = FakeUserDataSourceImpl()
+
+    // 2. Repositories (DataSource를 주입받음)
+    val communityRepository = CommunityRepositoryImpl(communityDataSource)
+    val noteRepository = NoteRepositoryImpl(noteDataSource)
+    val timerRepository = TimerRepositoryImpl(timerDataSource)
+    val userRepository = UserRepositoryImpl(userDataSource)
+    val userStatsRepository = UserStatsRepositoryImpl(userDataSource)
+
+    // 3. Note UseCases
     override val noteUseCases = NoteUseCases(
         getNotes = GetNotesUseCase(noteRepository),
         insertNote = InsertNoteUseCase(noteRepository),
@@ -31,15 +35,27 @@ class ApplicationContainerImpl : ApplicationContainer {
         getRecordByDate = GetRecordByDateUseCase(noteRepository)
     )
 
-    // 3. Timer UseCases
+    // 4. Timer UseCases
     override val timerUseCases = TimerUseCases(
         getPresets = GetPresetsUseCase(timerRepository)
     )
 
-    // 4. User UseCases 추가
+    // 5. User UseCases
     override val userUseCases = UserUseCases(
         getCurrentUserId = GetCurrentUserIdUseCase(userRepository),
         getUser = GetUserUseCase(userRepository),
         getUserStats = GetUserStatsUseCase(userStatsRepository)
+    )
+
+    // 6. Community UseCases
+    override val communityUseCases = CommunityUseCases(
+        getPopularNotes = GetPopularNotesUseCase(communityRepository),
+        getRisingNotes = GetRisingNotesUseCase(communityRepository),
+        getMostSavedNotes = GetMostSavedNotesUseCase(communityRepository),
+        getRecommendedMasters = GetRecommendedMastersUseCase(communityRepository),
+        getPopularTags = GetPopularTagsUseCase(communityRepository),
+        getFollowingFeed = GetFollowingFeedUseCase(communityRepository),
+        toggleLike = ToggleLikeUseCase(communityRepository),
+        toggleFollow = ToggleFollowUseCase(communityRepository)
     )
 }

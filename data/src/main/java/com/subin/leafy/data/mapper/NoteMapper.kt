@@ -70,7 +70,42 @@ fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
     metaInfo = "${this.waterTemp} · ${this.brewTime} · ${this.brewCount}회 우림",
     rating = this.stars
 )
-
+/**
+ * BrewingNote(Domain) -> BrewingNoteDTO (Data Layer 저장용)
+ */
+fun BrewingNote.toDTO() = BrewingNoteDTO(
+    _id = this.id.value,
+    userId = this.ownerId.value,
+    teaName = this.teaInfo.name,
+    teaBrand = this.teaInfo.brand,
+    teaType = this.teaInfo.type,
+    leafStyle = this.teaInfo.leafStyle,
+    processing = this.teaInfo.processing,
+    teaGrade = this.teaInfo.grade,
+    waterTemp = this.condition.waterTemp,
+    leafAmount = this.condition.leafAmount,
+    brewTime = this.condition.brewTime,
+    brewCount = this.condition.brewCount,
+    teaware = this.condition.teaware,
+    selectedTags = this.evaluation.selectedTags.toList(),
+    sweetness = this.evaluation.sweetness,
+    sourness = this.evaluation.sourness,
+    bitterness = this.evaluation.bitterness,
+    saltiness = this.evaluation.saltiness,
+    umami = this.evaluation.umami,
+    bodyType = this.evaluation.bodyType.name,
+    finishLevel = this.evaluation.finishLevel,
+    memo = this.evaluation.memo,
+    stars = this.ratingInfo.stars,
+    purchaseAgain = this.ratingInfo.purchaseAgain,
+    weather = this.context.weather.name,
+    withPeople = this.context.withPeople,
+    dryLeafUri = this.context.dryLeafUri,
+    liquorUri = this.context.liquorUri,
+    teawareUri = this.context.teawareUri,
+    additionalUri = this.context.additionalUri,
+    createdAt = this.createdAt.time
+)
 /**
  * 상세 BrewingNote -> Firestore용 Map (저장용)
  */
