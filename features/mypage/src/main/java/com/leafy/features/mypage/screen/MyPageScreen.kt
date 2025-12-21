@@ -1,167 +1,148 @@
 package com.leafy.features.mypage.screen
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.leafy.features.mypage.data.MyPageTab
-import com.leafy.features.mypage.ui.component.MyPageTopAppBar
-import com.leafy.features.mypage.presentation.analyze.screen.AnalyzeScreen
-import com.leafy.features.mypage.presentation.badges.screen.BadgesScreen
-import com.leafy.features.mypage.presentation.calendar.screen.CalendarScreen
-import com.leafy.features.mypage.presentation.wishlist.screen.WishlistScreen
-import com.leafy.features.mypage.presentation.collection.screen.CollectionScreen
-import com.leafy.shared.ui.component.UserProfileContent
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.leafy.features.mypage.ui.MyPageUiState
+import com.leafy.features.mypage.ui.MyPageViewModel
+import com.leafy.features.mypage.ui.component.ProfileHeader
+import com.leafy.features.mypage.ui.component.QuickTimerAction
+import com.leafy.features.mypage.ui.session.MyPageCalendarSection
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.features.mypage.viewmodel.MyPageViewModel
+import com.subin.leafy.domain.model.*
+import com.subin.leafy.domain.model.id.NoteId
+import com.subin.leafy.domain.model.id.UserId
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyPageScreen(
-    modifier: Modifier = Modifier,
-    viewModel: MyPageViewModel = viewModel(),
+    viewModel: MyPageViewModel,
     onSettingsClick: () -> Unit,
-    onEditProfileClick: () -> Unit
+    onAddRecordClick: () -> Unit,
+    onEditRecordClick: (String) -> Unit
 ) {
-    val colors = MaterialTheme.colorScheme
-    var selectedTab by remember { mutableStateOf(MyPageTab.CALENDAR) }
-    val uiState by viewModel.uiState.collectAsState()
 
-    val tabs = MyPageTab.values()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    MyPageContent(
+        uiState = uiState,
+        onSettingsClick = onSettingsClick,
+        onDateClick = viewModel::onDateSelected,
+        onPrevMonth = { viewModel.changeMonth(-1) },
+        onNextMonth = { viewModel.changeMonth(1) },
+        onAddRecordClick = onAddRecordClick,
+        onEditRecordClick = onEditRecordClick
+    )
+}
+
+@Composable
+private fun MyPageContent(
+    uiState: MyPageUiState,
+    onSettingsClick: () -> Unit,
+    onDateClick: (Int) -> Unit,
+    onPrevMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onAddRecordClick: () -> Unit,
+    onEditRecordClick: (String) -> Unit
+) {
+    val scrollState = rememberScrollState()
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            MyPageTopAppBar(onSettingsClick = onSettingsClick)
-        },
-        containerColor = colors.background
+        modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-
-        if (uiState.isLoading) {
-            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            return@Scaffold
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
+                .verticalScroll(scrollState)
         ) {
 
-            UserProfileContent(
-                username = uiState.username,
-                bio = uiState.bio,
-                notesCount = uiState.stats.notesCount,
-                postsCount = uiState.stats.postsCount,
-                followerCount = uiState.stats.followerCount,
-                followingCount = uiState.stats.followingCount,
-                rating = uiState.stats.rating.toDouble(),
-                badgesCount = uiState.stats.badgesCount,
-                profileImageRes = uiState.profileImageRes,
-                onEditProfileClick = onEditProfileClick
+            if (uiState.user != null && uiState.userStats != null) {
+                ProfileHeader(
+                    user = uiState.user,
+                    stats = uiState.userStats,
+                    onSettingsClick = onSettingsClick
+                )
+            } else if (uiState.isLoading) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            QuickTimerAction(
+                presetName = "데일리 녹차",
+                onClick = {}
             )
 
-            SecondaryScrollableTabRow(
-                selectedTabIndex = tabs.indexOf(selectedTab),
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = colors.surface,
-                edgePadding = 16.dp
-            ) {
-                tabs.forEach { tab ->
-                    val isSelected = tab == selectedTab
-                    Tab(
-                        selected = isSelected,
-                        onClick = { selectedTab = tab },
-                        modifier = Modifier.padding(horizontal = 4.dp),
-
-                        icon = if (tab.iconRes != null) {
-                            {
-                                Icon(
-                                    painter = painterResource(id = tab.iconRes),
-                                    contentDescription = tab.name,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = if (isSelected) colors.primary else colors.onSurfaceVariant
-                                )
-                            }
-                        } else null,
-
-                        text = {
-                            Text(
-                                text = tab.name.lowercase().replaceFirstChar { it.uppercase() },
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                ),
-                                color = if (isSelected) colors.primary else colors.onSurfaceVariant
-                            )
-                        }
-                    )
+            MyPageCalendarSection(
+                uiState = uiState,
+                onDateClick = onDateClick,
+                onPrevMonth = onPrevMonth,
+                onNextMonth = onNextMonth,
+                onAddClick = onAddRecordClick,
+                onEditClick = {
+                    uiState.selectedRecord?.let { onEditRecordClick(it.id.value) }
                 }
-            }
+            )
 
-            // 3. 탭 콘텐츠 영역
-            when (selectedTab) {
-                MyPageTab.CALENDAR -> {
-                    CalendarScreen(modifier = Modifier.fillMaxWidth().weight(1f))
-                }
-
-                MyPageTab.ANALYTICS -> {
-                    AnalyzeScreen(
-                        brewingData = uiState.analyzeData.brewingData,
-                        teaTypeRecords = uiState.analyzeData.teaTypeRecords,
-                        recommendations = uiState.analyzeData.recommendations,
-                        topTeas = uiState.analyzeData.topTeas,
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
-                }
-
-                MyPageTab.WISHLIST -> {
-                    WishlistScreen(
-                        wishlistItems = uiState.wishlistData.wishlistItems,
-                        savedNotes = uiState.wishlistData.savedNotes,
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
-                }
-
-                MyPageTab.COLLECTION -> {
-                    CollectionScreen(
-                        items = uiState.collectionItems,
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
-                }
-
-                MyPageTab.BADGES -> {
-                    BadgesScreen(
-                        badges = uiState.badges,
-                        onMoreClick = { /* TODO: 뱃지 전체보기 이동 */ },
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
-                }
-            }
+            // 하단 여백을 위한 스페이서
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 private fun MyPageScreenPreview() {
+    // 프리뷰용 Mock 데이터 구성
+    val mockUser = User(
+        id = UserId("1"),
+        username = "Felix",
+        profileImageUrl = null
+    )
+
+    val mockStats = UserStats(
+        weeklyBrewingCount = 5,
+        averageRating = 4.8,
+        preferredTea = "Oolong",
+        averageBrewingTime = "3:20",
+        monthlyBrewingCount = 18
+    )
+
+    val mockRecord = BrewingRecord(
+        id = NoteId("note_1"),
+        teaName = "Alishan Oolong",
+        metaInfo = "2025.12.21 · 3rd Steep",
+        rating = 5,
+        date = java.time.LocalDate.now()
+    )
+
     LeafyTheme {
-        MyPageScreen(
+        MyPageContent(
+            uiState = MyPageUiState(
+                user = mockUser,
+                userStats = mockStats,
+                recordedDays = listOf(1, 5, 12, 15, 21),
+                selectedRecord = mockRecord,
+                isLoading = false
+            ),
             onSettingsClick = {},
-            onEditProfileClick = {}
+            onDateClick = {},
+            onPrevMonth = {},
+            onNextMonth = {},
+            onAddRecordClick = {},
+            onEditRecordClick = {}
         )
     }
 }
