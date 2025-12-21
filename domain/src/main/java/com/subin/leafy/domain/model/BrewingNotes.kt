@@ -1,10 +1,13 @@
 package com.subin.leafy.domain.model
 
+import com.subin.leafy.domain.model.id.NoteId
+import com.subin.leafy.domain.model.id.UserId
 import java.util.Date
+import java.util.UUID
 
 data class BrewingNote(
-    val id: Long = 0,
-    val userId: String = "mock_user_leafy",
+    val id: NoteId = NoteId(UUID.randomUUID().toString()),
+    val ownerId : UserId,
     val teaInfo: TeaInfo,
     val condition: BrewingCondition,
     val evaluation: SensoryEvaluation,

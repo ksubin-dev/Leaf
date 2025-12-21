@@ -3,7 +3,7 @@ package com.leafy.features.timer.ui.factory
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.leafy.features.timer.ui.TimerViewModel
-import com.subin.leafy.domain.usecase.timer.TimerUseCases
+import com.subin.leafy.domain.usecase.TimerUseCases
 
 class TimerViewModelFactory(
     private val timerUseCases: TimerUseCases

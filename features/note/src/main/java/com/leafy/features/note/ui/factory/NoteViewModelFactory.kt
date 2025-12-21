@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.leafy.features.note.ui.NoteViewModel
 import com.subin.leafy.domain.model.InfusionRecord
-import com.subin.leafy.domain.usecase.note.NoteUseCases
+import com.subin.leafy.domain.usecase.NoteUseCases
 
 class NoteViewModelFactory(
     private val noteUseCases: NoteUseCases,
