@@ -1,4 +1,4 @@
-package com.leafy.shared.ui.util
+package com.leafy.shared.ui.utils
 
 import java.time.YearMonth
 

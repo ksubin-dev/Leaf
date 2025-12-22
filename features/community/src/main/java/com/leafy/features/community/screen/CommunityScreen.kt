@@ -30,7 +30,7 @@ fun CommunityScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // 1. 일회성 이벤트(Effect) 처리: 토스트 등
+    // 1. 일회성 이벤트(Effect) 처리: 토스트 등 //걷어내기
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -82,7 +82,7 @@ fun CommunityScreen(
 }
 
 /**
- * Trending 탭 레이아웃: 유저님이 만든 모든 섹션 컴포넌트 통합
+ * Trending 탭 레이아웃
  */
 @Composable
 private fun TrendingTabContent(

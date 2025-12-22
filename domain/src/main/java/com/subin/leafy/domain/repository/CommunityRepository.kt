@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface CommunityRepository {
     // Trending 탭용 데이터
+    //각각 impl 작업
     fun getPopularNotes(): Flow<DataResourceResult<List<CommunityPost>>>
     fun getRisingNotes(): Flow<DataResourceResult<List<CommunityPost>>>
     fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>>
