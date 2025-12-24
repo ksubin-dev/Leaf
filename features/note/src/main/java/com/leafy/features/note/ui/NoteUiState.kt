@@ -6,7 +6,7 @@ import com.subin.leafy.domain.model.WeatherType
 /**
  * 브루잉 노트 작성 화면의 상태를 관리하는 객체
  */
-data class NoteUiState(
+data class NoteUiState( // 베이직하나 만들어서 상속
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isSaved: Boolean = false,

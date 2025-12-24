@@ -6,6 +6,7 @@ import java.util.Date
 import java.util.UUID
 
 data class BrewingNote(
+    //uuid 호출
     val id: NoteId = NoteId(UUID.randomUUID().toString()),
     val ownerId : UserId,
     val teaInfo: TeaInfo,

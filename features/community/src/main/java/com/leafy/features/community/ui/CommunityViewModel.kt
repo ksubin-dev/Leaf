@@ -31,13 +31,10 @@ class CommunityViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // 🎯 모든 데이터를 병렬로 가져옵니다.
             launch { fetchPopularNotes() }
             launch { fetchRisingNotes() }
             launch { fetchMasters() }
             launch { fetchFollowingFeed() }
-
-            // 🔥 누락되었던 섹션 호출 추가
             launch { fetchPopularTags() }
             launch { fetchMostSavedNotes() }
         }
@@ -59,7 +56,6 @@ class CommunityViewModel(
         }
     }
 
-    // 🎯 새롭게 추가된 함수: 인기 태그
     private suspend fun fetchPopularTags() {
         communityUseCases.getPopularTags().collectLatest { result ->
             handleDataResult(result) { data ->
@@ -68,7 +64,6 @@ class CommunityViewModel(
         }
     }
 
-    // 🎯 새롭게 추가된 함수: 가장 많이 저장된 노트
     private suspend fun fetchMostSavedNotes() {
         communityUseCases.getMostSavedNotes().collectLatest { result ->
             handleDataResult(result) { data ->

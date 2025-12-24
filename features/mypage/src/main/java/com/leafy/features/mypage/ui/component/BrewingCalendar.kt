@@ -18,7 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.util.CalendarUtil
+import com.leafy.shared.ui.utils.CalendarUtil
 
 @Composable
 fun BrewingCalendar(
@@ -90,7 +90,10 @@ fun BrewingCalendar(
                 userScrollEnabled = false,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            ) {//key 갖고있어야함 그래야 날짜 하나만 바뀐다.
+                /*
+                key: ((index: Int) -> Any)? = null,
+                 */
                 items(daysInMonth + firstDayOffset) { index ->
                     if (index >= firstDayOffset) {
                         val day = index - firstDayOffset + 1

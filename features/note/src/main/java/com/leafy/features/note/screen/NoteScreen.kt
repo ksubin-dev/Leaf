@@ -1,6 +1,5 @@
 package com.leafy.features.note.screen
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,17 +13,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leafy.features.note.ui.NoteUiEffect
 import com.leafy.features.note.ui.NoteUiState
 import com.leafy.features.note.ui.NoteViewModel
-import com.leafy.features.note.ui.factory.NoteViewModelFactory
 import com.leafy.features.note.ui.sections.*
-import com.leafy.shared.di.ApplicationContainerProvider
 import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.WeatherType
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.leafy.shared.ui.utils.showToast
 
 @Composable
 fun NoteScreen(
@@ -40,7 +37,8 @@ fun NoteScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is NoteUiEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    showToast(context = context, effect.message)
+                    //Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
                 is NoteUiEffect.NavigateBack -> {
                     onNavigateBack()

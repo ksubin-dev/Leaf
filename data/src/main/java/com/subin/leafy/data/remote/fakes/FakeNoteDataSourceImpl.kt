@@ -8,7 +8,7 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.id.NoteId
 
-class FakeNoteDataSourceImpl : NoteDataSource {
+class FakeNoteDataSourceImpl : NoteDataSource { //여기가 나중에 FirebaseNoteDateSourceImpl로 바뀜
     // 실제 DB처럼 DTO 리스트로 관리합니다.
     private val db = mutableListOf<BrewingNoteDTO>()
 
