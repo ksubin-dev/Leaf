@@ -1,8 +1,9 @@
 package com.subin.leafy.domain.repository
 
+import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.UserStats
-import com.subin.leafy.domain.model.id.UserId
+import kotlinx.coroutines.flow.Flow
 
 interface UserStatsRepository {
-    suspend fun getUserStats(userId: UserId): UserStats
+    fun getUserStats(userId: String): Flow<DataResourceResult<UserStats>>
 }

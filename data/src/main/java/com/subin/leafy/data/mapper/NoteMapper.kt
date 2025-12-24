@@ -4,8 +4,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.subin.leafy.data.model.dto.BrewingNoteDTO
 import com.subin.leafy.domain.model.*
-import com.subin.leafy.domain.model.id.NoteId
-import com.subin.leafy.domain.model.id.UserId
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Date
@@ -14,8 +12,8 @@ import java.util.Date
  * DTO -> 상세 BrewingNote (상세 화면용)
  */
 fun BrewingNoteDTO.toDomainNote() = BrewingNote(
-    id = NoteId(this._id),
-    ownerId = UserId(this.userId),
+    id = this._id,
+    ownerId = this.userId,
     teaInfo = TeaInfo(
         name = this.teaName,
         brand = this.teaBrand,
@@ -62,9 +60,9 @@ fun BrewingNoteDTO.toDomainNote() = BrewingNote(
  */
 @RequiresApi(Build.VERSION_CODES.O)
 fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
-    id = NoteId(this._id),
+    id = this._id,
     date = Instant.ofEpochMilli(this.createdAt)
-        .atZone(ZoneId.systemDefault())
+        .atZone(ZoneId.of("Asia/Seoul"))
         .toLocalDate(),
     teaName = this.teaName,
     metaInfo = "${this.waterTemp} · ${this.brewTime} · ${this.brewCount}회 우림",
@@ -74,8 +72,8 @@ fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
  * BrewingNote(Domain) -> BrewingNoteDTO (Data Layer 저장용)
  */
 fun BrewingNote.toDTO() = BrewingNoteDTO(
-    _id = this.id.value,
-    userId = this.ownerId.value,
+    _id = this.id,
+    userId = this.ownerId,
     teaName = this.teaInfo.name,
     teaBrand = this.teaInfo.brand,
     teaType = this.teaInfo.type,
@@ -110,8 +108,8 @@ fun BrewingNote.toDTO() = BrewingNoteDTO(
  * 상세 BrewingNote -> Firestore용 Map (저장용)
  */
 fun BrewingNote.toFirestoreMap(): Map<String, Any?> = mapOf(
-    "_id" to this.id.value,
-    "userId" to this.ownerId.value,
+    "_id" to this.id,
+    "userId" to this.ownerId,
     "teaName" to this.teaInfo.name,
     "teaBrand" to this.teaInfo.brand,
     "teaType" to this.teaInfo.type,
@@ -150,8 +148,8 @@ fun BrewingNote.toFirestoreMap(): Map<String, Any?> = mapOf(
 fun BrewingNote.toRecord() = BrewingRecord(
     id = this.id,
     date = this.createdAt.toInstant()
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate(),
+        .atZone(ZoneId.of("Asia/Seoul"))
+        .toLocalDate(),  //이 부분 date = TimeUtils.toLocalDate(this.createdAt) 이런식으로 바꾸기 가능
     teaName = this.teaInfo.name,
     metaInfo = "${this.condition.waterTemp} · ${this.condition.brewTime} · ${this.condition.brewCount}회 우림",
     rating = this.ratingInfo.stars

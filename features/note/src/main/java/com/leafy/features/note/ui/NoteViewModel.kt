@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.*
-import com.subin.leafy.domain.model.id.UserId
 import com.subin.leafy.domain.usecase.NoteUseCases
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -85,6 +84,10 @@ class NoteViewModel(
 
         viewModelScope.launch {
             val ownerId = noteUseCases.getCurrentUserId()
+            if (ownerId == null) {
+                _effect.send(NoteUiEffect.ShowToast("로그인이 필요한 서비스입니다."))
+                return@launch
+            }
             val domainNote = _uiState.value.toDomain(ownerId)
             handleOperation(noteUseCases.insertNote(domainNote))
         }
@@ -183,8 +186,9 @@ class NoteViewModel(
 /**
  * NoteUiState -> BrewingNote 변환
  */
-fun NoteUiState.toDomain(ownerId: UserId): BrewingNote {
+fun NoteUiState.toDomain(ownerId: String): BrewingNote {
     return BrewingNote(
+        id = java.util.UUID.randomUUID().toString(),//인데 파이어베이스라면 이거 바꿔줘야함
         ownerId = ownerId,
         teaInfo = TeaInfo(
             name = teaName,

@@ -20,8 +20,6 @@ import com.leafy.features.mypage.ui.component.QuickTimerAction
 import com.leafy.features.mypage.ui.session.MyPageCalendarSection
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.*
-import com.subin.leafy.domain.model.id.NoteId
-import com.subin.leafy.domain.model.id.UserId
 
 @Composable
 fun MyPageScreen(

@@ -28,7 +28,7 @@ import com.subin.leafy.domain.model.TimerPreset
 @Composable
 fun PresetBottomSheet(
     presets: List<TimerPreset>,
-    selectedPresetId: Long?,
+    selectedPresetId: String?,
     onPresetClick: (TimerPreset) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -164,9 +164,9 @@ private fun PresetCard(
 @Composable
 fun PresetBottomSheetPreview() {
     val mockPresets = listOf(
-        TimerPreset(id = 1, name = "Daily Green Tea", temp = "80°C", baseTimeSeconds = 120, leafAmount = "2g", teaType = "Green"),
-        TimerPreset(id = 2, name = "Morning Oolong", temp = "95°C", baseTimeSeconds = 45, leafAmount = "5g", teaType = "Oolong"),
-        TimerPreset(id = 3, name = "Deep Pu-erh", temp = "100°C", baseTimeSeconds = 20, leafAmount = "7g", teaType = "Black")
+        TimerPreset(id = "1", name = "Daily Green Tea", temp = "80°C", baseTimeSeconds = 120, leafAmount = "2g", teaType = "Green"),
+        TimerPreset(id = "2", name = "Morning Oolong", temp = "95°C", baseTimeSeconds = 45, leafAmount = "5g", teaType = "Oolong"),
+        TimerPreset(id = "3", name = "Deep Pu-erh", temp = "100°C", baseTimeSeconds = 20, leafAmount = "7g", teaType = "Black")
     )
 
     LeafyTheme {
@@ -177,7 +177,7 @@ fun PresetBottomSheetPreview() {
                 mockPresets.forEach { preset ->
                     PresetCard(
                         preset = preset,
-                        isSelected = preset.id == 1L,
+                        isSelected = preset.id == "1",
                         onClick = {}
                     )
                     Spacer(modifier = Modifier.height(12.dp))

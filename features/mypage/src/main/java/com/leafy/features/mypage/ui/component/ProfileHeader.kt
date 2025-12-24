@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserStats
-import com.subin.leafy.domain.model.id.UserId
 import com.leafy.shared.R as SharedR
 
 @Composable

@@ -1,9 +1,7 @@
 package com.subin.leafy.domain.model
 
-import com.subin.leafy.domain.model.id.UserId
-
 data class User(
-    val id: UserId,
+    val id: String,
     val username: String,
     val profileImageUrl: String?
 )

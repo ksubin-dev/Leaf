@@ -1,14 +1,12 @@
 package com.subin.leafy.domain.model
 
-import com.subin.leafy.domain.model.id.NoteId
-import com.subin.leafy.domain.model.id.UserId
 import java.util.Date
 import java.util.UUID
 
 data class BrewingNote(
     //uuid 호출
-    val id: NoteId = NoteId(UUID.randomUUID().toString()),
-    val ownerId : UserId,
+    val id: String,
+    val ownerId : String,
     val teaInfo: TeaInfo,
     val condition: BrewingCondition,
     val evaluation: SensoryEvaluation,
