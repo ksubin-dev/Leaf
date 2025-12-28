@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserStats
-import com.subin.leafy.domain.model.id.UserId
 import com.leafy.shared.R as SharedR
 
 @Composable
@@ -119,7 +118,7 @@ fun ProfileHeader(
 @Preview(showBackground = true)
 @Composable
 fun ProfileHeaderPreview() {
-    val mockUser = User(id = UserId("1"), username = "Felix", profileImageUrl = null)
+    val mockUser = User(id = "1", username = "Felix", profileImageUrl = null)
     val mockStats = UserStats(
         weeklyBrewingCount = 3,
         averageRating = 4.5,

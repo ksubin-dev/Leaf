@@ -1,7 +1,10 @@
 package com.leafy.features.mypage.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.note.GetMonthlyRecordsUseCase
 import com.subin.leafy.domain.usecase.note.GetRecordByDateUseCase
@@ -13,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@RequiresApi(Build.VERSION_CODES.O)
 class MyPageViewModel(
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val getUserUseCase: GetUserUseCase,
@@ -25,35 +29,44 @@ class MyPageViewModel(
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadUserProfile()          // 사용자 정보 로드
-        loadCurrentMonthRecords()  // 기존 로직
+        loadUserProfile()
+        loadCurrentMonthRecords()
     }
 
     private fun loadUserProfile() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            try {
-                val currentId = getCurrentUserIdUseCase()
-
-                // 2. ID를 이용해 유저 정보와 통계 정보를 "동시에" 가져오기 (async 활용 가능)
-                // 현재는 간단하게 순차 호출로 작성합니다.
-                val user = getUserUseCase(currentId)
-                val stats = getUserStatsUseCase(currentId)
-
-                _uiState.update {
-                    it.copy(
-                        user = user,
-                        userStats = stats,
-                        isLoading = false
-                    )
+            val currentId = getCurrentUserIdUseCase() ?: return@launch
+            getUserUseCase(currentId).collect { result ->
+                when (result) {
+                    is DataResourceResult.Success -> {
+                        _uiState.update { it.copy(user = result.data) }
+                    }
+                    is DataResourceResult.Failure -> {
+                        _uiState.update { it.copy(errorMessage = result.exception.message) }
+                    }
+                    else -> {}
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false) }
-                // 필요 시 에러 처리 로직 추가
+            }
+        }
+
+        viewModelScope.launch {
+            val currentId = getCurrentUserIdUseCase() ?: return@launch
+            getUserStatsUseCase(currentId).collect { result ->
+                when (result) {
+                    is DataResourceResult.Success -> {
+                        _uiState.update { it.copy(userStats = result.data, isLoading = false) }
+                    }
+                    is DataResourceResult.Failure -> {
+                        _uiState.update { it.copy(isLoading = false) }
+                    }
+                    else -> {}
+                }
             }
         }
     }
+
     // [좌우 이동 로직]
     fun changeMonth(amount: Long) {
         _uiState.update { it.copy(selectedDateTime = it.selectedDateTime.plusMonths(amount)) }
@@ -66,7 +79,9 @@ class MyPageViewModel(
         _uiState.update { it.copy(selectedDateTime = newDate) }
 
         viewModelScope.launch {
-            val result = getRecordByDateUseCase(newDate.toLocalDate())
+            val dateString = LeafyTimeUtils.formatToString(newDate)
+            val result = getRecordByDateUseCase(dateString)
+
             if (result is DataResourceResult.Success) {
                 _uiState.update { it.copy(selectedRecord = result.data) }
             }
@@ -80,8 +95,14 @@ class MyPageViewModel(
         viewModelScope.launch {
             getMonthlyRecordsUseCase(year, month).collect { result ->
                 if (result is DataResourceResult.Success) {
-                    val days = result.data.map { it.date.dayOfMonth }
-                    _uiState.update { it.copy(recordedDays = days) }
+                    val days = result.data.map { record ->
+                        LeafyTimeUtils.parseToDateTime(record.dateString).dayOfMonth
+                    }.distinct()
+
+                    _uiState.update { it.copy(
+                        monthlyRecords = result.data,
+                        recordedDays = days
+                    ) }
                 }
             }
         }

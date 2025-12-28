@@ -1,5 +1,7 @@
 package com.leafy.features.mypage.ui.session
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,6 +13,7 @@ import com.leafy.features.mypage.ui.component.BrewingCalendar
 import com.leafy.features.mypage.ui.component.BrewingRecordCard
 import com.leafy.features.mypage.ui.component.BrewingRecordEmptyCard
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyPageCalendarSection(
     uiState: MyPageUiState,
@@ -33,7 +36,7 @@ fun MyPageCalendarSection(
             onPrevMonth = onPrevMonth,
             onNextMonth = onNextMonth
         ) {
-            Column {
+            Column(modifier = Modifier.padding(top = 16.dp)) {
                 if (uiState.selectedRecord != null) {
                     BrewingRecordCard(
                         teaName = uiState.selectedRecord.teaName,

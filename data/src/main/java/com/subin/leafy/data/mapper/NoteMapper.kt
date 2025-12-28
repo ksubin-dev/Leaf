@@ -1,58 +1,53 @@
 package com.subin.leafy.data.mapper
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.subin.leafy.data.model.dto.BrewingNoteDTO
 import com.subin.leafy.domain.model.*
-import com.subin.leafy.domain.model.id.NoteId
-import com.subin.leafy.domain.model.id.UserId
-import java.time.Instant
-import java.time.ZoneId
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
+
+
+/**
+ * 날짜 변환을 위한 유틸리티 객체
+ */
+object TimeUtils {
+    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+    fun toDateString(date: Date): String = dateFormatter.format(date)
+
+    fun fromDateString(dateString: String): Date {
+        return runCatching { dateFormatter.parse(dateString) }.getOrNull() ?: Date()
+    }
+}
 
 /**
  * DTO -> 상세 BrewingNote (상세 화면용)
  */
 fun BrewingNoteDTO.toDomainNote() = BrewingNote(
-    id = NoteId(this._id),
-    ownerId = UserId(this.userId),
+    id = this._id,
+    ownerId = this.userId,
     teaInfo = TeaInfo(
-        name = this.teaName,
-        brand = this.teaBrand,
-        type = this.teaType,
-        leafStyle = this.leafStyle,
-        processing = this.processing,
-        grade = this.teaGrade
+        name = this.teaName, brand = this.teaBrand, type = this.teaType,
+        leafStyle = this.leafStyle, processing = this.processing, grade = this.teaGrade
     ),
     condition = BrewingCondition(
-        waterTemp = this.waterTemp,
-        leafAmount = this.leafAmount,
-        brewTime = this.brewTime,
-        brewCount = this.brewCount,
-        teaware = this.teaware
+        waterTemp = this.waterTemp, leafAmount = this.leafAmount,
+        brewTime = this.brewTime, brewCount = this.brewCount, teaware = this.teaware
     ),
     evaluation = SensoryEvaluation(
         selectedTags = this.selectedTags.toSet(),
-        sweetness = this.sweetness,
-        sourness = this.sourness,
-        bitterness = this.bitterness,
-        saltiness = this.saltiness,
+        sweetness = this.sweetness, sourness = this.sourness,
+        bitterness = this.bitterness, saltiness = this.saltiness,
         umami = this.umami,
         bodyType = runCatching { BodyType.valueOf(this.bodyType) }.getOrDefault(BodyType.MEDIUM),
-        finishLevel = this.finishLevel,
-        memo = this.memo
+        finishLevel = this.finishLevel, memo = this.memo
     ),
-    ratingInfo = RatingInfo(
-        stars = this.stars,
-        purchaseAgain = this.purchaseAgain
-    ),
+    ratingInfo = RatingInfo(stars = this.stars, purchaseAgain = this.purchaseAgain),
     context = NoteContext(
+        dateTime = this.dateTime,
         weather = runCatching { WeatherType.valueOf(this.weather) }.getOrDefault(WeatherType.INDOOR),
-        withPeople = this.withPeople,
-        dryLeafUri = this.dryLeafUri,
-        liquorUri = this.liquorUri,
-        teawareUri = this.teawareUri,
-        additionalUri = this.additionalUri
+        withPeople = this.withPeople, dryLeafUri = this.dryLeafUri,
+        liquorUri = this.liquorUri, teawareUri = this.teawareUri, additionalUri = this.additionalUri
     ),
     createdAt = Date(this.createdAt)
 )
@@ -60,22 +55,20 @@ fun BrewingNoteDTO.toDomainNote() = BrewingNote(
 /**
  * DTO -> 요약 BrewingRecord (마이페이지 캘린더용)
  */
-@RequiresApi(Build.VERSION_CODES.O)
 fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
-    id = NoteId(this._id),
-    date = Instant.ofEpochMilli(this.createdAt)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate(),
+    id = this._id,
+    dateString = this.dateTime.ifBlank { TimeUtils.toDateString(Date(this.createdAt)) },
     teaName = this.teaName,
     metaInfo = "${this.waterTemp} · ${this.brewTime} · ${this.brewCount}회 우림",
     rating = this.stars
 )
+
 /**
  * BrewingNote(Domain) -> BrewingNoteDTO (Data Layer 저장용)
  */
 fun BrewingNote.toDTO() = BrewingNoteDTO(
-    _id = this.id.value,
-    userId = this.ownerId.value,
+    _id = this.id,
+    userId = this.ownerId,
     teaName = this.teaInfo.name,
     teaBrand = this.teaInfo.brand,
     teaType = this.teaInfo.type,
@@ -98,6 +91,7 @@ fun BrewingNote.toDTO() = BrewingNoteDTO(
     memo = this.evaluation.memo,
     stars = this.ratingInfo.stars,
     purchaseAgain = this.ratingInfo.purchaseAgain,
+    dateTime = this.context.dateTime,
     weather = this.context.weather.name,
     withPeople = this.context.withPeople,
     dryLeafUri = this.context.dryLeafUri,
@@ -106,52 +100,32 @@ fun BrewingNote.toDTO() = BrewingNoteDTO(
     additionalUri = this.context.additionalUri,
     createdAt = this.createdAt.time
 )
+
 /**
  * 상세 BrewingNote -> Firestore용 Map (저장용)
  */
-fun BrewingNote.toFirestoreMap(): Map<String, Any?> = mapOf(
-    "_id" to this.id.value,
-    "userId" to this.ownerId.value,
-    "teaName" to this.teaInfo.name,
-    "teaBrand" to this.teaInfo.brand,
-    "teaType" to this.teaInfo.type,
-    "leafStyle" to this.teaInfo.leafStyle,
-    "processing" to this.teaInfo.processing,
-    "teaGrade" to this.teaInfo.grade,
-    "waterTemp" to this.condition.waterTemp,
-    "leafAmount" to this.condition.leafAmount,
-    "brewTime" to this.condition.brewTime,
-    "brewCount" to this.condition.brewCount,
-    "teaware" to this.condition.teaware,
-    "selectedTags" to this.evaluation.selectedTags.toList(),
-    "sweetness" to this.evaluation.sweetness,
-    "sourness" to this.evaluation.sourness,
-    "bitterness" to this.evaluation.bitterness,
-    "saltiness" to this.evaluation.saltiness,
-    "umami" to this.evaluation.umami,
-    "bodyType" to this.evaluation.bodyType.name,
-    "finishLevel" to this.evaluation.finishLevel,
-    "memo" to this.evaluation.memo,
-    "stars" to this.ratingInfo.stars,
-    "purchaseAgain" to this.ratingInfo.purchaseAgain,
-    "weather" to this.context.weather.name,
-    "withPeople" to this.context.withPeople,
-    "dryLeafUri" to this.context.dryLeafUri,
-    "liquorUri" to this.context.liquorUri,
-    "teawareUri" to this.context.teawareUri,
-    "additionalUri" to this.context.additionalUri,
-    "createdAt" to this.createdAt.time
-)
+fun BrewingNote.toFirestoreMap(): Map<String, Any?> = this.toDTO().let { dto ->
+    mapOf(
+        "_id" to dto._id, "userId" to dto.userId, "teaName" to dto.teaName,
+        "teaBrand" to dto.teaBrand, "teaType" to dto.teaType, "leafStyle" to dto.leafStyle,
+        "processing" to dto.processing, "teaGrade" to dto.teaGrade, "waterTemp" to dto.waterTemp,
+        "leafAmount" to dto.leafAmount, "brewTime" to dto.brewTime, "brewCount" to dto.brewCount,
+        "teaware" to dto.teaware, "selectedTags" to dto.selectedTags, "sweetness" to dto.sweetness,
+        "sourness" to dto.sourness, "bitterness" to dto.bitterness, "saltiness" to dto.saltiness,
+        "umami" to dto.umami, "bodyType" to dto.bodyType, "finishLevel" to dto.finishLevel,
+        "memo" to dto.memo, "stars" to dto.stars, "purchaseAgain" to dto.purchaseAgain,
+        "dateTime" to dto.dateTime, "weather" to dto.weather, "withPeople" to dto.withPeople,
+        "dryLeafUri" to dto.dryLeafUri, "liquorUri" to dto.liquorUri, "teawareUri" to dto.teawareUri,
+        "additionalUri" to dto.additionalUri, "createdAt" to dto.createdAt
+    )
+}
+
 /**
- * BrewingNote(상세) -> BrewingRecord(요약)
- * mockDb(도메인 모델 리스트)를 캘린더용으로 변환할 때 사용합니다.
+ * 상세 BrewingNote -> BrewingRecord(요약)
  */
-@RequiresApi(Build.VERSION_CODES.O)
 fun BrewingNote.toRecord() = BrewingRecord(
     id = this.id,
-    date = this.createdAt.toInstant()
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate(),
+    dateString = this.context.dateTime.ifBlank { TimeUtils.toDateString(this.createdAt) },
     teaName = this.teaInfo.name,
     metaInfo = "${this.condition.waterTemp} · ${this.condition.brewTime} · ${this.condition.brewCount}회 우림",
     rating = this.ratingInfo.stars
@@ -160,5 +134,4 @@ fun BrewingNote.toRecord() = BrewingRecord(
 /**
  * 리스트 변환 유틸리티
  */
-@RequiresApi(Build.VERSION_CODES.O)
 fun List<BrewingNoteDTO>.toDomainRecordList() = this.map { it.toDomainRecord() }

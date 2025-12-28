@@ -3,24 +3,35 @@ package com.subin.leafy.data.repository
 import com.subin.leafy.data.datasource.UserDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
-import com.subin.leafy.domain.model.id.UserId
 import com.subin.leafy.domain.repository.UserRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 
 class UserRepositoryImpl(
     private val dataSource: UserDataSource
 ) : UserRepository {
 
-    override suspend fun getCurrentUserId(): UserId {
+    override suspend fun getCurrentUserId(): String? {
         return dataSource.getCurrentUserId()
     }
 
-    override suspend fun getUser(userId: UserId): User {
-        val result = dataSource.getUser(userId)
-        return if (result is DataResourceResult.Success) result.data
-        else throw Exception("User not found")
-    }
+    override fun getUser(userId: String): Flow<DataResourceResult<User>> = flow {
+        emit(dataSource.getUser(userId))
+    }.onStart {
+        emit(DataResourceResult.Loading)
+    }.catch { e ->
+        emit(DataResourceResult.Failure(e))
+    }.flowOn(Dispatchers.IO)
 
-    override suspend fun updateProfile(user: User) {
-        // TODO: 나중에 DataSource에 update 기능을 추가하면 여기서 호출합니다.
-    }
+
+    override fun updateProfile(user: User): Flow<DataResourceResult<Unit>> = flow<DataResourceResult<Unit>> {
+        //val result = dataSource.updateUser(user)
+        //    emit(result) => 나중에 user에 추가해줘야함
+        emit(DataResourceResult.Success(Unit))
+    }.onStart {
+        emit(DataResourceResult.Loading)
+    }.catch { e ->
+        emit(DataResourceResult.Failure(e))
+    }.flowOn(Dispatchers.IO)
 }

@@ -4,13 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.*
-import com.subin.leafy.domain.model.id.UserId
 import com.subin.leafy.domain.usecase.NoteUseCases
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-// UI에서 처리할 일회성 이벤트
 sealed interface NoteUiEffect {
     data class ShowToast(val message: String) : NoteUiEffect
     object NavigateBack : NoteUiEffect
@@ -31,16 +29,12 @@ class NoteViewModel(
     val effect = _effect.receiveAsFlow()
 
     init {
-        initialRecords?.let { records ->
-            applyTimerRecords(records)
-        }
+        initialRecords?.let { applyTimerRecords(it) }
     }
 
     private fun applyTimerRecords(records: List<InfusionRecord>) {
         if (records.isEmpty()) return
-
         val lastBrew = records.first()
-
         _uiState.update { state ->
             state.copy(
                 brewTime = lastBrew.formattedTime,
@@ -50,9 +44,6 @@ class NoteViewModel(
         }
     }
 
-    /**
-     * CUD 작업을 일괄 처리하는 공통 함수
-     */
     private suspend fun handleOperation(flow: Flow<DataResourceResult<Unit>>) {
         flow.collectLatest { result ->
             when (result) {
@@ -68,157 +59,116 @@ class NoteViewModel(
                     _isProcessing.update { false }
                     _effect.send(NoteUiEffect.ShowToast("실패: ${result.exception.message}"))
                 }
-                else -> Unit
+                else -> {
+                    _isProcessing.update { false }
+                }
             }
         }
     }
 
-    // --- 비즈니스 로직 (UseCase 호출) ---
-
     fun saveNote() {
-        if (_uiState.value.teaName.isBlank()) {
-            viewModelScope.launch {
-                _effect.send(NoteUiEffect.ShowToast("차 이름을 입력해주세요."))
-            }
+        val currentState = _uiState.value
+        if (currentState.teaName.isBlank()) {
+            viewModelScope.launch { _effect.send(NoteUiEffect.ShowToast("차 이름을 입력해주세요.")) }
+            return
+        }
+
+        val hasPhoto = listOf(
+            currentState.dryLeafUri, currentState.liquorUri,
+            currentState.teawareUri, currentState.additionalUri
+        ).any { !it.isNullOrBlank() }
+
+        if (!hasPhoto) {
+            viewModelScope.launch { _effect.send(NoteUiEffect.ShowToast("최소 한 장의 사진을 등록해야 합니다.")) }
             return
         }
 
         viewModelScope.launch {
-            val ownerId = noteUseCases.getCurrentUserId()
-            val domainNote = _uiState.value.toDomain(ownerId)
+            val ownerId = noteUseCases.getCurrentUserId() ?: run {
+                _effect.send(NoteUiEffect.ShowToast("로그인이 필요한 서비스입니다."))
+                return@launch
+            }
+
+            val domainNote = currentState.toDomain(ownerId)
             handleOperation(noteUseCases.insertNote(domainNote))
         }
     }
 
-    // --- UI 상태 업데이트 함수들 ---
+    // --- UI 업데이트 함수 ---
 
-    fun updateTeaInfo(
-        name: String? = null,
-        brand: String? = null,
-        type: String? = null,
-        style: String? = null,
-        processing: String? = null,
-        grade: String? = null
-    ) {
-        _uiState.update {
-            it.copy(
-                teaName = name ?: it.teaName,
-                brandName = brand ?: it.brandName,
-                teaType = type ?: it.teaType,
-                leafStyle = style ?: it.leafStyle,
-                leafProcessing = processing ?: it.leafProcessing,
-                teaGrade = grade ?: it.teaGrade
-            )
-        }
+    fun updateTeaInfo(name: String? = null, brand: String? = null, type: String? = null,
+                      style: String? = null, processing: String? = null, grade: String? = null) {
+        _uiState.update { it.copy(
+            teaName = name ?: it.teaName, brandName = brand ?: it.brandName,
+            teaType = type ?: it.teaType, leafStyle = style ?: it.leafStyle,
+            leafProcessing = processing ?: it.leafProcessing, teaGrade = grade ?: it.teaGrade
+        )}
     }
 
     fun updateContext(
-        dateTime: String? = null,
-        weather: WeatherType? = null,
-        withPeople: String? = null
+        dateTime: String? = null, weather: WeatherType? = null, withPeople: String? = null,
+        dryUri: String? = null, liqUri: String? = null, teaUri: String? = null, addUri: String? = null
     ) {
-        _uiState.update {
-            it.copy(
-                dateTime = dateTime ?: it.dateTime,
-                weather = weather ?: it.weather,
-                withPeople = withPeople ?: it.withPeople
-            )
-        }
+        _uiState.update { it.copy(
+            dateTime = dateTime ?: it.dateTime, weather = weather ?: it.weather,
+            withPeople = withPeople ?: it.withPeople,
+            dryLeafUri = dryUri ?: it.dryLeafUri, liquorUri = liqUri ?: it.liquorUri,
+            teawareUri = teaUri ?: it.teawareUri, additionalUri = addUri ?: it.additionalUri
+        )}
     }
 
-    fun updateCondition(
-        temp: String? = null,
-        amount: String? = null,
-        time: String? = null,
-        count: String? = null,
-        teaware: String? = null
-    ) {
-        _uiState.update {
-            it.copy(
-                waterTemp = temp ?: it.waterTemp,
-                leafAmount = amount ?: it.leafAmount,
-                brewTime = time ?: it.brewTime,
-                brewCount = count ?: it.brewCount,
-                teaware = teaware ?: it.teaware
-            )
-        }
+    fun updateCondition(temp: String? = null, amount: String? = null, time: String? = null,
+                        count: String? = null, teaware: String? = null) {
+        _uiState.update { it.copy(
+            waterTemp = temp ?: it.waterTemp, leafAmount = amount ?: it.leafAmount,
+            brewTime = time ?: it.brewTime, brewCount = count ?: it.brewCount,
+            teaware = teaware ?: it.teaware
+        )}
     }
 
-    fun updateSensory(
-        tags: Set<String>? = null,
-        sweet: Int? = null,
-        sour: Int? = null,
-        bitter: Int? = null,
-        salty: Int? = null,
-        umami: Int? = null,
-        body: BodyType? = null,
-        finish: Float? = null,
-        memo: String? = null
-    ) {
-        _uiState.update {
-            it.copy(
-                selectedTags = tags ?: it.selectedTags,
-                sweetness = sweet ?: it.sweetness,
-                sourness = sour ?: it.sourness,
-                bitterness = bitter ?: it.bitterness,
-                saltiness = salty ?: it.saltiness,
-                umami = umami ?: it.umami,
-                bodyType = body ?: it.bodyType,
-                finishLevel = finish ?: it.finishLevel,
-                memo = memo ?: it.memo
-            )
-        }
+    fun updateSensory(tags: Set<String>? = null, sweet: Float? = null, sour: Float? = null,
+                      bitter: Float? = null, salty: Float? = null, umami: Float? = null,
+                      body: BodyType? = null, finish: Float? = null, memo: String? = null) {
+        _uiState.update { it.copy(
+            selectedTags = tags ?: it.selectedTags, sweetness = sweet ?: it.sweetness,
+            sourness = sour ?: it.sourness, bitterness = bitter ?: it.bitterness,
+            saltiness = salty ?: it.saltiness, umami = umami ?: it.umami,
+            bodyType = body ?: it.bodyType, finishLevel = finish ?: it.finishLevel,
+            memo = memo ?: it.memo
+        )}
     }
 
     fun updateRating(rating: Int? = null, purchaseAgain: Boolean? = null) {
-        _uiState.update {
-            it.copy(
-                rating = rating ?: it.rating,
-                purchaseAgain = purchaseAgain ?: it.purchaseAgain
-            )
-        }
+        _uiState.update { it.copy(rating = rating ?: it.rating, purchaseAgain = purchaseAgain ?: it.purchaseAgain) }
     }
 }
 
 /**
- * NoteUiState -> BrewingNote 변환
+ * NoteUiState -> BrewingNote 변환 확장 함수
  */
-fun NoteUiState.toDomain(ownerId: UserId): BrewingNote {
+fun NoteUiState.toDomain(ownerId: String): BrewingNote {
     return BrewingNote(
+        id = java.util.UUID.randomUUID().toString(),
         ownerId = ownerId,
         teaInfo = TeaInfo(
-            name = teaName,
-            brand = brandName,
-            type = teaType,
-            leafStyle = leafStyle,
-            processing = leafProcessing,
-            grade = teaGrade
+            name = teaName, brand = brandName, type = teaType,
+            leafStyle = leafStyle, processing = leafProcessing, grade = teaGrade
         ),
         condition = BrewingCondition(
-            waterTemp = waterTemp,
-            leafAmount = leafAmount,
-            brewTime = brewTime,
-            brewCount = brewCount,
-            teaware = teaware
+            waterTemp = waterTemp, leafAmount = leafAmount,
+            brewTime = brewTime, brewCount = brewCount, teaware = teaware
         ),
         evaluation = SensoryEvaluation(
-            selectedTags = selectedTags,
-            sweetness = sweetness,
-            sourness = sourness,
-            bitterness = bitterness,
-            saltiness = saltiness,
-            umami = umami,
-            bodyType = bodyType,
-            finishLevel = finishLevel,
-            memo = memo
+            selectedTags = selectedTags, sweetness = sweetness, sourness = sourness,
+            bitterness = bitterness, saltiness = saltiness, umami = umami,
+            bodyType = bodyType, finishLevel = finishLevel, memo = memo
         ),
-        ratingInfo = RatingInfo(
-            stars = rating,
-            purchaseAgain = purchaseAgain
-        ),
+        ratingInfo = RatingInfo(stars = rating, purchaseAgain = purchaseAgain),
         context = NoteContext(
-            weather = weather,
-            withPeople = withPeople
+            dateTime = dateTime,
+            weather = weather, withPeople = withPeople,
+            dryLeafUri = dryLeafUri, liquorUri = liquorUri,
+            teawareUri = teawareUri, additionalUri = additionalUri
         )
     )
 }

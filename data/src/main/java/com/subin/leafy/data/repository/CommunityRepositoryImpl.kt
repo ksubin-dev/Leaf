@@ -59,7 +59,6 @@ class CommunityRepositoryImpl(
     }.flowOn(Dispatchers.IO)
 
     // 액션(CUD) 계열은 Flow 대신 직접 DataResourceResult 반환하거나
-    // 필요에 따라 강사님처럼 Flow로 감쌀 수 있습니다.
     override suspend fun toggleLike(postId: String): DataResourceResult<Boolean> {
         return targetDataSource.toggleLike(postId)
     }

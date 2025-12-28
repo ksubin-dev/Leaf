@@ -1,6 +1,8 @@
 package com.leafy.features.mypage.screen
 
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,13 +18,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.mypage.ui.MyPageUiState
 import com.leafy.features.mypage.ui.MyPageViewModel
 import com.leafy.features.mypage.ui.component.ProfileHeader
-import com.leafy.features.mypage.ui.component.QuickTimerAction
 import com.leafy.features.mypage.ui.session.MyPageCalendarSection
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.*
-import com.subin.leafy.domain.model.id.NoteId
-import com.subin.leafy.domain.model.id.UserId
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyPageScreen(
     viewModel: MyPageViewModel,
@@ -30,7 +30,6 @@ fun MyPageScreen(
     onAddRecordClick: () -> Unit,
     onEditRecordClick: (String) -> Unit
 ) {
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     MyPageContent(
@@ -44,6 +43,7 @@ fun MyPageScreen(
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun MyPageContent(
     uiState: MyPageUiState,
@@ -66,6 +66,12 @@ private fun MyPageContent(
                 .padding(innerPadding)
                 .verticalScroll(scrollState)
         ) {
+            if (uiState.isLoading) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
 
             if (uiState.user != null && uiState.userStats != null) {
                 ProfileHeader(
@@ -73,17 +79,7 @@ private fun MyPageContent(
                     stats = uiState.userStats,
                     onSettingsClick = onSettingsClick
                 )
-            } else if (uiState.isLoading) {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary
-                )
             }
-
-            QuickTimerAction(
-                presetName = "데일리 녹차",
-                onClick = {}
-            )
 
             MyPageCalendarSection(
                 uiState = uiState,
@@ -92,22 +88,21 @@ private fun MyPageContent(
                 onNextMonth = onNextMonth,
                 onAddClick = onAddRecordClick,
                 onEditClick = {
-                    uiState.selectedRecord?.let { onEditRecordClick(it.id.value) }
+                    uiState.selectedRecord?.let { onEditRecordClick(it.id) }
                 }
             )
 
-            // 하단 여백을 위한 스페이서
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 private fun MyPageScreenPreview() {
-    // 프리뷰용 Mock 데이터 구성
     val mockUser = User(
-        id = UserId("1"),
+        id = "user_1",
         username = "Felix",
         profileImageUrl = null
     )
@@ -121,11 +116,11 @@ private fun MyPageScreenPreview() {
     )
 
     val mockRecord = BrewingRecord(
-        id = NoteId("note_1"),
+        id = "note_1",
         teaName = "Alishan Oolong",
-        metaInfo = "2025.12.21 · 3rd Steep",
+        metaInfo = "3회 우림",
         rating = 5,
-        date = java.time.LocalDate.now()
+        dateString = "2025-12-21 14:00"
     )
 
     LeafyTheme {
@@ -146,4 +141,3 @@ private fun MyPageScreenPreview() {
         )
     }
 }
-

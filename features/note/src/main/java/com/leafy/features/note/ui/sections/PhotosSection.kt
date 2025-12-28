@@ -24,12 +24,15 @@ import com.leafy.shared.ui.theme.LeafyTheme
 @Composable
 fun PhotosSection(
     modifier: Modifier = Modifier,
+    dryLeafUri: String? = null,
+    liquorUri: String? = null,
+    teawareUri: String? = null,
+    additionalUri: String? = null,
     onClickDryLeaf: () -> Unit,
     onClickTeaLiquor: () -> Unit,
     onClickTeaware: () -> Unit,
     onClickAdditional: () -> Unit
 ) {
-
     val colors = MaterialTheme.colorScheme
 
     Column(modifier = modifier) {
@@ -55,21 +58,21 @@ fun PhotosSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 NotePhotoSlot(
                     title = "Dry Leaf",
+                    imageUri = dryLeafUri,
                     iconRes = SharedR.drawable.ic_leaf,
                     onClick = onClickDryLeaf,
                     modifier = Modifier.weight(1f)
                 )
                 NotePhotoSlot(
                     title = "Tea Liquor",
+                    imageUri = liquorUri,
                     iconRes = SharedR.drawable.ic_note_photo_tea_liquor,
                     onClick = onClickTeaLiquor,
                     modifier = Modifier.weight(1f)
@@ -82,12 +85,14 @@ fun PhotosSection(
             ) {
                 NotePhotoSlot(
                     title = "Teaware",
+                    imageUri = teawareUri,
                     iconRes = SharedR.drawable.ic_note_photo_teaware,
                     onClick = onClickTeaware,
                     modifier = Modifier.weight(1f)
                 )
                 NotePhotoSlot(
                     title = "Additional",
+                    imageUri = additionalUri,
                     iconRes = SharedR.drawable.ic_note_photo_add,
                     onClick = onClickAdditional,
                     modifier = Modifier.weight(1f)

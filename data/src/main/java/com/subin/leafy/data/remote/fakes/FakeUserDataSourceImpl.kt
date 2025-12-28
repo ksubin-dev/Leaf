@@ -7,13 +7,12 @@ import com.subin.leafy.data.model.dto.UserStatsDTO
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserStats
-import com.subin.leafy.domain.model.id.UserId
 
 class FakeUserDataSourceImpl : UserDataSource {
 
     // 가짜 ID 값을 여기서 정의합니다.
     //FirestoreSource에서는 실제 Firebase UID를 반환
-    private val fakeCurrentUserId = UserId("mock_user_leafy")
+    private val fakeCurrentUserId = "mock_user_leafy"
 
     private val fakeUserDto = UserDTO(
         uid = "mock_user_leafy",
@@ -29,17 +28,17 @@ class FakeUserDataSourceImpl : UserDataSource {
         avgBrewingTime = "3:00"
     )
 
-    override suspend fun getCurrentUserId(): UserId {
+    override suspend fun getCurrentUserId(): String? {
         return fakeCurrentUserId
     }
 
-    override suspend fun getUser(userId: UserId): DataResourceResult<User> = runCatching {
+    override suspend fun getUser(userId: String): DataResourceResult<User> = runCatching {
         DataResourceResult.Success(fakeUserDto.toDomain())
     }.getOrElse {
         DataResourceResult.Failure(it)
     }
 
-    override suspend fun getUserStats(userId: UserId): DataResourceResult<UserStats> = runCatching {
+    override suspend fun getUserStats(userId: String): DataResourceResult<UserStats> = runCatching {
         DataResourceResult.Success(fakeStatsDto.toDomain())
     }.getOrElse {
         DataResourceResult.Failure(it)

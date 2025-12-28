@@ -1,14 +1,12 @@
 package com.subin.leafy.domain.model
 
-import com.subin.leafy.domain.model.id.NoteId
-import com.subin.leafy.domain.model.id.UserId
 import java.util.Date
 import java.util.UUID
 
 data class BrewingNote(
     //uuid 호출
-    val id: NoteId = NoteId(UUID.randomUUID().toString()),
-    val ownerId : UserId,
+    val id: String,
+    val ownerId : String,
     val teaInfo: TeaInfo,
     val condition: BrewingCondition,
     val evaluation: SensoryEvaluation,
@@ -39,15 +37,23 @@ data class BrewingCondition(
 // 맛 평가 정보 (SensoryEvaluationSection 대응)
 data class SensoryEvaluation(
     val selectedTags: Set<String> = emptySet(),
-    val sweetness: Int = 0,
-    val sourness: Int = 0,
-    val bitterness: Int = 0,
-    val saltiness: Int = 0,
-    val umami: Int = 0,
+    val sweetness: Float = 0f,
+    val sourness: Float = 0f,
+    val bitterness: Float = 0f,
+    val saltiness: Float = 0f,
+    val umami: Float = 0f,
     val bodyType: BodyType = BodyType.MEDIUM,
     val finishLevel: Float = 0.5f,
     val memo: String = ""
 )
+
+fun SensoryEvaluation.getFinishLabel(): String {
+    return when {
+        finishLevel < 0.3f -> "Clean (깔끔)"
+        finishLevel > 0.7f -> "Astringent (떫음)"
+        else -> "Balanced (균형 잡힘)"
+    }
+}
 
 // 별점 및 재구매 의사
 data class RatingInfo(
@@ -57,6 +63,7 @@ data class RatingInfo(
 
 // 날씨 및 사진 정보
 data class NoteContext(
+    val dateTime: String = "",
     val weather: WeatherType,
     val withPeople: String = "",
     val dryLeafUri: String? = null,

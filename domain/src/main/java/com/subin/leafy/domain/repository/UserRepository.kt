@@ -1,10 +1,13 @@
 package com.subin.leafy.domain.repository
 
+import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
-import com.subin.leafy.domain.model.id.UserId
+import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
-    suspend fun getCurrentUserId(): UserId
-    suspend fun getUser(userId: UserId): User
-    suspend fun updateProfile(user: User)
+    /** 현재 로그인된 유저 ID 조회 (로그인 안 된 경우 null) */
+    suspend fun getCurrentUserId(): String?
+
+    fun getUser(userId: String): Flow<DataResourceResult<User>>
+    fun updateProfile(user: User): Flow<DataResourceResult<Unit>>
 }
