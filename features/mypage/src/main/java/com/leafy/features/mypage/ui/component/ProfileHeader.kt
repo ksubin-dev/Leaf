@@ -118,7 +118,7 @@ fun ProfileHeader(
 @Preview(showBackground = true)
 @Composable
 fun ProfileHeaderPreview() {
-    val mockUser = User(id = UserId("1"), username = "Felix", profileImageUrl = null)
+    val mockUser = User(id = "1", username = "Felix", profileImageUrl = null)
     val mockStats = UserStats(
         weeklyBrewingCount = 3,
         averageRating = 4.5,

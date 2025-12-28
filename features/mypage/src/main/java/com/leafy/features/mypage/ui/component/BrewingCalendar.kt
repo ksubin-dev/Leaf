@@ -1,5 +1,7 @@
 package com.leafy.features.mypage.ui.component
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -19,7 +21,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.CalendarUtil
+import com.leafy.shared.ui.utils.LeafyTimeUtils
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BrewingCalendar(
     modifier: Modifier = Modifier,
@@ -32,9 +36,11 @@ fun BrewingCalendar(
     bottomContent: @Composable () -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
-
     val firstDayOffset = CalendarUtil.getFirstDayOffset(currentMonth)
     val daysInMonth = CalendarUtil.getDaysInMonth(currentMonth)
+
+    val today = LeafyTimeUtils.now().toLocalDate()
+    val isCurrentMonth = currentMonth.year == today.year && currentMonth.monthValue == today.monthValue
 
     Card(
         modifier = modifier
@@ -90,18 +96,17 @@ fun BrewingCalendar(
                 userScrollEnabled = false,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {//key 갖고있어야함 그래야 날짜 하나만 바뀐다.
-                /*
-                key: ((index: Int) -> Any)? = null,
-                 */
-                items(daysInMonth + firstDayOffset) { index ->
+            ) {
+                items(
+                    count = daysInMonth + firstDayOffset,
+                    key = { it }
+                ) { index ->
                     if (index >= firstDayOffset) {
                         val day = index - firstDayOffset + 1
                         CalendarDayItem(
                             day = day,
                             isSelected = day == selectedDay,
-                            isToday = (day == java.time.LocalDate.now().dayOfMonth &&
-                                    currentMonth == java.time.YearMonth.now()),
+                            isToday = isCurrentMonth && day == today.dayOfMonth,
                             hasRecord = recordedDays.contains(day),
                             onClick = { onDateClick(day) }
                         )
@@ -118,6 +123,7 @@ fun BrewingCalendar(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun BrewingCalendarPreview() {
@@ -131,9 +137,9 @@ fun BrewingCalendarPreview() {
                 currentMonth = java.time.YearMonth.of(2025, 12),
                 selectedDay = 17,
                 recordedDays = listOf(1, 3, 5, 8, 10, 15, 17),
-                onDateClick = {},    // 클릭 이벤트 빈 값 추가
-                onPrevMonth = {},    // 이전달 클릭 빈 값 추가
-                onNextMonth = {}     // 다음달 클릭 빈 값 추가
+                onDateClick = {},
+                onPrevMonth = {},
+                onNextMonth = {}
             )
         }
     }

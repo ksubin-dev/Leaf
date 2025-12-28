@@ -30,7 +30,7 @@ fun BrewingItemCard(
         modifier = modifier
             .height(80.dp)
             .clip(RoundedCornerShape(12.dp)),
-        color = MaterialTheme.colorScheme.tertiary
+        color = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),

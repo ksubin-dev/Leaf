@@ -3,39 +3,46 @@ package com.subin.leafy.data.model.dto
 data class BrewingNoteDTO(
     val _id: String = "",
     val userId: String = "",
-    // TeaInfo
+
+    // 1. TeaInfo
     val teaName: String = "",
     val teaBrand: String = "",
     val teaType: String = "",
     val leafStyle: String = "",
     val processing: String = "",
     val teaGrade: String = "",
-    // BrewingCondition
+
+    // 2. BrewingCondition
     val waterTemp: String = "",
     val leafAmount: String = "",
     val brewTime: String = "",
     val brewCount: String = "",
     val teaware: String = "",
-    // SensoryEvaluation
+
+    // 3. SensoryEvaluation
     val selectedTags: List<String> = emptyList(),
-    val sweetness: Int = 0,
-    val sourness: Int = 0,
-    val bitterness: Int = 0,
-    val saltiness: Int = 0,
-    val umami: Int = 0,
+    val sweetness: Float = 0f,
+    val sourness: Float = 0f,
+    val bitterness: Float = 0f,
+    val saltiness: Float = 0f,
+    val umami: Float = 0f,
     val bodyType: String = "MEDIUM",
     val finishLevel: Float = 0.5f,
     val memo: String = "",
-    // RatingInfo
+
+    // 4. RatingInfo
     val stars: Int = 0,
     val purchaseAgain: Boolean? = null,
-    // NoteContext
+
+    // 5. NoteContext
+    val dateTime: String = "",
     val weather: String = "INDOOR",
     val withPeople: String = "",
     val dryLeafUri: String? = null,
     val liquorUri: String? = null,
     val teawareUri: String? = null,
     val additionalUri: String? = null,
-    // Timestamp
+
+    // 6. Timestamp (시스템 관리용)
     val createdAt: Long = 0L
 )

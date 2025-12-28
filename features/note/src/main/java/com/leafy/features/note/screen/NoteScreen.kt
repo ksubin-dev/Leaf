@@ -29,7 +29,6 @@ fun NoteScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
 
@@ -38,7 +37,6 @@ fun NoteScreen(
             when (effect) {
                 is NoteUiEffect.ShowToast -> {
                     showToast(context = context, effect.message)
-                    //Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
                 is NoteUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -55,8 +53,8 @@ fun NoteScreen(
         onUpdateTeaInfo = { name, brand, type, style, processing, grade ->
             viewModel.updateTeaInfo(name, brand, type, style, processing, grade)
         },
-        onUpdateContext = { dateTime, weather, withPeople ->
-            viewModel.updateContext(dateTime, weather, withPeople)
+        onUpdateContext = { dateTime, weather, withPeople, dry, liq, tea, add ->
+            viewModel.updateContext(dateTime, weather, withPeople, dry, liq, tea, add)
         },
         onUpdateCondition = { temp, amount, time, count, teaware ->
             viewModel.updateCondition(temp, amount, time, count, teaware)
@@ -78,9 +76,9 @@ private fun NoteContent(
     onNavigateBack: () -> Unit,
     onSave: () -> Unit,
     onUpdateTeaInfo: (String?, String?, String?, String?, String?, String?) -> Unit,
-    onUpdateContext: (String?, WeatherType?, String?) -> Unit,
+    onUpdateContext: (String?, WeatherType?, String?, String?, String?, String?, String?) -> Unit,
     onUpdateCondition: (String?, String?, String?, String?, String?) -> Unit,
-    onUpdateSensory: (Set<String>?, Int?, Int?, Int?, Int?, Int?, BodyType?, Float?, String?) -> Unit,
+    onUpdateSensory: (Set<String>?, Float?, Float?, Float?, Float?, Float?, BodyType?, Float?, String?) -> Unit,
     onUpdateRating: (Int?, Boolean?) -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
@@ -131,9 +129,16 @@ private fun NoteContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
+
             PhotosSection(
-                onClickDryLeaf = {}, onClickTeaLiquor = {},
-                onClickTeaware = {}, onClickAdditional = {}
+                dryLeafUri = uiState.dryLeafUri,
+                liquorUri = uiState.liquorUri,
+                teawareUri = uiState.teawareUri,
+                additionalUri = uiState.additionalUri,
+                onClickDryLeaf = { /* 갤러리 연동 시 it 자리에 uri 입력 */ onUpdateContext(null, null, null, "sample_uri", null, null, null) },
+                onClickTeaLiquor = { onUpdateContext(null, null, null, null, "sample_uri", null, null) },
+                onClickTeaware = { onUpdateContext(null, null, null, null, null, "sample_uri", null) },
+                onClickAdditional = { onUpdateContext(null, null, null, null, null, null, "sample_uri") }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -159,9 +164,9 @@ private fun NoteContent(
                 dateTime = uiState.dateTime,
                 selectedWeather = uiState.weather,
                 withPeople = uiState.withPeople,
-                onDateTimeChange = { onUpdateContext(it, null, null) },
-                onWeatherSelected = { onUpdateContext(null, it, null) },
-                onWithPeopleChange = { onUpdateContext(null, null, it) }
+                onDateTimeChange = { onUpdateContext(it, null, null, null, null, null, null) },
+                onWeatherSelected = { onUpdateContext(null, it, null, null, null, null, null) },
+                onWithPeopleChange = { onUpdateContext(null, null, it, null, null, null, null) }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -183,20 +188,20 @@ private fun NoteContent(
 
             SensoryEvaluationSection(
                 selectedTags = uiState.selectedTags,
-                sweetIntensity = uiState.sweetness.toFloat(),
-                sourIntensity = uiState.sourness.toFloat(),
-                bitterIntensity = uiState.bitterness.toFloat(),
-                saltyIntensity = uiState.saltiness.toFloat(),
-                umamiIntensity = uiState.umami.toFloat(),
+                sweetIntensity = uiState.sweetness,
+                sourIntensity = uiState.sourness,
+                bitterIntensity = uiState.bitterness,
+                saltyIntensity = uiState.saltiness,
+                umamiIntensity = uiState.umami,
                 bodyType = uiState.bodyType,
                 finishValue = uiState.finishLevel,
                 notes = uiState.memo,
                 onTagsChange = { onUpdateSensory(it, null, null, null, null, null, null, null, null) },
-                onSweetnessChange = { onUpdateSensory(null, it.toInt(), null, null, null, null, null, null, null) },
-                onSournessChange = { onUpdateSensory(null, null, it.toInt(), null, null, null, null, null, null) },
-                onBitternessChange = { onUpdateSensory(null, null, null, it.toInt(), null, null, null, null, null) },
-                onSaltyChange = { onUpdateSensory(null, null, null, null, it.toInt(), null, null, null, null) },
-                onUmamiChange = { onUpdateSensory(null, null, null, null, null, it.toInt(), null, null, null) },
+                onSweetnessChange = { onUpdateSensory(null, it, null, null, null, null, null, null, null) },
+                onSournessChange = { onUpdateSensory(null, null, it, null, null, null, null, null, null) },
+                onBitternessChange = { onUpdateSensory(null, null, null, it, null, null, null, null, null) },
+                onSaltyChange = { onUpdateSensory(null, null, null, null, it, null, null, null, null) },
+                onUmamiChange = { onUpdateSensory(null, null, null, null, null, it, null, null, null) },
                 onBodyTypeChange = { onUpdateSensory(null, null, null, null, null, null, it, null, null) },
                 onFinishValueChange = { onUpdateSensory(null, null, null, null, null, null, null, it, null) },
                 onNotesChange = { onUpdateSensory(null, null, null, null, null, null, null, null, it) }
@@ -233,7 +238,7 @@ private fun NoteScreenPreview() {
             onNavigateBack = {},
             onSave = {},
             onUpdateTeaInfo = { _, _, _, _, _, _ -> },
-            onUpdateContext = { _, _, _ -> },
+            onUpdateContext = { _, _, _, _, _, _, _ -> }, // 7개 인자 프리뷰 반영
             onUpdateCondition = { _, _, _, _, _ -> },
             onUpdateSensory = { _, _, _, _, _, _, _, _, _ -> },
             onUpdateRating = { _, _ -> }

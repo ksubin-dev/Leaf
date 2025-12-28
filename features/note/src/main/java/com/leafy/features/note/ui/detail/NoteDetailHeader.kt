@@ -152,7 +152,6 @@ fun NoteDetailHeader(
         }
     }
 }
-// --- 🔍 프리뷰 영역 ---
 
 @Preview(showBackground = true)
 @Composable

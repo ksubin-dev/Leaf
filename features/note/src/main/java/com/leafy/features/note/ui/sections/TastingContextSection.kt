@@ -83,12 +83,10 @@ fun TastingContextSection(
                     TextButton(
                         onClick = {
                             showDatePicker = false
-                            val millis = datePickerState.selectedDateMillis
-                            if (millis != null) {
-                                val date = Date(millis)
-                                val formatter = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
-                                // ViewModel로 포맷팅된 날짜 전달
-                                onDateTimeChange(formatter.format(date))
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                val formattedDate = formatter.format(Date(millis))
+                                onDateTimeChange(formattedDate)
                             }
                         }
                     ) { Text("OK") }

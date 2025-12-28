@@ -13,12 +13,8 @@ interface NoteRepository {
     fun update(note: BrewingNote): Flow<DataResourceResult<Unit>>
     fun delete(id: String): Flow<DataResourceResult<Unit>>
 
-    fun getNoteById(id: String): Flow<DataResourceResult<BrewingNote>>
-
-    // 캘린더/마이페이지를 위한 확장 기능
-    /** 특정 연/월의 노트들을 요약(BrewingRecord) 형태로 가져오기 */
+    fun getNoteById(noteId: String): Flow<DataResourceResult<BrewingNote>>
     fun getRecordsByMonth(year: Int, month: Int): Flow<DataResourceResult<List<BrewingRecord>>>
 
-    /** 특정 날짜의 노트 하나를 요약 형태로 가져오기 */
-    suspend fun getRecordByDate(date: LocalDate): DataResourceResult<BrewingRecord?>
+    suspend fun getRecordByDate(dateString: String): DataResourceResult<BrewingRecord?>
 }
