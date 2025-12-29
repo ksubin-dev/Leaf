@@ -2,6 +2,7 @@ package com.subin.leafy.di
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.google.firebase.auth.FirebaseAuth
 import com.subin.leafy.data.remote.fakes.*
 import com.subin.leafy.data.repository.*
 import com.subin.leafy.domain.usecase.*
@@ -10,12 +11,15 @@ import com.subin.leafy.domain.usecase.note.*
 import com.subin.leafy.domain.usecase.timer.GetPresetsUseCase
 import com.subin.leafy.domain.usecase.user.*
 import com.leafy.shared.di.ApplicationContainer
+import com.subin.leafy.domain.repository.AuthRepository
 import com.subin.leafy.domain.usecase.auth.GetAuthUserUseCase
 import com.subin.leafy.domain.usecase.auth.LoginUseCase
 import com.subin.leafy.domain.usecase.auth.LogoutUseCase
 import com.subin.leafy.domain.usecase.auth.SignUpUseCase
 
-class ApplicationContainerImpl : ApplicationContainer {
+class ApplicationContainerImpl() : ApplicationContainer {
+
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
     // 1. DataSources
     private val communityDataSource = FakeCommunityDataSourceImpl()
@@ -26,15 +30,16 @@ class ApplicationContainerImpl : ApplicationContainer {
 
     // 2. Repositories
     val communityRepository = CommunityRepositoryImpl(communityDataSource)
+    @RequiresApi(Build.VERSION_CODES.O)
     val noteRepository = NoteRepositoryImpl(noteDataSource)
     val timerRepository = TimerRepositoryImpl(timerDataSource)
     val userRepository = UserRepositoryImpl(userDataSource)
     val userStatsRepository = UserStatsRepositoryImpl(userDataSource)
 
-    // Auth Repository 추가 (내일 Firebase 연동 시 이 부분만 교체하면 됩니다)
-    val authRepository = FakeAuthRepositoryImpl()
+    val authRepository: AuthRepository = FirebaseAuthRepositoryImpl(firebaseAuth)
 
     // 3. Note UseCases
+    @RequiresApi(Build.VERSION_CODES.O)
     override val noteUseCases = NoteUseCases(
         getNotes = GetNotesUseCase(noteRepository),
         getNoteById = GetNoteByIdUseCase(noteRepository),
@@ -71,7 +76,7 @@ class ApplicationContainerImpl : ApplicationContainer {
     )
 
     // 7. Auth UseCases
-    override val authUserUseCase = AuthUseCases(
+    override val authUseCases = AuthUseCases(
         signUp = SignUpUseCase(authRepository),
         login = LoginUseCase(authRepository),
         logout = LogoutUseCase(authRepository),

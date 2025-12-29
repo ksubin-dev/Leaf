@@ -13,7 +13,7 @@ interface ApplicationContainer {
 
     val communityUseCases: CommunityUseCases
 
-    val authUserUseCase : AuthUseCases
+    val authUseCases: AuthUseCases
 
 
 }
