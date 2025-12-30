@@ -58,14 +58,18 @@ fun EntryPointScreen(container: ApplicationContainer) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
-        val isAuthScreen = currentDestination?.hierarchy?.any {
-            it.route?.contains("AuthRoute") == true || it.route?.contains("AuthRouteGraph") == true
+        val shouldHideBottomBar = currentDestination?.hierarchy?.any { destination ->
+            destination.route?.let { route ->
+                route.contains("AuthRoute") ||
+                        route.contains("NoteDetail") ||
+                        route.contains("TimerTab")
+            } ?: false
         } == true
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
-                if (!isAuthScreen) {
+                if (!shouldHideBottomBar) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         NavigationBar(
                             modifier = Modifier.align(Alignment.BottomCenter),
@@ -141,7 +145,7 @@ fun EntryPointScreen(container: ApplicationContainer) {
                 navController = navController,
                 startDestination = AuthRouteGraph,
                 modifier = Modifier.padding(
-                    bottom = if (isAuthScreen) 0.dp else paddingValues.calculateBottomPadding()
+                    bottom = if (shouldHideBottomBar) 0.dp else paddingValues.calculateBottomPadding()
                 )
             ) {
                 authNavGraph(
@@ -155,7 +159,14 @@ fun EntryPointScreen(container: ApplicationContainer) {
                 )
 
                 homeNavGraph(navController)
-                noteNavGraph(container = container, onNavigateBack = { navController.popBackStack() })
+                noteNavGraph(
+                    navController = navController,
+                    container = container,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { noteId ->
+                        navController.navigate(MainNavigationRoute.NoteTab(initialRecords = null)) // 수정 모드 전환 로직 필요 시
+                    }
+                )
                 communityNavGraph(navController = navController, container = container)
                 timerNavGraph(navController = navController, container = container)
                 mypageNavGraph(container = container, navController = navController)

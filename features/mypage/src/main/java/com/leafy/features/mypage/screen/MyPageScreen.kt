@@ -14,7 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.leafy.features.mypage.ui.MyPageUiEffect
 import com.leafy.features.mypage.ui.MyPageUiState
 import com.leafy.features.mypage.ui.MyPageViewModel
 import com.leafy.features.mypage.ui.component.ProfileHeader
@@ -28,9 +32,33 @@ fun MyPageScreen(
     viewModel: MyPageViewModel,
     onSettingsClick: () -> Unit,
     onAddRecordClick: () -> Unit,
-    onEditRecordClick: (String) -> Unit
+    onEditRecordClick: (String) -> Unit,
+    onRecordDetailClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is MyPageUiEffect.NavigateToDetail -> {
+                    onRecordDetailClick(effect.noteId)
+                }
+            }
+        }
+    }
 
     MyPageContent(
         uiState = uiState,
@@ -39,10 +67,12 @@ fun MyPageScreen(
         onPrevMonth = { viewModel.changeMonth(-1) },
         onNextMonth = { viewModel.changeMonth(1) },
         onAddRecordClick = onAddRecordClick,
-        onEditRecordClick = onEditRecordClick
+        onEditRecordClick = onEditRecordClick,
+        onRecordDetailClick = { noteId ->
+            viewModel.onRecordDetailClick(noteId)
+        }
     )
 }
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun MyPageContent(
@@ -52,7 +82,8 @@ private fun MyPageContent(
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onAddRecordClick: () -> Unit,
-    onEditRecordClick: (String) -> Unit
+    onEditRecordClick: (String) -> Unit,
+    onRecordDetailClick: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -73,10 +104,10 @@ private fun MyPageContent(
                 )
             }
 
-            if (uiState.user != null && uiState.userStats != null) {
+            uiState.user?.let { user ->
                 ProfileHeader(
-                    user = uiState.user,
-                    stats = uiState.userStats,
+                    user = user,
+                    stats = uiState.userStats ?: UserStats(0, 0.0, "-", "-", 0),
                     onSettingsClick = onSettingsClick
                 )
             }
@@ -87,9 +118,8 @@ private fun MyPageContent(
                 onPrevMonth = onPrevMonth,
                 onNextMonth = onNextMonth,
                 onAddClick = onAddRecordClick,
-                onEditClick = {
-                    uiState.selectedRecord?.let { onEditRecordClick(it.id) }
-                }
+                onEditClick = onEditRecordClick,
+                onDetailClick = onRecordDetailClick
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -120,7 +150,7 @@ private fun MyPageScreenPreview() {
         teaName = "Alishan Oolong",
         metaInfo = "3회 우림",
         rating = 5,
-        dateString = "2025-12-21 14:00"
+        dateString = "2025-12-21"
     )
 
     LeafyTheme {
@@ -137,7 +167,8 @@ private fun MyPageScreenPreview() {
             onPrevMonth = {},
             onNextMonth = {},
             onAddRecordClick = {},
-            onEditRecordClick = {}
+            onEditRecordClick = {},
+            onRecordDetailClick = {},
         )
     }
 }

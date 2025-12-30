@@ -6,15 +6,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.model.User
+import com.subin.leafy.domain.model.UserStats
 import com.subin.leafy.domain.usecase.note.GetMonthlyRecordsUseCase
 import com.subin.leafy.domain.usecase.note.GetRecordByDateUseCase
 import com.subin.leafy.domain.usecase.user.GetCurrentUserIdUseCase
 import com.subin.leafy.domain.usecase.user.GetUserStatsUseCase
 import com.subin.leafy.domain.usecase.user.GetUserUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+
+sealed interface MyPageUiEffect {
+    data class NavigateToDetail(val noteId: String) : MyPageUiEffect
+    // 필요하다면 설정 이동 등 추가 가능
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MyPageViewModel(
@@ -28,7 +38,15 @@ class MyPageViewModel(
     private val _uiState = MutableStateFlow(MyPageUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _effect = Channel<MyPageUiEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
+
     init {
+        loadUserProfile()
+        loadCurrentMonthRecords()
+    }
+
+    fun refresh() {
         loadUserProfile()
         loadCurrentMonthRecords()
     }
@@ -44,7 +62,16 @@ class MyPageViewModel(
                         _uiState.update { it.copy(user = result.data) }
                     }
                     is DataResourceResult.Failure -> {
-                        _uiState.update { it.copy(errorMessage = result.exception.message) }
+                        _uiState.update {
+                            it.copy(
+                                user = User(
+                                    id = currentId,
+                                    username = "사용자",
+                                    profileImageUrl = null
+                                ),
+                                errorMessage = result.exception.message
+                            )
+                        }
                     }
                     else -> {}
                 }
@@ -59,7 +86,12 @@ class MyPageViewModel(
                         _uiState.update { it.copy(userStats = result.data, isLoading = false) }
                     }
                     is DataResourceResult.Failure -> {
-                        _uiState.update { it.copy(isLoading = false) }
+                        _uiState.update {
+                            it.copy(
+                                userStats = UserStats(0, 0.0, "-", "-", 0),
+                                isLoading = false
+                            )
+                        }
                     }
                     else -> {}
                 }
@@ -69,14 +101,16 @@ class MyPageViewModel(
 
     // [좌우 이동 로직]
     fun changeMonth(amount: Long) {
-        _uiState.update { it.copy(selectedDateTime = it.selectedDateTime.plusMonths(amount)) }
+        _uiState.update {
+            it.copy(selectedDate = it.selectedDate.plusMonths(amount))
+        }
         loadCurrentMonthRecords()
     }
 
     // [날짜 클릭 로직]
     fun onDateSelected(day: Int) {
-        val newDate = _uiState.value.selectedDateTime.withDayOfMonth(day)
-        _uiState.update { it.copy(selectedDateTime = newDate) }
+        val newDate = _uiState.value.selectedDate.withDayOfMonth(day)
+        _uiState.update { it.copy(selectedDate = newDate) }
 
         viewModelScope.launch {
             val dateString = LeafyTimeUtils.formatToString(newDate)
@@ -88,21 +122,30 @@ class MyPageViewModel(
         }
     }
 
+    fun onRecordDetailClick(noteId: String) {
+        viewModelScope.launch {
+            _effect.send(MyPageUiEffect.NavigateToDetail(noteId))
+        }
+    }
+
+    /** 현재 설정된 연/월의 모든 기록 로드 */
     private fun loadCurrentMonthRecords() {
-        val year = _uiState.value.selectedDateTime.year
-        val month = _uiState.value.selectedDateTime.monthValue
+        val year = _uiState.value.selectedDate.year
+        val month = _uiState.value.selectedDate.monthValue
 
         viewModelScope.launch {
             getMonthlyRecordsUseCase(year, month).collect { result ->
                 if (result is DataResourceResult.Success) {
                     val days = result.data.map { record ->
-                        LeafyTimeUtils.parseToDateTime(record.dateString).dayOfMonth
+                        LeafyTimeUtils.parseToDate(record.dateString).dayOfMonth
                     }.distinct()
 
                     _uiState.update { it.copy(
                         monthlyRecords = result.data,
                         recordedDays = days
                     ) }
+
+                    onDateSelected(_uiState.value.selectedDay)
                 }
             }
         }

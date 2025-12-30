@@ -1,15 +1,10 @@
 package com.leafy.features.community.ui.component
 
-
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,16 +15,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.leafy.shared.ui.component.RatingStars
 import com.leafy.shared.R as SharedR
 
 /**
- * 노트 요약 카드 - 간결한 버전 (제목, 서브타이틀, 텍스트 별점, 옵션으로 프로필 사진만 표시)
- * 이 카드는 '이번 주 인기 노트'에 사용됩니다.
+ * 노트 요약 카드 - 간결한 버전
+ * '이번 주 인기 노트' 등 섹션에서 사용됩니다.
  */
 @Composable
 fun ExploreSummaryNoteCard(
-    note: ExploreNoteSummaryUi,
+    note: ExploreNoteUi,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     showHotBadge: Boolean = false,
@@ -52,15 +49,16 @@ fun ExploreSummaryNoteCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // 🔹 썸네일 + (옵션) 뱃지
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
             ) {
-                Image(
-                    painter = painterResource(id = note.imageRes),
+                AsyncImage(
+                    model = note.imageUrl,
                     contentDescription = note.title,
+                    placeholder = painterResource(id = SharedR.drawable.ic_sample_tea_1),
+                    error = painterResource(id = SharedR.drawable.ic_sample_tea_1),
                     modifier = Modifier
                         .matchParentSize()
                         .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
@@ -68,19 +66,18 @@ fun ExploreSummaryNoteCard(
                 )
 
                 if (showHotBadge) {
-                    Box(
+                    Surface(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(10.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(colors.error)
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(10.dp),
+                        shape = RoundedCornerShape(999.dp),
+                        color = colors.error
                     ) {
                         Text(
                             text = hotLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = colors.onPrimary
+                            color = colors.onPrimary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -96,7 +93,8 @@ fun ExploreSummaryNoteCard(
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
-                    color = colors.onSurface
+                    color = colors.onSurface,
+                    maxLines = 1
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -114,25 +112,22 @@ fun ExploreSummaryNoteCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        val filledStars = note.rating.toInt().coerceIn(0, 5)
-
-                        Text(
-                            text = "★".repeat(filledStars),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = colors.error
-                        )
-                    }
+                    RatingStars(
+                        rating = note.rating.toInt(),
+                        size = 14.dp
+                    )
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    if (note.profileImageRes != null) {
-                        Image(
-                            painter = painterResource(id = note.profileImageRes),
+                    if (note.authorProfileUrl != null) {
+                        AsyncImage(
+                            model = note.authorProfileUrl,
                             contentDescription = "Author avatar",
+                            placeholder = painterResource(id = SharedR.drawable.ic_profile_1),
+                            error = painterResource(id = SharedR.drawable.ic_profile_1),
                             modifier = Modifier
                                 .size(30.dp)
-                                .clip(RoundedCornerShape(50)),
+                                .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
                     }
@@ -142,19 +137,18 @@ fun ExploreSummaryNoteCard(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
-private fun ExploreSummaryNoteCardWithProfilePreview() {
+private fun ExploreSummaryNoteCardPreview() {
     LeafyTheme {
         ExploreSummaryNoteCard(
-            note = ExploreNoteSummaryUi(
+            note = ExploreNoteUi(
+                id = "sample_1",
                 title = "프리미엄 제주 녹차",
                 subtitle = "깔끔하고 상쾌한 맛의 일품",
-                imageRes = SharedR.drawable.ic_sample_tea_1,
+                imageUrl = null,
                 rating = 4.8f,
-                savedCount = 234,
-                profileImageRes = SharedR.drawable.ic_profile_1
+                authorProfileUrl = null
             )
         )
     }

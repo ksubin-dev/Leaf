@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -33,11 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.leafy.shared.R as SharedR
 
 @Composable
 fun NoteDetailHeader(
@@ -53,25 +56,28 @@ fun NoteDetailHeader(
     // 메뉴의 표시 상태를 관리
     var showMenu by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(320.dp)
-    ) {
-
-        if (imageUrl != null) {
+    Box(modifier = modifier.fillMaxWidth().height(320.dp)) {
+        // 🎯 이미지 레이어
+        if (!imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = imageUrl,
                 contentDescription = "Tea Image",
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                error = painterResource(id = SharedR.drawable.ic_sample_tea_4)
             )
         } else {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            )
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = SharedR.drawable.ic_leaf),
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
+                )
+            }
         }
 
         Box(
@@ -126,26 +132,20 @@ fun NoteDetailHeader(
                 ) {
                     Icon(Icons.Default.MoreVert, "More", tint = Color.White)
                 }
-                
+
                 DropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("수정하기") },
+                        text = { Text("Edit Note") },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        onClick = {
-                            showMenu = false
-                            onEditClick()
-                        }
+                        onClick = { showMenu = false; onEditClick() }
                     )
                     DropdownMenuItem(
-                        text = { Text("삭제하기") },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                        onClick = {
-                            showMenu = false
-                            onDeleteClick()
-                        }
+                        text = { Text("Delete Note") },
+                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
+                        onClick = { showMenu = false; onDeleteClick() }
                     )
                 }
             }

@@ -1,14 +1,9 @@
 package com.leafy.features.community.ui.component
 
-import androidx.compose.foundation.Image
-import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +12,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.leafy.features.community.util.toKiloFormat
 import com.leafy.shared.R as SharedR
 
@@ -25,7 +21,7 @@ import com.leafy.shared.R as SharedR
  */
 @Composable
 fun ExploreSavedNoteCard(
-    note: ExploreNoteSummaryUi,
+    note: ExploreNoteUi,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
@@ -47,10 +43,11 @@ fun ExploreSavedNoteCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 썸네일
-            Image(
-                painter = painterResource(id = note.imageRes),
+            AsyncImage(
+                model = note.imageUrl,
                 contentDescription = note.title,
+                placeholder = painterResource(id = SharedR.drawable.ic_sample_tea_1),
+                error = painterResource(id = SharedR.drawable.ic_sample_tea_1),
                 modifier = Modifier
                     .size(60.dp)
                     .clip(RoundedCornerShape(12.dp)),
@@ -59,7 +56,6 @@ fun ExploreSavedNoteCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // 제목 + 서브타이틀
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -68,21 +64,22 @@ fun ExploreSavedNoteCard(
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
-                    color = colors.onSurface
+                    color = colors.onSurface,
+                    maxLines = 1
                 )
                 Text(
                     text = note.subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1
                 )
             }
-
 
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    painter = painterResource(id = SharedR.drawable.ic_bookmark_outlin),
+                    painter = painterResource(id = SharedR.drawable.ic_bookmark),
                     contentDescription = "Saved count",
                     tint = colors.secondary,
                     modifier = Modifier.size(18.dp)

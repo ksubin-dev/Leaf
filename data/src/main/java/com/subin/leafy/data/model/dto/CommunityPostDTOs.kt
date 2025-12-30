@@ -5,12 +5,12 @@ data class CommunityPostDTO(
     val _id: String = "",
     val authorId: String = "",
     val authorName: String = "",
-    val authorProfileUrl: Int? = null, // 실제 서버 연동 시 String(URL)으로 변경
+    val authorProfileUrl: String? = null,
     val title: String = "",
     val subtitle: String = "",
     val content: String = "",
     val teaTag: String = "",
-    val imageRes: Int = 0,
+    val imageUrl: String? = null,
     val rating: Float = 0f,
     val metaInfo: String = "",
     val brewingSteps: List<String> = emptyList(),
@@ -26,7 +26,7 @@ data class TeaMasterDTO(
     val id: String = "",
     val name: String = "",
     val title: String = "",
-    val profileImageRes: Int = 0,
+    val profileImageUrl: String? = null,
     val isFollowing: Boolean = false
 )
 

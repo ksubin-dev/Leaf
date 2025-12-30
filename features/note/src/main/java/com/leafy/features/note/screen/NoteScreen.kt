@@ -1,5 +1,7 @@
 package com.leafy.features.note.screen
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +25,7 @@ import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.showToast
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NoteScreen(
     viewModel: NoteViewModel,
@@ -68,6 +71,7 @@ fun NoteScreen(
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NoteContent(
@@ -221,6 +225,7 @@ private fun NoteContent(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 private fun NoteScreenPreview() {

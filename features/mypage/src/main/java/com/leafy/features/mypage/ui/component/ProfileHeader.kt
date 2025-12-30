@@ -1,6 +1,5 @@
 package com.leafy.features.mypage.ui.component
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -16,20 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserStats
-import com.leafy.shared.R as SharedR
 
 @Composable
 fun ProfileHeader(
     user: User,
     stats: UserStats,
-    profileImageRes: Int? = null,
     onSettingsClick: () -> Unit
 ) {
     Column(
@@ -44,7 +41,6 @@ fun ProfileHeader(
             verticalAlignment = Alignment.Top
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // 프로필 이미지 영역
                 Box(
                     modifier = Modifier
                         .size(64.dp)
@@ -56,10 +52,10 @@ fun ProfileHeader(
                             shape = CircleShape
                         )
                 ) {
-                    if (profileImageRes != null) {
-                        Image(
-                            painter = painterResource(id = profileImageRes),
-                            contentDescription = null,
+                    if (!user.profileImageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = user.profileImageUrl,
+                            contentDescription = "Profile Image",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -77,13 +73,13 @@ fun ProfileHeader(
 
                 Column {
                     Text(
-                        text = "${user.username}", // User 모델 사용
+                        text = user.username,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "이번 주: ${stats.weeklyBrewingCount}회 브루잉 · 평균 ${stats.averageRating}★", // Stats 모델 사용
+                        text = "이번 주: ${stats.weeklyBrewingCount}회 브루잉 · 평균 ${stats.averageRating}★",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
@@ -102,14 +98,13 @@ fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 가로 스크롤 영역: Stats 모델의 데이터들로 칩 구성
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SnapshotChip(label = "선호 티", value = stats.preferredTea)
+            SnapshotChip(label = "선호 티", value = stats.preferredTea.ifBlank { "-" })
             SnapshotChip(label = "평균 우림", value = stats.averageBrewingTime)
-            SnapshotChip(label = "이번 달", value = "${stats.monthlyBrewingCount}회 브루잉")
+            SnapshotChip(label = "이번 달", value = "${stats.monthlyBrewingCount}회")
         }
     }
 }
@@ -118,7 +113,7 @@ fun ProfileHeader(
 @Preview(showBackground = true)
 @Composable
 fun ProfileHeaderPreview() {
-    val mockUser = User(id = "1", username = "Felix", profileImageUrl = null)
+    val mockUser = User(id = "1", username = "Leafy", profileImageUrl = null)
     val mockStats = UserStats(
         weeklyBrewingCount = 3,
         averageRating = 4.5,

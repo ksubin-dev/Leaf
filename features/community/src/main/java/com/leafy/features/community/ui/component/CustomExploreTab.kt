@@ -35,13 +35,11 @@ fun CustomExploreTabRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp) // 높이 고정
+                .height(44.dp)
                 .background(colors.background)
         ) {
             ExploreTab.entries.forEach { tab ->
                 val selected = tab == selectedTab
-
-                // 2. 각 탭 아이템 (균등한 공간 할당)
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -73,8 +71,6 @@ fun CustomExploreTabRow(
                 }
             }
         }
-
-        // 4. 하단 구분선
         HorizontalDivider(
             color = colors.onSurfaceVariant.copy(alpha = 1f),
             thickness = 1.dp
@@ -83,7 +79,6 @@ fun CustomExploreTabRow(
 }
 
 
-// 💡 추가된 프리뷰 코드 💡
 @Preview(showBackground = true)
 @Composable
 private fun CustomExploreTabRowPreview() {
@@ -103,10 +98,9 @@ private fun CustomExploreTabRowPreview() {
 @Composable
 private fun CustomExploreTabRowFollowingSelectedPreview() {
     LeafyTheme {
-        // Following 탭이 선택된 상태를 미리 보여줍니다.
         CustomExploreTabRow(
             selectedTab = ExploreTab.FOLLOWING,
-            onTabSelected = { /* no-op for static preview */ }
+            onTabSelected = { }
         )
     }
 }

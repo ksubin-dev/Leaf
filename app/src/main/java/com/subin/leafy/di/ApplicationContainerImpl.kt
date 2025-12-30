@@ -3,7 +3,8 @@ package com.subin.leafy.di
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.google.firebase.auth.FirebaseAuth
-import com.subin.leafy.data.remote.fakes.*
+import com.google.firebase.firestore.FirebaseFirestore
+import com.subin.leafy.data.remote.firestore.*
 import com.subin.leafy.data.repository.*
 import com.subin.leafy.domain.usecase.*
 import com.subin.leafy.domain.usecase.community.*
@@ -19,14 +20,15 @@ import com.subin.leafy.domain.usecase.auth.SignUpUseCase
 
 class ApplicationContainerImpl() : ApplicationContainer {
 
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    // 1. DataSources
-    private val communityDataSource = FakeCommunityDataSourceImpl()
+    // 1. DataSources (이제 Fake가 아닌 실제 Firestore 구현체 사용)
     @RequiresApi(Build.VERSION_CODES.O)
-    private val noteDataSource = FakeNoteDataSourceImpl()
-    private val timerDataSource = FakeTimerDataSourceImpl()
-    private val userDataSource = FakeUserDataSourceImpl()
+    private val noteDataSource = FirestoreNoteDataSourceImpl(firestore)
+    private val userDataSource = FirestoreUserDataSourceImpl(firebaseAuth, firestore)
+    private val timerDataSource = FirestoreTimerDataSourceImpl(firestore)
+    private val communityDataSource = FirestoreCommunityDataSourceImpl(firestore)
 
     // 2. Repositories
     val communityRepository = CommunityRepositoryImpl(communityDataSource)
@@ -36,7 +38,10 @@ class ApplicationContainerImpl() : ApplicationContainer {
     val userRepository = UserRepositoryImpl(userDataSource)
     val userStatsRepository = UserStatsRepositoryImpl(userDataSource)
 
-    val authRepository: AuthRepository = FirebaseAuthRepositoryImpl(firebaseAuth)
+    val authRepository: AuthRepository = FirebaseAuthRepositoryImpl(
+        firebaseAuth = firebaseAuth,
+        firestore = firestore
+    )
 
     // 3. Note UseCases
     @RequiresApi(Build.VERSION_CODES.O)

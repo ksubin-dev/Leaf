@@ -21,7 +21,8 @@ fun MyPageCalendarSection(
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onAddClick: () -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: (String) -> Unit,
+    onDetailClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -42,7 +43,8 @@ fun MyPageCalendarSection(
                         teaName = uiState.selectedRecord.teaName,
                         metaInfo = uiState.selectedRecord.metaInfo,
                         rating = uiState.selectedRecord.rating,
-                        onEditClick = onEditClick
+                        onEditClick = { onEditClick(uiState.selectedRecord.id) },
+                        onCardClick = { onDetailClick(uiState.selectedRecord.id) }
                     )
                 } else {
                     BrewingRecordEmptyCard(onAddClick = onAddClick)

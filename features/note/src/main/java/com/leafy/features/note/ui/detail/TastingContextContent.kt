@@ -62,7 +62,7 @@ fun TastingContextContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = context.weather?.name ?: "Indoor",
+                    text = context.weather?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Indoor",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )

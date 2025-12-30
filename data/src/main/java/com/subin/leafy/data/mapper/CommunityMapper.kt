@@ -19,7 +19,7 @@ fun CommunityPostDTO.toDomain() = CommunityPost(
     subtitle = this.subtitle,
     content = this.content,
     teaTag = this.teaTag,
-    imageRes = this.imageRes,
+    imageUrl = this.imageUrl,
     rating = this.rating,
     metaInfo = this.metaInfo,
     brewingSteps = this.brewingSteps,
@@ -35,7 +35,7 @@ fun TeaMasterDTO.toDomain() = TeaMaster(
     id = this.id,
     name = this.name,
     title = this.title,
-    profileImageRes = this.profileImageRes,
+    profileImageUrl = this.profileImageUrl,
     isFollowing = this.isFollowing
 )
 
@@ -58,7 +58,7 @@ fun CommunityPost.toFirestoreMap(): Map<String, Any?> = mapOf(
     "subtitle" to this.subtitle,
     "content" to this.content,
     "teaTag" to this.teaTag,
-    "imageRes" to this.imageRes,
+    "imageUrl" to this.imageUrl,
     "rating" to this.rating,
     "metaInfo" to this.metaInfo,
     "brewingSteps" to this.brewingSteps,

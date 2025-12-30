@@ -23,7 +23,6 @@ fun ExploreTrendingPopularTagsSection(
     onTagClick: (ExploreTagUi) -> Unit = {}
 ) {
     Column(modifier = modifier) {
-
         ExploreSectionHeader(
             title = "지금 인기 있는 태그",
             showMore = true,
@@ -33,13 +32,16 @@ fun ExploreTrendingPopularTagsSection(
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 4.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(tags) { tag ->
+            items(
+                items = tags,
+                key = { it.id }
+            ) { tag ->
                 ExploreTagChip(
                     tag = tag,
-                    onClick = onTagClick
+                    onClick = { onTagClick(tag) }
                 )
             }
         }
@@ -51,10 +53,10 @@ fun ExploreTrendingPopularTagsSection(
 private fun ExploreTrendingPopularTagsSectionPreview() {
     LeafyTheme {
         val dummyTags = listOf(
-            ExploreTagUi(label = "녹차"),
-            ExploreTagUi(label = "우롱차"),
-            ExploreTagUi(label = "가향홍차"),
-            ExploreTagUi(label = "허브티"),
+            ExploreTagUi(id = "1", label = "녹차", isTrendingUp = true),
+            ExploreTagUi(id = "2", label = "우롱차", isTrendingUp = false),
+            ExploreTagUi(id = "3", label = "가향홍차", isTrendingUp = true),
+            ExploreTagUi(id = "4", label = "허브티", isTrendingUp = false),
         )
 
         ExploreTrendingPopularTagsSection(tags = dummyTags)

@@ -17,9 +17,8 @@ class NoteViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(NoteViewModel::class.java) -> {
-                NoteViewModel(noteUseCases, initialRecords) as T
+                NoteViewModel(noteUseCases, initialRecords, noteId) as T
             }
-
             modelClass.isAssignableFrom(NoteDetailViewModel::class.java) -> {
                 NoteDetailViewModel(noteUseCases, noteId ?: "") as T
             }

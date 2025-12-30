@@ -1,5 +1,6 @@
 package com.leafy.features.note.screen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,7 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,22 +38,26 @@ import com.subin.leafy.domain.model.WeatherType
 @Composable
 fun NoteDetailScreen(
     uiState: NoteUiState,
+    snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onEditClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Scaffold { innerPadding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = innerPadding.calculateTopPadding())
-                .verticalScroll(rememberScrollState())
+                .padding(bottom = innerPadding.calculateBottomPadding())
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             NoteDetailHeader(
                 teaName = uiState.teaName,
                 teaType = uiState.teaType,
-                imageUrl = uiState.dryLeafUri,
+                imageUrl = uiState.liquorUri ?: uiState.dryLeafUri ?: uiState.teawareUri ?: uiState.additionalUri,
                 onBackClick = onNavigateBack,
                 onEditClick = onEditClick,
                 onDeleteClick = onDeleteClick
@@ -63,13 +71,7 @@ fun NoteDetailScreen(
 
             DetailSectionCard(title = "Brewing Conditions") {
                 BrewingConditionsContent(
-                    condition = BrewingCondition(
-                        waterTemp = uiState.waterTemp,
-                        leafAmount = uiState.leafAmount,
-                        brewTime = uiState.brewTime,
-                        brewCount = uiState.brewCount,
-                        teaware = uiState.teaware
-                    )
+                    condition = BrewingCondition(uiState.waterTemp, uiState.leafAmount, uiState.brewTime, uiState.brewCount, uiState.teaware)
                 )
             }
 
@@ -85,26 +87,23 @@ fun NoteDetailScreen(
                 )
             }
 
-            // 3. 사진 섹션
-            DetailSectionCard(title = "Photos") {
-                PhotoDetailSectionContent(uiState)
+            val hasPhoto = listOf(uiState.dryLeafUri, uiState.liquorUri, uiState.teawareUri, uiState.additionalUri).any { !it.isNullOrBlank() }
+            if (hasPhoto) {
+                DetailSectionCard(title = "Photos") {
+                    PhotoDetailSectionContent(uiState)
+                }
             }
 
-            // 4. 별점 및 평점 숫자
             RatingInfoDetailSection(
-                ratingInfo = RatingInfo(
-                    stars = uiState.rating,
-                    purchaseAgain = uiState.purchaseAgain
-                )
+                ratingInfo = RatingInfo(stars = uiState.rating, purchaseAgain = uiState.purchaseAgain)
             )
-            Spacer(modifier = Modifier.height(24.dp))
 
             NoteActionButtons(
                 onEditClick = onEditClick,
                 onShareClick = onShareClick
             )
 
-            Spacer(modifier = Modifier.height(innerPadding.calculateBottomPadding() + 32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -114,6 +113,7 @@ fun NoteDetailScreen(
 @Composable
 fun FinalNoteDetailScreenPreview() {
     LeafyTheme {
+        val snackbarHostState = remember { SnackbarHostState() }
         val mockState = NoteUiState(
             teaName = "Earl Grey Supreme",
             teaType = "Black Tea",
@@ -147,10 +147,11 @@ fun FinalNoteDetailScreenPreview() {
 
         NoteDetailScreen(
             uiState = mockState,
+            snackbarHostState = snackbarHostState,
             onNavigateBack = {},
             onEditClick = {},
             onShareClick = {},
-            onDeleteClick = {}
+            onDeleteClick = {},
         )
     }
 }
