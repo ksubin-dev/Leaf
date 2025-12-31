@@ -8,7 +8,7 @@ import com.subin.leafy.domain.model.CommunityTag
 import com.subin.leafy.domain.model.TeaMaster
 
 /**
- * DTO -> Domain 모델 변환 (Data Layer -> Domain Layer)
+ * DTO -> Domain 모델 변환
  */
 fun CommunityPostDTO.toDomain() = CommunityPost(
     id = this._id,
@@ -19,7 +19,7 @@ fun CommunityPostDTO.toDomain() = CommunityPost(
     subtitle = this.subtitle,
     content = this.content,
     teaTag = this.teaTag,
-    imageUrl = this.imageUrl,
+    imageUrl = this.imageUrl ?: this.liquorUri ?: this.dryLeafUri,
     rating = this.rating,
     metaInfo = this.metaInfo,
     brewingSteps = this.brewingSteps,
@@ -30,7 +30,6 @@ fun CommunityPostDTO.toDomain() = CommunityPost(
     createdAt = this.createdAt
 )
 
-// TeaMaster 변환 추가
 fun TeaMasterDTO.toDomain() = TeaMaster(
     id = this.id,
     name = this.name,
@@ -39,7 +38,6 @@ fun TeaMasterDTO.toDomain() = TeaMaster(
     isFollowing = this.isFollowing
 )
 
-// CommunityTag 변환 추가
 fun CommunityTagDTO.toDomain() = CommunityTag(
     id = this.id,
     label = this.label,
@@ -47,7 +45,7 @@ fun CommunityTagDTO.toDomain() = CommunityTag(
 )
 
 /**
- * Domain 모델 -> Firestore용 Map 변환 (저장용)
+ * Domain 모델 -> Firestore용 Map 변환 (CUD 작업용)
  */
 fun CommunityPost.toFirestoreMap(): Map<String, Any?> = mapOf(
     "_id" to this.id,
@@ -72,7 +70,6 @@ fun CommunityPost.toFirestoreMap(): Map<String, Any?> = mapOf(
 /**
  * 리스트 변환 유틸리티
  */
-// 리스트 변환 유틸리티들
 fun List<CommunityPostDTO>.toDomainList() = this.map { it.toDomain() }
 fun List<TeaMasterDTO>.toDomainMasterList() = this.map { it.toDomain() }
 fun List<CommunityTagDTO>.toDomainTagList() = this.map { it.toDomain() }

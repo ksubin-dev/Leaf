@@ -14,7 +14,6 @@ data class CommunityUiState(
     val risingNotes: List<ExploreNoteUi> = emptyList(),
     val mostSavedNotes: List<ExploreNoteUi> = emptyList(),
     val followingFeed: List<ExploreNoteUi> = emptyList(),
-
     val teaMasters: List<ExploreTeaMasterUi> = emptyList(),
     val popularTags: List<ExploreTagUi> = emptyList()
 )

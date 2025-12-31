@@ -4,14 +4,15 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.CommunityPost
 import com.subin.leafy.domain.model.CommunityTag
 import com.subin.leafy.domain.model.TeaMaster
+import kotlinx.coroutines.flow.Flow
 
 interface CommunityDataSource {
-    suspend fun getPopularNotes(): DataResourceResult<List<CommunityPost>>
-    suspend fun getRisingNotes(): DataResourceResult<List<CommunityPost>>
-    suspend fun getMostSavedNotes(): DataResourceResult<List<CommunityPost>>
-    suspend fun getRecommendedMasters(): DataResourceResult<List<TeaMaster>>
-    suspend fun getPopularTags(): DataResourceResult<List<CommunityTag>>
-    suspend fun getFollowingFeed(): DataResourceResult<List<CommunityPost>>
+    fun getPopularNotes(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getRisingNotes(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getRecommendedMasters(): Flow<DataResourceResult<List<TeaMaster>>>
+    fun getPopularTags(): Flow<DataResourceResult<List<CommunityTag>>>
     suspend fun toggleLike(postId: String): DataResourceResult<Boolean>
     suspend fun toggleFollow(masterId: String): DataResourceResult<Boolean>
 }

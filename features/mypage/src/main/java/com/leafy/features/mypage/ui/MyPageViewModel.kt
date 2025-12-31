@@ -42,8 +42,7 @@ class MyPageViewModel(
     val effect = _effect.receiveAsFlow()
 
     init {
-        loadUserProfile()
-        loadCurrentMonthRecords()
+        refresh()
     }
 
     fun refresh() {
@@ -56,6 +55,7 @@ class MyPageViewModel(
             _uiState.update { it.copy(isLoading = true) }
 
             val currentId = getCurrentUserIdUseCase() ?: return@launch
+
             getUserUseCase(currentId).collect { result ->
                 when (result) {
                     is DataResourceResult.Success -> {
@@ -64,11 +64,7 @@ class MyPageViewModel(
                     is DataResourceResult.Failure -> {
                         _uiState.update {
                             it.copy(
-                                user = User(
-                                    id = currentId,
-                                    username = "사용자",
-                                    profileImageUrl = null
-                                ),
+                                user = User(id = currentId, username = "사용자", profileImageUrl = null),
                                 errorMessage = result.exception.message
                             )
                         }
@@ -99,11 +95,8 @@ class MyPageViewModel(
         }
     }
 
-    // [좌우 이동 로직]
     fun changeMonth(amount: Long) {
-        _uiState.update {
-            it.copy(selectedDate = it.selectedDate.plusMonths(amount))
-        }
+        _uiState.update { it.copy(selectedDate = it.selectedDate.plusMonths(amount)) }
         loadCurrentMonthRecords()
     }
 
@@ -112,14 +105,11 @@ class MyPageViewModel(
         val newDate = _uiState.value.selectedDate.withDayOfMonth(day)
         _uiState.update { it.copy(selectedDate = newDate) }
 
-        viewModelScope.launch {
-            val dateString = LeafyTimeUtils.formatToString(newDate)
-            val result = getRecordByDateUseCase(dateString)
+        val dateString = LeafyTimeUtils.formatToString(newDate)
 
-            if (result is DataResourceResult.Success) {
-                _uiState.update { it.copy(selectedRecord = result.data) }
-            }
-        }
+        val recordOnThatDay = _uiState.value.monthlyRecords.find { it.dateString == dateString }
+
+        _uiState.update { it.copy(selectedRecord = recordOnThatDay) }
     }
 
     fun onRecordDetailClick(noteId: String) {
@@ -134,20 +124,28 @@ class MyPageViewModel(
         val month = _uiState.value.selectedDate.monthValue
 
         viewModelScope.launch {
-            getMonthlyRecordsUseCase(year, month).collect { result ->
+            val currentId = getCurrentUserIdUseCase() ?: return@launch
+
+            // 한 달 치 데이터를 통째로 가져옵니다.
+            getMonthlyRecordsUseCase(currentId, year, month).collect { result ->
                 if (result is DataResourceResult.Success) {
-                    val days = result.data.map { record ->
+                    val records = result.data
+
+                    // 날짜 숫자 리스트 추출 (캘린더 점 표시용)
+                    val days = records.map { record ->
                         LeafyTimeUtils.parseToDate(record.dateString).dayOfMonth
                     }.distinct()
 
                     _uiState.update { it.copy(
-                        monthlyRecords = result.data,
+                        monthlyRecords = records,
                         recordedDays = days
                     ) }
 
+                    // 데이터를 새로 불러왔으니, 현재 선택되어 있는 날짜(selectedDay)에
+                    // 혹시 기록이 있는지 다시 한번 매칭 시도
                     onDateSelected(_uiState.value.selectedDay)
                 }
             }
         }
     }
-}
+    }

@@ -5,5 +5,6 @@ data class BrewingRecord(
     val dateString: String,
     val teaName: String,
     val metaInfo: String,
-    val rating: Int
+    val rating: Int,
+    val imageUrl: String? = null
 )

@@ -74,7 +74,8 @@ fun CommunityScreen(
                         )
                         ExploreTab.FOLLOWING -> FollowingTabContent(
                             uiState = uiState,
-                            onNoteClick = { onNoteClick(it.id) }
+                            onNoteClick = { onNoteClick(it.id) },
+                            onLikeClick = { note -> viewModel.toggleLike(note.id) }
                         )
                     }
                 }
@@ -143,7 +144,8 @@ private fun TrendingTabContent(
 @Composable
 private fun FollowingTabContent(
     uiState: CommunityUiState,
-    onNoteClick: (ExploreNoteUi) -> Unit
+    onNoteClick: (ExploreNoteUi) -> Unit,
+    onLikeClick: (ExploreNoteUi) -> Unit
 ) {
     if (uiState.followingFeed.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -157,6 +159,7 @@ private fun FollowingTabContent(
         ExploreFollowingFeedSection(
             notes = uiState.followingFeed,
             onNoteClick = onNoteClick,
+            onLikeClick = onLikeClick,
             modifier = Modifier.fillMaxSize()
         )
     }

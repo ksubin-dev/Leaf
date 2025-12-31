@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
 
     implementation(libs.coil.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

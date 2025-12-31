@@ -1,11 +1,14 @@
 package com.leafy.features.note.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -23,6 +26,7 @@ import com.subin.leafy.domain.model.InfusionRecord
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.noteNavGraph(
     navController: NavController,
     container: ApplicationContainer,
@@ -35,6 +39,7 @@ fun NavGraphBuilder.noteNavGraph(
             runCatching { Json.decodeFromString<List<InfusionRecord>>(jsonString) }.getOrElse { emptyList() }
         }
 
+        // 통합 팩토리 사용
         val factory = NoteViewModelFactory(
             noteUseCases = container.noteUseCases,
             initialRecords = initialRecords
@@ -47,12 +52,16 @@ fun NavGraphBuilder.noteNavGraph(
         )
     }
 
+    // 2. 노트 상세 화면 (NoteDetail)
     composable<MainNavigationRoute.NoteDetail> { backStackEntry ->
         val route: MainNavigationRoute.NoteDetail = backStackEntry.toRoute()
         val noteId = route.noteId
 
         val snackbarHostState = remember { SnackbarHostState() }
+        // 🔹 UI 전용 로직을 위한 코루틴 스코프 (공유하기 등 단순 스낵바용)
+        val scope = rememberCoroutineScope()
 
+        // 통합 팩토리 사용 (NoteDetailViewModel 생성 지원)
         val factory = NoteViewModelFactory(
             noteUseCases = container.noteUseCases,
             initialRecords = null,
@@ -61,11 +70,12 @@ fun NavGraphBuilder.noteNavGraph(
 
         val viewModel: NoteDetailViewModel = viewModel(factory = factory)
         val uiState by viewModel.uiState.collectAsState()
+        val isProcessing by viewModel.isProcessing.collectAsState()
 
         LaunchedEffect(viewModel.effect) {
             viewModel.effect.collect { effect ->
                 when (effect) {
-                    is NoteDetailUiEffect.ShowToast -> {
+                    is NoteDetailUiEffect.ShowSnackbar -> {
                         snackbarHostState.showSnackbar(
                             message = effect.message,
                             withDismissAction = true
@@ -80,12 +90,13 @@ fun NavGraphBuilder.noteNavGraph(
 
         NoteDetailScreen(
             uiState = uiState,
+            isProcessing = isProcessing,
             snackbarHostState = snackbarHostState,
             onNavigateBack = onNavigateBack,
             onEditClick = { onNavigateToEdit(noteId) },
             onShareClick = {
-                viewModel.viewModelScope.launch {
-                    snackbarHostState.showSnackbar("Sharing is not yet implemented.")
+                scope.launch {
+                    snackbarHostState.showSnackbar("공유 기능은 아직 준비 중입니다.")
                 }
             },
             onDeleteClick = {

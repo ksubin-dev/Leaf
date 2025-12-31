@@ -5,7 +5,7 @@ import com.subin.leafy.domain.model.BrewingRecord
 import com.subin.leafy.domain.repository.NoteRepository
 
 class GetRecordByDateUseCase(private val repository: NoteRepository) {
-    suspend operator fun invoke(dateString: String): DataResourceResult<BrewingRecord?> {
-        return repository.getRecordByDate(dateString)
+    operator suspend fun invoke(userId: String, dateString: String): DataResourceResult<BrewingRecord?> {
+        return repository.getRecordByDate(userId, dateString)
     }
 }

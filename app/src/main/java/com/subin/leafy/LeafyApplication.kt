@@ -19,6 +19,8 @@ class LeafyApplication : Application(), ApplicationContainerProvider {
         return appContainer
     }
 
+    //여기서 코일 설정 -> coilusing 예제 파일
+
     companion object {
         private lateinit var leafyApplication: LeafyApplication
         fun getAppContext() = leafyApplication

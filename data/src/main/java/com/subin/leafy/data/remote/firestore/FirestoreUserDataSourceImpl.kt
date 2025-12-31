@@ -20,6 +20,11 @@ class FirestoreUserDataSourceImpl(
         return firebaseAuth.currentUser?.uid
     }
 
+    //common 만들어서 users나 커뮤니티쪽 빼기
+    //select snapshot 써야함 이걸로 바꾸기 서치는 스냅샷!!
+    //DataResourceResult  cud
+
+    //바꾸기
     override suspend fun getUser(userId: String): DataResourceResult<User> = runCatching {
         val snapshot = firestore.collection("users").document(userId).get().await()
         val userDto = snapshot.toObject(UserDTO::class.java)

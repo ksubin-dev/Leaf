@@ -31,7 +31,7 @@ import com.subin.leafy.domain.model.*
 fun MyPageScreen(
     viewModel: MyPageViewModel,
     onSettingsClick: () -> Unit,
-    onAddRecordClick: () -> Unit,
+    onAddRecordClick: (String) -> Unit,
     onEditRecordClick: (String) -> Unit,
     onRecordDetailClick: (String) -> Unit
 ) {
@@ -66,7 +66,7 @@ fun MyPageScreen(
         onDateClick = viewModel::onDateSelected,
         onPrevMonth = { viewModel.changeMonth(-1) },
         onNextMonth = { viewModel.changeMonth(1) },
-        onAddRecordClick = onAddRecordClick,
+        onAddRecordClick = { onAddRecordClick(uiState.selectedDateString) },
         onEditRecordClick = onEditRecordClick,
         onRecordDetailClick = { noteId ->
             viewModel.onRecordDetailClick(noteId)

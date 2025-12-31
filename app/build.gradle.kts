@@ -65,7 +65,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
 
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.bundles.firebase.libraries)
+
     implementation(libs.firebase.auth)
     implementation(libs.androidx.core.splashscreen)
 

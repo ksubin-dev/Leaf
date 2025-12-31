@@ -19,12 +19,13 @@ import com.leafy.features.community.ui.component.ExploreNoteUi
 fun ExploreFollowingFeedSection(
     modifier: Modifier = Modifier,
     notes: List<ExploreNoteUi>,
-    onNoteClick: (ExploreNoteUi) -> Unit = {}
+    onNoteClick: (ExploreNoteUi) -> Unit = {},
+    onLikeClick: (ExploreNoteUi) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 24.dp)
+        contentPadding = PaddingValues(16.dp)
     ) {
         items(
             items = notes,
@@ -33,7 +34,8 @@ fun ExploreFollowingFeedSection(
             ExploreFollowingNoteCard(
                 note = note,
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onNoteClick(note) }
+                onClick = { onNoteClick(note) },
+                onLikeClick = { onLikeClick(note) }
             )
         }
     }

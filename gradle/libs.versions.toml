@@ -29,6 +29,8 @@ foundationLayout = "1.9.4"
 ui = "1.9.5"
 foundation = "1.9.5"
 runtime = "1.10.0"
+lifecycleViewmodelKtx = "2.10.0"
+
 
 
 [libraries]
@@ -60,9 +62,12 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 #Firebase
+# Firebase BoM
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 
 
 [plugins]
@@ -87,6 +92,7 @@ compose-libraries=[
     "androidx-navigation-compose"
 ]
 firebase-libraries = [
-    "firebase-firestore-ktx",
-    "firebase-auth"
+    "firebase-firestore",
+    "firebase-auth",
+    "firebase-storage"
 ]

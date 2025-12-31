@@ -26,7 +26,9 @@ import com.leafy.shared.R as SharedR
 fun ExploreFollowingNoteCard(
     note: ExploreNoteUi,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onLikeClick: () -> Unit = {},
+    onBookmarkClick: () -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -182,26 +184,34 @@ fun ExploreFollowingNoteCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = painterResource(id = if (note.isLiked) SharedR.drawable.ic_like_filled else SharedR.drawable.ic_like),
-                    contentDescription = "Like",
-                    modifier = Modifier.size(20.dp),
-                    tint = if (note.isLiked) colors.error else colors.secondary
-                )
+                IconButton(onClick = onLikeClick) {
+                    Icon(
+                        painter = painterResource(id = if (note.isLiked) SharedR.drawable.ic_like_filled else SharedR.drawable.ic_like),
+                        contentDescription = "Like",
+                        modifier = Modifier.size(20.dp),
+                        tint = if (note.isLiked) colors.error else colors.secondary
+                    )
+                }
                 Spacer(modifier = Modifier.width(12.dp))
-                Icon(
-                    painter = painterResource(id = SharedR.drawable.ic_comment),
-                    contentDescription = "Comment",
-                    modifier = Modifier.size(20.dp),
-                    tint = colors.primary
-                )
+
+                IconButton(onClick = { /* 댓글 기능 TODO */ }) {
+                    Icon(
+                        painter = painterResource(id = SharedR.drawable.ic_comment),
+                        contentDescription = "Comment",
+                        modifier = Modifier.size(20.dp),
+                        tint = colors.primary
+                    )
+                }
                 Spacer(modifier = Modifier.width(12.dp))
-                Icon(
-                    painter = painterResource(id = SharedR.drawable.ic_bookmark),
-                    contentDescription = "Bookmark",
-                    modifier = Modifier.size(20.dp),
-                    tint = if (note.isSaved) colors.primary else colors.secondary
-                )
+
+                IconButton(onClick = onBookmarkClick) {
+                    Icon(
+                        painter = painterResource(id = SharedR.drawable.ic_bookmark),
+                        contentDescription = "Bookmark",
+                        modifier = Modifier.size(20.dp),
+                        tint = if (note.isSaved) colors.primary else colors.secondary
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))

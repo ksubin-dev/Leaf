@@ -1,7 +1,7 @@
 package com.subin.leafy.data.repository
 
-import android.annotation.SuppressLint
 import com.subin.leafy.data.datasource.NoteDataSource
+import com.subin.leafy.data.datasource.StorageDataSource
 import com.subin.leafy.data.mapper.toRecord
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
@@ -11,83 +11,98 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
 class NoteRepositoryImpl(
-    private val dataSource: NoteDataSource
+    private val dataSource: NoteDataSource,
+    private val storageDataSource: StorageDataSource
 ) : NoteRepository {
 
+    // --- [CUD 작업 공통 래퍼] ---
     private fun wrapCUDOperation(
         operation: suspend () -> DataResourceResult<Unit>
     ): Flow<DataResourceResult<Unit>> = flow {
-        emit(operation())
-    }.onStart { emit(DataResourceResult.Loading) }
-        .catch { emit(DataResourceResult.Failure(it)) }
-        .flowOn(Dispatchers.IO)
+        emit(DataResourceResult.Loading)
+        val result = operation()
+        emit(result)
+    }.catch { e ->
+        emit(DataResourceResult.Failure(e))
+    }.flowOn(Dispatchers.IO)
 
-    override fun create(note: BrewingNote) = wrapCUDOperation { dataSource.create(note) }
-    override fun read() = flow {
-        emit(dataSource.read())
-    }.onStart { emit(DataResourceResult.Loading) }
-        .catch { emit(DataResourceResult.Failure(it)) }
-        .flowOn(Dispatchers.IO)
+    // --- [이미지 업로드 헬퍼] ---
+    private suspend fun uploadImages(note: BrewingNote, localUris: Map<String, String?>): BrewingNote {
+        val updatedUrls = localUris.mapValues { (key, uri) ->
+            if (uri != null && uri.startsWith("content://")) {
+                val result = storageDataSource.uploadImage(uri, "notes/${note.ownerId}/${note.id}/$key")
+                if (result is DataResourceResult.Success) result.data else uri
+            } else {
+                uri
+            }
+        }
+        return note.copy(
+            context = note.context.copy(
+                dryLeafUri = updatedUrls["dryLeaf"],
+                liquorUri = updatedUrls["liquor"],
+                teawareUri = updatedUrls["teaware"],
+                additionalUri = updatedUrls["additional"]
+            )
+        )
+    }
 
-    override fun update(note: BrewingNote) = wrapCUDOperation { dataSource.update(note) }
-    override fun delete(id: String) = wrapCUDOperation { dataSource.delete(id) }
+    // --- [인터페이스 구현부: CREATE & UPDATE] ---
 
-    override fun getNoteById(id: String): Flow<DataResourceResult<BrewingNote>> = flow {
-        val result = dataSource.read()
-        when (result) {
-            is DataResourceResult.Success -> {
-                val note = result.data.find { it.id == id }
+    override fun create(note: BrewingNote, localImageUris: Map<String, String?>) = wrapCUDOperation {
+        val finalNote = uploadImages(note, localImageUris)
+        dataSource.create(finalNote)
+    }
+
+    override fun update(note: BrewingNote, localImageUris: Map<String, String?>) = wrapCUDOperation {
+        val finalNote = uploadImages(note, localImageUris)
+        dataSource.update(finalNote)
+    }
+
+    override fun delete(id: String) = wrapCUDOperation {
+        dataSource.delete(id)
+    }
+
+    // --- [인터페이스 구현부: READ] ---
+
+    override fun read(userId: String): Flow<DataResourceResult<List<BrewingNote>>> =
+        dataSource.read(userId)
+            .map { list -> DataResourceResult.Success(list) as DataResourceResult<List<BrewingNote>> }
+            .onStart { emit(DataResourceResult.Loading) }
+            .catch { e -> emit(DataResourceResult.Failure(e)) }
+            .flowOn(Dispatchers.IO)
+
+    override fun getNoteById(userId: String, noteId: String): Flow<DataResourceResult<BrewingNote>> =
+        dataSource.read(userId)
+            .map { list ->
+                val note = list.find { it.id == noteId }
                 if (note != null) {
-                    emit(DataResourceResult.Success(note))
+                    DataResourceResult.Success(note) as DataResourceResult<BrewingNote>
                 } else {
-                    emit(DataResourceResult.Failure(Exception("해당 ID($id)의 노트를 찾을 수 없습니다.")))
+                    DataResourceResult.Failure(Exception("노트를 찾을 수 없습니다."))
                 }
             }
-            is DataResourceResult.Failure -> {
-                emit(DataResourceResult.Failure(result.exception))
+            .catch { e -> emit(DataResourceResult.Failure(e)) }
+            .flowOn(Dispatchers.IO)
+
+    override fun getRecordsByMonth(userId: String, year: Int, month: Int): Flow<DataResourceResult<List<BrewingRecord>>> =
+        dataSource.read(userId)
+            .map { list ->
+                val prefix = String.format("%04d-%02d", year, month)
+                val records = list.filter { it.context.dateTime.startsWith(prefix) }
+                    .map { it.toRecord() }
+                DataResourceResult.Success(records) as DataResourceResult<List<BrewingRecord>>
             }
-            else -> {
-                emit(DataResourceResult.Failure(Exception("데이터를 불러오는 중 알 수 없는 오류가 발생했습니다.")))
-            }
-        }
-    }.onStart { emit(DataResourceResult.Loading) }
-        .catch { emit(DataResourceResult.Failure(it)) }
-        .flowOn(Dispatchers.IO)
+            .onStart { emit(DataResourceResult.Loading) }
+            .catch { e -> emit(DataResourceResult.Failure(e)) }
+            .flowOn(Dispatchers.IO)
 
-    /**
-     * 특정 연/월의 레코드 가져오기 (String 비교 방식)
-     */
-    @SuppressLint("DefaultLocale")
-    override fun getRecordsByMonth(year: Int, month: Int): Flow<DataResourceResult<List<BrewingRecord>>> = flow {
-        val result = dataSource.read()
-        if (result is DataResourceResult.Success) {
-            val prefix = String.format("%04d-%02d", year, month)
-
-            val records = result.data.filter { note ->
-                note.context.dateTime.startsWith(prefix)
-            }.map { it.toRecord() }
-
-            emit(DataResourceResult.Success(records))
-        } else if (result is DataResourceResult.Failure) {
-            emit(DataResourceResult.Failure(result.exception))
-        }
-    }.onStart { emit(DataResourceResult.Loading) }
-        .flowOn(Dispatchers.IO)
-
-    /**
-     * 특정 날짜의 레코드 가져오기 (String 직접 비교 방식)
-     */
-    override suspend fun getRecordByDate(dateString: String): DataResourceResult<BrewingRecord?> {
-        val result = dataSource.read()
-        return if (result is DataResourceResult.Success) {
-            val note = result.data.find { note ->
-                note.context.dateTime == dateString
-            }
-            DataResourceResult.Success(note?.toRecord())
-        } else if (result is DataResourceResult.Failure) {
-            DataResourceResult.Failure(result.exception)
-        } else {
-            DataResourceResult.Failure(Exception("알 수 없는 오류가 발생했습니다."))
+    override suspend fun getRecordByDate(userId: String, dateString: String): DataResourceResult<BrewingRecord?> {
+        return try {
+            val list = dataSource.read(userId).first()
+            val record = list.find { it.context.dateTime == dateString }?.toRecord()
+            DataResourceResult.Success(record)
+        } catch (e: Exception) {
+            DataResourceResult.Failure(e)
         }
     }
 }

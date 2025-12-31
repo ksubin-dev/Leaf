@@ -2,14 +2,88 @@ package com.leafy.features.community.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.community.ui.component.ExploreNoteUi
-import com.leafy.features.community.ui.component.ExploreTagUi
-import com.leafy.features.community.ui.component.ExploreTeaMasterUi
 import com.subin.leafy.domain.common.DataResourceResult
-import com.subin.leafy.domain.model.ExploreTab
+import com.subin.leafy.domain.model.*
 import com.subin.leafy.domain.usecase.CommunityUseCases
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+
+//sealed interface CommunityUiEffect {
+//    data class ShowSnackbar(val message: String) : CommunityUiEffect
+//}
+//
+//class CommunityViewModel(
+//    private val communityUseCases: CommunityUseCases
+//) : ViewModel() {
+//
+//    private val _selectedTab = MutableStateFlow(ExploreTab.TRENDING)
+//
+//    private val _effect = MutableSharedFlow<CommunityUiEffect>()
+//    val effect = _effect.asSharedFlow()
+//
+//    val uiState: StateFlow<CommunityUiState> = combine(
+//        listOf(
+//            communityUseCases.getPopularNotes(),
+//            communityUseCases.getRisingNotes(),
+//            communityUseCases.getPopularTags(),
+//            communityUseCases.getMostSavedNotes(),
+//            communityUseCases.getRecommendedMasters(),
+//            communityUseCases.getFollowingFeed(),
+//            _selectedTab
+//        )
+//    ) { array ->
+//        // 1. 강제 캐스팅을 통해 타입을 정확히 알려줍니다.
+//        val popular = array[0] as DataResourceResult<List<CommunityPost>>
+//        val rising = array[1] as DataResourceResult<List<CommunityPost>>
+//        val tags = array[2] as DataResourceResult<List<CommunityTag>>
+//        val saved = array[3] as DataResourceResult<List<CommunityPost>>
+//        val masters = array[4] as DataResourceResult<List<TeaMaster>>
+//        val following = array[5] as DataResourceResult<List<CommunityPost>>
+//        val tab = array[6] as ExploreTab
+//
+//        val allResults = listOf(popular, rising, tags, saved, masters, following)
+//
+//        CommunityUiState(
+//            isLoading = allResults.any { it is DataResourceResult.Loading },
+//            selectedTab = tab,
+//            popularNotes = (popular as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+//            risingNotes = (rising as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+//            popularTags = (tags as? DataResourceResult.Success)?.data?.toTagUi() ?: emptyList(),
+//            mostSavedNotes = (saved as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+//            teaMasters = (masters as? DataResourceResult.Success)?.data?.toMasterUi() ?: emptyList(),
+//            followingFeed = (following as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+//            errorMessage = allResults
+//                .filterIsInstance<DataResourceResult.Failure>()
+//                .firstOrNull()?.exception?.message
+//        )
+//    }.stateIn(
+//        scope = viewModelScope,
+//        started = SharingStarted.WhileSubscribed(5000),
+//        initialValue = CommunityUiState(isLoading = true)
+//    )
+//
+//    fun onTabSelected(tab: ExploreTab) {
+//        _selectedTab.value = tab
+//    }
+//
+//    fun toggleLike(postId: String) {
+//        viewModelScope.launch {
+//            val result = communityUseCases.toggleLike(postId)
+//            if (result is DataResourceResult.Failure) {
+//                _effect.emit(CommunityUiEffect.ShowSnackbar("좋아요 실패: ${result.exception.message}"))
+//            }
+//        }
+//    }
+//
+//    fun toggleFollow(masterId: String) {
+//        viewModelScope.launch {
+//            val result = communityUseCases.toggleFollow(masterId)
+//            if (result is DataResourceResult.Failure) {
+//                _effect.emit(CommunityUiEffect.ShowSnackbar("팔로우 실패: ${result.exception.message}"))
+//            }
+//        }
+//    }
+//}
 
 sealed interface CommunityUiEffect {
     data class ShowSnackbar(val message: String) : CommunityUiEffect
@@ -19,226 +93,134 @@ class CommunityViewModel(
     private val communityUseCases: CommunityUseCases
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(CommunityUiState())
-    val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
+    private val _selectedTab = MutableStateFlow(ExploreTab.TRENDING)
     private val _effect = MutableSharedFlow<CommunityUiEffect>()
-    val effect: SharedFlow<CommunityUiEffect> = _effect.asSharedFlow()
+    val effect = _effect.asSharedFlow()
 
-    init {
-        readAll()
-    }
+    // --- 1. CommunityPost 더미 데이터 (꽉 채움) ---
+    private val dummyPosts = listOf(
+        CommunityPost(
+            id = "1",
+            authorId = "user_01",
+            authorName = "차 마시는 민지",
+            authorProfileUrl = "https://picsum.photos/100/100?random=1",
+            title = "제주 서광다원 햇차 시음기",
+            subtitle = "제주 · 2024년 첫물 녹차",
+            content = "올해 처음 나온 제주 녹차를 마셔봤습니다. 수색이 아주 맑고 끝맛이 달큰하네요. 아침 안개를 머금은 듯한 신선함이 특징입니다.",
+            teaTag = "Green Tea",
+            imageUrl = "https://picsum.photos/400/300?random=11",
+            rating = 4.8f,
+            metaInfo = "제주 서광다원 · 95℃ · 3m",
+            brewingSteps = listOf("95℃", "3m", "5g", "150ml"),
+            likeCount = 124,
+            savedCount = 56,
+            isLiked = true,
+            isSaved = false,
+            createdAt = "2시간 전",
+            topComment = "저도 이 차 좋아해요! 정말 깔끔하죠."
+        ),
+        CommunityPost(
+            id = "2",
+            authorId = "user_02",
+            authorName = "우롱러버",
+            authorProfileUrl = "https://picsum.photos/100/100?random=2",
+            title = "대만 동정오룡차의 매력",
+            subtitle = "대만 · 중배화 · 반구형",
+            content = "동정오룡 특유의 구수한 풍미와 꽃향기가 조화롭습니다. 여러 번 우려도 맛이 무너지지 않아서 좋아요.",
+            teaTag = "Oolong",
+            imageUrl = "https://picsum.photos/400/300?random=22",
+            rating = 4.5f,
+            metaInfo = "대만 난터우 · 100℃ · 5m",
+            brewingSteps = listOf("100℃", "5m", "7g", "200ml"),
+            likeCount = 89,
+            savedCount = 120,
+            isLiked = false,
+            isSaved = true,
+            createdAt = "5시간 전",
+            topComment = "배화 정도가 딱 적당해 보이네요."
+        )
+    )
 
-    fun readAll() {
-//        viewModelScope.launch {
-//            _uiState.update { it.copy(isLoading = true) }
-//            launch { fetchPopularNotes() }
-//            launch { fetchRisingNotes() }
-//            launch { fetchMasters() }
-//            launch { fetchFollowingFeed() }
-//            launch { fetchPopularTags() }
-//            launch { fetchMostSavedNotes() }
-//        }
+    // --- 2. TeaMaster 더미 데이터 (꽉 채움) ---
+    private val dummyMastersList = listOf(
+        TeaMaster(
+            id = "m1",
+            name = "티마스터 소영",
+            title = "홍차 전문 테이스터",
+            profileImageUrl = "https://picsum.photos/100/100?random=3",
+            isFollowing = false
+        ),
+        TeaMaster(
+            id = "m2",
+            name = "그린티 마니아",
+            title = "녹차 & 말차 전문가",
+            profileImageUrl = "https://picsum.photos/100/100?random=4",
+            isFollowing = true
+        )
+    )
 
-        _uiState.update { it.copy(isLoading = true) }
+    // --- 3. CommunityTag 더미 데이터 ---
+    private val dummyTagsList = listOf(
+        CommunityTag(id = "t1", label = "우롱차", isTrendingUp = true),
+        CommunityTag(id = "t2", label = "다도세트", isTrendingUp = true),
+        CommunityTag(id = "t3", label = "보이차", isTrendingUp = false)
+    )
 
-        // 실제 UseCase 호출 대신, 아래 샘플 데이터를 바로 할당합니다.
-        _uiState.update { state ->
-            state.copy(
-                isLoading = false,
-                // 1. 인기 노트 샘플 (Top Section)
-                popularNotes = listOf(
-                    ExploreNoteUi(
-                        id = "p1",
-                        title = "제주 첫물 녹차",
-                        subtitle = "제주 서광다원 · 2024년 봄",
-                        imageUrl = "https://picsum.photos/400/300?random=1",
-                        rating = 4.8f,
-                        authorName = "차 마시는 루이",
-                        authorProfileUrl = "https://picsum.photos/100/100?random=11"
-                    ),
-                    ExploreNoteUi(
-                        id = "p2",
-                        title = "우롱 밀크티 베이스",
-                        subtitle = "대만 오룡 · 고소한 풍미",
-                        imageUrl = "https://picsum.photos/400/300?random=2",
-                        rating = 4.5f,
-                        authorName = "밀크티러버"
-                        //authorProfileUrl = "https://picsum.photos/100/100?random=11"
-                         //이거 없으니까 그냥 안보임 없더라도 보여주는 로직 필요함
-                    )
-                ),
-                // 2. 급상승 노트 샘플 (Rising Section)
-                risingNotes = listOf(
-                    ExploreNoteUi(
-                        id = "r1",
-                        title = "상큼한 히비스커스",
-                        subtitle = "블렌딩 티의 정석",
-                        imageUrl = "https://picsum.photos/400/300?random=3",
-                        rating = 4.2f,
-                        authorName = "티 소믈리에",
-                        likeCount = 120
-                    )
-                ),
-                // 3. 인기 태그 샘플
-                popularTags = listOf(
-                    ExploreTagUi(id = "t1", label = "우롱차", isTrendingUp = true),
-                    ExploreTagUi(id = "t2", label = "말차라떼", isTrendingUp = true),
-                    ExploreTagUi(id = "t3", label = "다도", isTrendingUp = false)
-                ),
-                // 4. 저장된 노트 샘플 (Saved Section)
-                mostSavedNotes = listOf(
-                    ExploreNoteUi(
-                        id = "s1",
-                        title = "실패 없는 밀크티 레시피",
-                        subtitle = "홍차 5g, 설탕 10g...",
-                        savedCount = 1500,
-                        rating = 5.0f
-                    )
-                ),
-                // 5. 티 마스터 샘플
-                teaMasters = listOf(
-                    ExploreTeaMasterUi(
-                        id = "m1",
-                        name = "보이차 거사",
-                        title = "보이차 20년 경력 마스터",
-                        profileImageUrl = "https://picsum.photos/100/100?random=21",
-                        isFollowing = false
-                    ),
-                    ExploreTeaMasterUi(
-                        id = "m2",
-                        name = "수진 소믈리에",
-                        title = "런던 티 아카데미 수료",
-                        profileImageUrl = "https://picsum.photos/100/100?random=22",
-                        isFollowing = true
-                    )
-                ),
-                // 6. 팔로잉 피드 샘플 (Following Tab)
-                followingFeed = listOf(
-                    ExploreNoteUi(
-                        id = "1",
-                        title = "동정오룡차 (Dong Ding Oolong)",
-                        subtitle = "대만 · 중배화 · 반구형",
-                        authorName = "민지",
-                        authorProfileUrl = null,
-                        timeAgo = "2시간 전",
-                        imageUrl = null,
-                        description = "은은한 꽃향과 부드러운 과일향이 조화롭게 어우러진 오룽차, 목넘김이 매끄럽고 여운이 깁니다.",
-                        rating = 4.5f,
-                        brewingChips = listOf("95℃", "3m", "5g", "1st Infusion"),
-                        reviewLabel = "Rebrew 가능",
-                        comment = "오늘 아침에 마신 차 중 최고였어요. 3회까지 우려봤는데 2번째 우림이 가장 좋았답니다. 😊",
-                        likeCount = 23,
-                        isLiked = true,
-                        likerProfileUrls = listOf("", "", "")
-                    )
-                )
-            )
-        }
-    }
-    
+    // ------------------------------------------------------------------
+    // Flow 결합 (UseCase 대신 위 더미 데이터들을 사용)
+    // ------------------------------------------------------------------
+    val uiState: StateFlow<CommunityUiState> = combine(
+        listOf(
+            flowOf(DataResourceResult.Success(dummyPosts)),      // Popular
+            flowOf(DataResourceResult.Success(dummyPosts.shuffled())), // Rising
+            flowOf(DataResourceResult.Success(dummyTagsList)),   // Tags
+            flowOf(DataResourceResult.Success(dummyPosts)),      // Saved
+            flowOf(DataResourceResult.Success(dummyMastersList)),// Masters
+            flowOf(DataResourceResult.Success(dummyPosts)),      // Following Feed
+            _selectedTab
+        )
+    ) { array ->
+        val popular = array[0] as DataResourceResult<List<CommunityPost>>
+        val rising = array[1] as DataResourceResult<List<CommunityPost>>
+        val tags = array[2] as DataResourceResult<List<CommunityTag>>
+        val saved = array[3] as DataResourceResult<List<CommunityPost>>
+        val masters = array[4] as DataResourceResult<List<TeaMaster>>
+        val following = array[5] as DataResourceResult<List<CommunityPost>>
+        val tab = array[6] as ExploreTab
 
-    private suspend fun fetchPopularNotes() {
-        communityUseCases.getPopularNotes().collectLatest { result ->
-            handleDataResult(result) { data ->
-                _uiState.update { it.copy(popularNotes = data.toNoteUi()) }
-            }
-        }
-    }
+        val allResults = listOf(popular, rising, tags, saved, masters, following)
 
-    private suspend fun fetchRisingNotes() {
-        communityUseCases.getRisingNotes().collectLatest { result ->
-            handleDataResult(result) { data ->
-                _uiState.update { it.copy(risingNotes = data.toNoteUi()) }
-            }
-        }
-    }
-
-    private suspend fun fetchPopularTags() {
-        communityUseCases.getPopularTags().collectLatest { result ->
-            handleDataResult(result) { data ->
-                _uiState.update { it.copy(popularTags = data.toTagUi()) }
-            }
-        }
-    }
-
-    private suspend fun fetchMostSavedNotes() {
-        communityUseCases.getMostSavedNotes().collectLatest { result ->
-            handleDataResult(result) { data ->
-                _uiState.update { it.copy(mostSavedNotes = data.toNoteUi()) }
-            }
-        }
-    }
-
-    private suspend fun fetchMasters() {
-        communityUseCases.getRecommendedMasters().collectLatest { result ->
-            handleDataResult(result) { data ->
-                _uiState.update { it.copy(teaMasters = data.toMasterUi()) }
-            }
-        }
-    }
-
-    private suspend fun fetchFollowingFeed() {
-        communityUseCases.getFollowingFeed().collectLatest { result ->
-            handleDataResult(result) { data ->
-                _uiState.update { it.copy(followingFeed = data.toNoteUi()) }
-            }
-        }
-    }
-
-    private fun <T> handleDataResult(
-        result: DataResourceResult<T>,
-        onSuccess: (T) -> Unit
-    ) {
-        when (result) {
-            is DataResourceResult.Loading -> {
-                _uiState.update { it.copy(isLoading = true) }
-            }
-            is DataResourceResult.Success -> {
-                onSuccess(result.data)
-                _uiState.update { it.copy(isLoading = false, errorMessage = null) }
-            }
-            is DataResourceResult.Failure -> {
-                _uiState.update { state ->
-                    state.copy(
-                        isLoading = false,
-                        errorMessage = result.exception.message
-                    )
-                }
-            }
-            else -> Unit
-        }
-    }
+        CommunityUiState(
+            isLoading = allResults.any { it is DataResourceResult.Loading },
+            selectedTab = tab,
+            popularNotes = (popular as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+            risingNotes = (rising as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+            popularTags = (tags as? DataResourceResult.Success)?.data?.toTagUi() ?: emptyList(),
+            mostSavedNotes = (saved as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+            teaMasters = (masters as? DataResourceResult.Success)?.data?.toMasterUi() ?: emptyList(),
+            followingFeed = (following as? DataResourceResult.Success)?.data?.toNoteUi() ?: emptyList(),
+            errorMessage = allResults.filterIsInstance<DataResourceResult.Failure>()
+                .firstOrNull()?.exception?.message
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = CommunityUiState(isLoading = true)
+    )
 
     fun onTabSelected(tab: ExploreTab) {
-        _uiState.update { it.copy(selectedTab = tab) }
+        _selectedTab.value = tab
     }
 
     fun toggleLike(postId: String) {
         viewModelScope.launch {
-            val result = communityUseCases.toggleLike(postId)
-            if (result is DataResourceResult.Success) {
-                // 🔹 Toast 대신 Snackbar Effect 발생
-                _effect.emit(CommunityUiEffect.ShowSnackbar("좋아요가 반영되었습니다."))
-            } else if (result is DataResourceResult.Failure) {
-                _effect.emit(CommunityUiEffect.ShowSnackbar("오류 발생: ${result.exception.message}"))
-            }
+            _effect.emit(CommunityUiEffect.ShowSnackbar("좋아요를 눌렀습니다! (게시글 ID: $postId)"))
         }
     }
 
     fun toggleFollow(masterId: String) {
-        _uiState.update { currentState ->
-            val updatedMasters = currentState.teaMasters.map { master ->
-                if (master.id == masterId) {
-                    master.copy(isFollowing = !master.isFollowing)
-                } else master
-            }
-            currentState.copy(teaMasters = updatedMasters)
-        }
-
         viewModelScope.launch {
-            val master = _uiState.value.teaMasters.find { it.id == masterId }
-            val message = if (master?.isFollowing == true) "팔로우를 시작했습니다." else "팔로우를 취소했습니다."
-            _effect.emit(CommunityUiEffect.ShowSnackbar(message))
+            _effect.emit(CommunityUiEffect.ShowSnackbar("마스터를 팔로우합니다. (ID: $masterId)"))
         }
     }
 }
