@@ -1,0 +1,8 @@
+package com.subin.leafy.data.datasource
+
+import com.subin.leafy.domain.common.DataResourceResult
+
+interface StorageDataSource {
+    suspend fun uploadImage(uriString: String, folderPath: String): DataResourceResult<String>
+    suspend fun deleteImage(imageUrl: String): DataResourceResult<Unit>
+}

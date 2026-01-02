@@ -62,7 +62,7 @@ fun RatingInfoDetailSection(
             text = ratingInfo.stars.toFloat().toString(),
             style = MaterialTheme.typography.displaySmall.copy(
                 fontWeight = FontWeight.Bold,
-                fontSize = 36.sp
+                fontSize = 42.sp
             ),
             color = MaterialTheme.colorScheme.error
         )

@@ -1,5 +1,7 @@
 package com.leafy.features.note.screen
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,8 +9,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,86 +42,91 @@ import com.subin.leafy.domain.model.WeatherType
 @Composable
 fun NoteDetailScreen(
     uiState: NoteUiState,
+    isProcessing: Boolean,
+    snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onEditClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Scaffold { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = innerPadding.calculateTopPadding())
-                .verticalScroll(rememberScrollState())
-        ) {
-            NoteDetailHeader(
-                teaName = uiState.teaName,
-                teaType = uiState.teaType,
-                imageUrl = uiState.dryLeafUri,
-                onBackClick = onNavigateBack,
-                onEditClick = onEditClick,
-                onDeleteClick = onDeleteClick
-            )
-
-            DetailSectionCard(title = "Tea Information") {
-                TeaInfoDetailContent(
-                    TeaInfo(uiState.teaName, uiState.brandName, uiState.teaType, uiState.leafStyle, uiState.leafProcessing, uiState.teaGrade)
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                NoteDetailHeader(
+                    teaName = uiState.teaName,
+                    teaType = uiState.teaType,
+                    imageUrl = uiState.liquorUri ?: uiState.dryLeafUri ?: uiState.teawareUri ?: uiState.additionalUri,
+                    onBackClick = onNavigateBack,
+                    onEditClick = onEditClick,
+                    onDeleteClick = onDeleteClick
                 )
-            }
 
-            DetailSectionCard(title = "Brewing Conditions") {
-                BrewingConditionsContent(
-                    condition = BrewingCondition(
-                        waterTemp = uiState.waterTemp,
-                        leafAmount = uiState.leafAmount,
-                        brewTime = uiState.brewTime,
-                        brewCount = uiState.brewCount,
-                        teaware = uiState.teaware
+                DetailSectionCard(title = "Tea Information") {
+                    TeaInfoDetailContent(
+                        TeaInfo(uiState.teaName, uiState.brandName, uiState.teaType, uiState.leafStyle, uiState.leafProcessing, uiState.teaGrade)
                     )
+                }
+
+                DetailSectionCard(title = "Brewing Conditions") {
+                    BrewingConditionsContent(
+                        condition = BrewingCondition(uiState.waterTemp, uiState.leafAmount, uiState.brewTime, uiState.brewCount, uiState.teaware)
+                    )
+                }
+
+                DetailSectionCard(title = "Tasting Context") {
+                    TastingContextContent(
+                        NoteContext(uiState.dateTime, uiState.weather, uiState.withPeople)
+                    )
+                }
+
+                DetailSectionCard(title = "Sensory Evaluation") {
+                    SensoryEvaluationContent(
+                        SensoryEvaluation(uiState.selectedTags, uiState.sweetness, uiState.sourness, uiState.bitterness, uiState.saltiness, uiState.umami, uiState.bodyType, uiState.finishLevel, uiState.memo)
+                    )
+                }
+
+                val hasPhoto = listOf(uiState.dryLeafUri, uiState.liquorUri, uiState.teawareUri, uiState.additionalUri).any { !it.isNullOrBlank() }
+                if (hasPhoto) {
+                    DetailSectionCard(title = "Photos") {
+                        PhotoDetailSectionContent(uiState)
+                    }
+                }
+
+                RatingInfoDetailSection(
+                    ratingInfo = RatingInfo(stars = uiState.rating, purchaseAgain = uiState.purchaseAgain)
                 )
+
+                NoteActionButtons(
+                    onEditClick = onEditClick,
+                    onShareClick = onShareClick
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
 
-            DetailSectionCard(title = "Tasting Context") {
-                TastingContextContent(
-                    NoteContext(uiState.dateTime, uiState.weather, uiState.withPeople)
+            if (isProcessing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-
-            DetailSectionCard(title = "Sensory Evaluation") {
-                SensoryEvaluationContent(
-                    SensoryEvaluation(uiState.selectedTags, uiState.sweetness, uiState.sourness, uiState.bitterness, uiState.saltiness, uiState.umami, uiState.bodyType, uiState.finishLevel, uiState.memo)
-                )
-            }
-
-            // 3. 사진 섹션
-            DetailSectionCard(title = "Photos") {
-                PhotoDetailSectionContent(uiState)
-            }
-
-            // 4. 별점 및 평점 숫자
-            RatingInfoDetailSection(
-                ratingInfo = RatingInfo(
-                    stars = uiState.rating,
-                    purchaseAgain = uiState.purchaseAgain
-                )
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-
-            NoteActionButtons(
-                onEditClick = onEditClick,
-                onShareClick = onShareClick
-            )
-
-            Spacer(modifier = Modifier.height(innerPadding.calculateBottomPadding() + 32.dp))
         }
     }
 }
 
-
-@Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
+@Preview(showBackground = true)
 @Composable
 fun FinalNoteDetailScreenPreview() {
     LeafyTheme {
+        val snackbarHostState = remember { SnackbarHostState() }
         val mockState = NoteUiState(
             teaName = "Earl Grey Supreme",
             teaType = "Black Tea",
@@ -121,17 +134,14 @@ fun FinalNoteDetailScreenPreview() {
             leafStyle = "Loose Leaf",
             leafProcessing = "Whole Leaf",
             teaGrade = "FTGFOP",
-
             waterTemp = "95",
             leafAmount = "2.5",
             brewTime = "4:30",
             brewCount = "3",
             teaware = "Ceramic Gaiwan",
-
             dateTime = "Nov 13, 2024 • 3:30 PM",
             weather = WeatherType.CLEAR,
             withPeople = "Solo",
-
             selectedTags = setOf("Floral", "Sweet", "Fruity", "Woody"),
             sweetness = 7f,
             sourness = 2f,
@@ -140,13 +150,15 @@ fun FinalNoteDetailScreenPreview() {
             umami = 6F,
             bodyType = BodyType.FULL,
             finishLevel = 0.8f,
-            memo = "Excellent balance of bergamot and base tea. The citrus notes are bright but not overpowering. Smooth mouthfeel with a pleasant astringency. Perfect afternoon tea.",
+            memo = "Excellent balance of bergamot and base tea.",
             rating = 5,
             purchaseAgain = true
         )
 
         NoteDetailScreen(
             uiState = mockState,
+            isProcessing = false,
+            snackbarHostState = snackbarHostState,
             onNavigateBack = {},
             onEditClick = {},
             onShareClick = {},

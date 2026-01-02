@@ -1,7 +1,6 @@
 package com.leafy.features.note.ui
 
-import com.subin.leafy.domain.model.BodyType
-import com.subin.leafy.domain.model.WeatherType
+import com.subin.leafy.domain.model.*
 
 data class NoteUiState(
     val isLoading: Boolean = false,
@@ -10,7 +9,7 @@ data class NoteUiState(
 
     // 1. Tasting Context
     val dateTime: String = "",
-    val weather: WeatherType = WeatherType.CLEAR,
+    val weather: WeatherType = WeatherType.INDOOR,
     val withPeople: String = "",
     val dryLeafUri: String? = null,
     val liquorUri: String? = null,
@@ -48,11 +47,38 @@ data class NoteUiState(
     val purchaseAgain: Boolean? = null
 ) {
     val isError: Boolean get() = errorMessage != null
+
     private val hasAtLeastOnePhoto: Boolean
         get() = !dryLeafUri.isNullOrBlank() ||
                 !liquorUri.isNullOrBlank() ||
                 !teawareUri.isNullOrBlank() ||
                 !additionalUri.isNullOrBlank()
+
     val canSave: Boolean
         get() = teaName.isNotBlank() && !isLoading && hasAtLeastOnePhoto
+
+    fun toDomain(ownerId: String, noteId: String): BrewingNote = BrewingNote(
+        id = noteId,
+        ownerId = ownerId,
+        teaInfo = TeaInfo(
+            name = teaName, brand = brandName, type = teaType,
+            leafStyle = leafStyle, processing = leafProcessing, grade = teaGrade
+        ),
+        condition = BrewingCondition(
+            waterTemp = waterTemp, leafAmount = leafAmount,
+            brewTime = brewTime, brewCount = brewCount, teaware = teaware
+        ),
+        evaluation = SensoryEvaluation(
+            selectedTags = selectedTags, sweetness = sweetness,
+            sourness = sourness, bitterness = bitterness,
+            saltiness = saltiness, umami = umami,
+            bodyType = bodyType, finishLevel = finishLevel, memo = memo
+        ),
+        ratingInfo = RatingInfo(stars = rating, purchaseAgain = purchaseAgain),
+        context = NoteContext(
+            dateTime = dateTime, weather = weather, withPeople = withPeople,
+            dryLeafUri = dryLeafUri, liquorUri = liquorUri,
+            teawareUri = teawareUri, additionalUri = additionalUri
+        )
+    )
 }

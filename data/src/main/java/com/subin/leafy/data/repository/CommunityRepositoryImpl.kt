@@ -7,63 +7,45 @@ import com.subin.leafy.domain.model.CommunityTag
 import com.subin.leafy.domain.model.TeaMaster
 import com.subin.leafy.domain.repository.CommunityRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 
 class CommunityRepositoryImpl(
     private val targetDataSource: CommunityDataSource
 ) : CommunityRepository {
 
-    override fun getPopularNotes(): Flow<DataResourceResult<List<CommunityPost>>> = flow {
-        emit(DataResourceResult.Loading)
-        emit(targetDataSource.getPopularNotes())
-    }.catch {
-        emit(DataResourceResult.Failure(it))
-    }.flowOn(Dispatchers.IO)
+    private fun <T> wrapFlow(fetcher: () -> Flow<DataResourceResult<T>>): Flow<DataResourceResult<T>> =
+        fetcher()
+            .onStart { emit(DataResourceResult.Loading) }
+            .catch { emit(DataResourceResult.Failure(it)) }
+            .flowOn(Dispatchers.IO) // 이것도 힐트한테 관리 맡기기!! 강사님 코드에 있으니까 하나 만들어서 사용하기
 
-    override fun getRisingNotes(): Flow<DataResourceResult<List<CommunityPost>>> = flow {
-        emit(DataResourceResult.Loading)
-        emit(targetDataSource.getRisingNotes())
-    }.catch {
-        emit(DataResourceResult.Failure(it))
-    }.flowOn(Dispatchers.IO)
+    override fun getPopularNotes() = wrapFlow { targetDataSource.getPopularNotes() }
 
-    override fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>> = flow {
-        emit(DataResourceResult.Loading)
-        emit(targetDataSource.getMostSavedNotes())
-    }.catch {
-        emit(DataResourceResult.Failure(it))
-    }.flowOn(Dispatchers.IO)
+    override fun getRisingNotes() = wrapFlow { targetDataSource.getRisingNotes() }
 
-    override fun getRecommendedMasters(): Flow<DataResourceResult<List<TeaMaster>>> = flow {
-        emit(DataResourceResult.Loading)
-        emit(targetDataSource.getRecommendedMasters())
-    }.catch {
-        emit(DataResourceResult.Failure(it))
-    }.flowOn(Dispatchers.IO)
+    override fun getMostSavedNotes() = wrapFlow { targetDataSource.getMostSavedNotes() }
 
-    override fun getPopularTags(): Flow<DataResourceResult<List<CommunityTag>>> = flow {
-        emit(DataResourceResult.Loading)
-        emit(targetDataSource.getPopularTags())
-    }.catch {
-        emit(DataResourceResult.Failure(it))
-    }.flowOn(Dispatchers.IO)
+    override fun getFollowingFeed() = wrapFlow { targetDataSource.getFollowingFeed() }
 
-    override fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>> = flow {
-        emit(DataResourceResult.Loading)
-        emit(targetDataSource.getFollowingFeed())
-    }.catch {
-        emit(DataResourceResult.Failure(it))
-    }.flowOn(Dispatchers.IO)
+    override fun getRecommendedMasters() = wrapFlow { targetDataSource.getRecommendedMasters() }
 
-    // 액션(CUD) 계열은 Flow 대신 직접 DataResourceResult 반환하거나
+    override fun getPopularTags() = wrapFlow { targetDataSource.getPopularTags() }
+
     override suspend fun toggleLike(postId: String): DataResourceResult<Boolean> {
-        return targetDataSource.toggleLike(postId)
+        return try {
+            targetDataSource.toggleLike(postId)
+        } catch (e: Exception) {
+            // 여기가 예외처리하고 뷰모델은 받게끔 전체적으로 확인하고 수정
+            DataResourceResult.Failure(e)
+        }
     }
 
     override suspend fun toggleFollow(masterId: String): DataResourceResult<Boolean> {
-        return targetDataSource.toggleFollow(masterId)
+        return try {
+            targetDataSource.toggleFollow(masterId)
+        } catch (e: Exception) {
+            DataResourceResult.Failure(e)
+        }
     }
 }
+//utils 패키지 만들어서 빼기 반복되는 코드들

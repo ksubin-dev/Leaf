@@ -6,14 +6,14 @@ import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.BrewingRecord
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserStats
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.YearMonth
 
 @RequiresApi(Build.VERSION_CODES.O)
 data class MyPageUiState(
     val user: User? = null,
     val userStats: UserStats? = null,
-    val selectedDateTime: LocalDateTime = LeafyTimeUtils.now(),
+    val selectedDate: LocalDate = LeafyTimeUtils.now(),
     val recordedDays: List<Int> = emptyList(),
     val monthlyRecords: List<BrewingRecord> = emptyList(),
     val selectedRecord: BrewingRecord? = null,
@@ -21,14 +21,17 @@ data class MyPageUiState(
     val errorMessage: String? = null
 ) {
     val currentMonth: YearMonth
-        get() = YearMonth.from(selectedDateTime)
+        get() = YearMonth.from(selectedDate)
 
     val selectedDay: Int
-        get() = selectedDateTime.dayOfMonth
+        get() = selectedDate.dayOfMonth
 
     val displayMonth: String
-        get() = "${selectedDateTime.year}년 ${selectedDateTime.monthValue}월"
+        get() = "${selectedDate.year}년 ${selectedDate.monthValue}월"
 
     fun hasRecordOnSelectedDay(): Boolean =
-        recordedDays.contains(selectedDateTime.dayOfMonth)
+        recordedDays.contains(selectedDate.dayOfMonth)
+
+    val selectedDateString: String
+        get() = LeafyTimeUtils.formatToString(selectedDate)
 }

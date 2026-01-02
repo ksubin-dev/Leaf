@@ -2,6 +2,7 @@ package com.leafy.features.mypage.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,13 +24,15 @@ fun BrewingRecordCard(
     teaName: String,
     metaInfo: String,
     rating: Int,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onCardClick: () -> Unit
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .clickable { onCardClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

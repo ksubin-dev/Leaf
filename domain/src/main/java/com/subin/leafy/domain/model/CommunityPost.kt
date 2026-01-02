@@ -4,12 +4,12 @@ data class CommunityPost(
     val id: String,
     val authorId: String,
     val authorName: String,
-    val authorProfileUrl: Int?, // 실제 앱에선 String(URL)이겠지만 지금은 리소스 ID 사용
+    val authorProfileUrl: String?,
     val title: String,
     val subtitle: String,
     val content: String,
     val teaTag: String,         // 예: "Oolong", "Green Tea"
-    val imageRes: Int,
+    val imageUrl: String?,
     val rating: Float,
     val metaInfo: String,       // 예: "대만 · 중배화"
     val brewingSteps: List<String>, // ["95℃", "3m", "5g"]
@@ -26,7 +26,7 @@ data class TeaMaster(
     val id: String,
     val name: String,
     val title: String,          // 예: "녹차 & 말차 전문가"
-    val profileImageRes: Int,
+    val profileImageUrl: String?,
     val isFollowing: Boolean
 )
 

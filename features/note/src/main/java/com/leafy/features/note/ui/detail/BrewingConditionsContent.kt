@@ -23,21 +23,20 @@ fun BrewingConditionsContent(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BrewingItemCard(
                     icon = ImageVector.vectorResource(id = SharedR.drawable.ic_temp),
                     label = "Temperature",
-                    value = "${condition.waterTemp}°C",
+                    value = formatValueWithUnit(condition.waterTemp, "°C"),
                     modifier = Modifier.weight(1f)
                 )
                 BrewingItemCard(
                     icon = ImageVector.vectorResource(id = SharedR.drawable.ic_leaf),
                     label = "Leaf Amount",
-                    value = "${condition.leafAmount}g",
+                    value = formatValueWithUnit(condition.leafAmount, "g"),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -45,28 +44,30 @@ fun BrewingConditionsContent(
                 BrewingItemCard(
                     icon = ImageVector.vectorResource(id = SharedR.drawable.ic_timer),
                     label = "Steeping Time",
-                    value = condition.brewTime,
+                    value = condition.brewTime.ifBlank { "-" },
                     modifier = Modifier.weight(1f)
                 )
                 BrewingItemCard(
                     icon = ImageVector.vectorResource(id = SharedR.drawable.ic_repeat),
                     label = "Infusions",
-                    value = condition.brewCount,
+                    value = if (condition.brewCount.isNotBlank()) "${condition.brewCount}회" else "-",
                     modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 2. 하단 상세 정보 리스트
-        DetailInfoRow(label = "Teaware", value = condition.teaware)
-        // 입력 모델에 따라 추가 정보(재질, 수질 등)를 확장할 수 있습니다.
+        if (condition.teaware.isNotBlank()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            DetailInfoRow(label = "Teaware", value = condition.teaware)
+        }
     }
 }
 
+private fun formatValueWithUnit(value: String, unit: String): String {
+    if (value.isBlank()) return "-"
+    return if (value.contains(unit)) value else "$value$unit"
+}
 
-// --- 🔍 프리뷰 ---
 @Preview(showBackground = true)
 @Composable
 fun BrewingConditionsDetailSectionPreview() {

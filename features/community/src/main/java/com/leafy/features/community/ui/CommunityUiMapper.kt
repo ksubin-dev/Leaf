@@ -1,7 +1,6 @@
 package com.leafy.features.community.ui
 
-import com.leafy.features.community.ui.component.ExploreFollowingNoteUi
-import com.leafy.features.community.ui.component.ExploreNoteSummaryUi
+import com.leafy.features.community.ui.component.ExploreNoteUi
 import com.leafy.features.community.ui.component.ExploreTagUi
 import com.leafy.features.community.ui.component.ExploreTeaMasterUi
 import com.subin.leafy.domain.model.CommunityPost
@@ -10,59 +9,55 @@ import com.subin.leafy.domain.model.TeaMaster
 import com.leafy.shared.R as SharedR
 
 /**
- * 도메인 모델 리스트 -> UI 모델 리스트 변환 (확장 함수)
+ * 1 & 4 통합: 커뮤니티 노트 (인기/라이징/팔로잉 통합)
  */
+fun List<CommunityPost>.toNoteUi(): List<ExploreNoteUi> = this.map { post ->
+    ExploreNoteUi(
+        id = post.id,
+        title = post.title,
+        subtitle = post.subtitle,
+        imageUrl = post.imageUrl,
+        rating = post.rating,
+        savedCount = post.savedCount,
+        likeCount = post.likeCount,
+        isLiked = post.isLiked,
+        isSaved = post.isSaved,
 
-// 1. 인기/라이징/저장 노트 요약용
-fun List<CommunityPost>.toSummaryUi(): List<ExploreNoteSummaryUi> = this.map {
-    ExploreNoteSummaryUi(
-        title = it.title,
-        subtitle = it.subtitle,
-        imageRes = it.imageRes,
-        rating = it.rating,
-        savedCount = it.savedCount,
-        profileImageRes = it.authorProfileUrl ?: SharedR.drawable.ic_profile_1,
-        authorName = it.authorName,
-        likeCount = it.likeCount,
-        isLiked = it.isLiked
+        // 작성자 및 피드 정보
+        authorName = post.authorName,
+        authorProfileUrl = post.authorProfileUrl,
+        timeAgo = post.createdAt,
+
+        // 상세 섹션용 정보 가공
+        metaInfo = post.subtitle,
+        description = post.content,
+        brewingChips = post.brewingSteps.ifEmpty { listOf(post.metaInfo) },
+        reviewLabel = if (post.rating >= 4.5f) "Highly Rated" else "Verified",
+        comment = "차의 풍미가 아주 좋습니다.",
+        likerProfileUrls = emptyList() // 나중에 서버에서 받아올 수 있음
     )
 }
 
-// 2. 티 마스터 섹션용
+/**
+ * 2. 티 마스터 섹션용
+ */
 fun List<TeaMaster>.toMasterUi(): List<ExploreTeaMasterUi> = this.map {
     ExploreTeaMasterUi(
-        profileImageRes = it.profileImageRes,
+        id = it.id,
         name = it.name,
         title = it.title,
+        profileImageUrl = it.profileImageUrl,
         isFollowing = it.isFollowing
     )
 }
 
-// 3. 인기 태그 섹션용
+/**
+ * 3. 인기 태그 섹션용
+ */
 fun List<CommunityTag>.toTagUi(): List<ExploreTagUi> = this.map {
     ExploreTagUi(
+        id = it.id,
         label = it.label,
         isTrendingUp = it.isTrendingUp
-    )
-}
-
-// 4. 팔로우 탭 피드용 (FollowingNoteCard 등에 사용)
-fun List<CommunityPost>.toFollowingUi(): List<ExploreFollowingNoteUi> = this.map { post ->
-    ExploreFollowingNoteUi(
-        authorName = post.authorName,
-        authorAvatarRes = post.authorProfileUrl ?: SharedR.drawable.ic_profile_1,
-        timeAgo = post.createdAt,
-        tagLabel = post.teaTag, // 예: "Oolong"
-        imageRes = post.imageRes,
-        title = post.title,
-        meta = post.subtitle, // "대만 · 중배화 · 반구형"
-        description = post.content,
-        // 도메인의 복잡한 정보를 UI용 칩 리스트로 가공
-        brewingChips = listOf("${post.rating}★", post.metaInfo),
-        rating = post.rating,
-        reviewLabel = "Verified", // 조건에 따른 라벨 처리 가능
-        comment = "커뮤니티 글의 상세 코멘트입니다.",
-        likerAvatarResList = listOf(SharedR.drawable.ic_profile_2), // 샘플
-        likeCountText = "${post.likeCount}명이 좋아합니다"
     )
 }

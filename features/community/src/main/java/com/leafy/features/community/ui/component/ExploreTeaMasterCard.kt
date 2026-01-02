@@ -1,16 +1,12 @@
 package com.leafy.features.community.ui.component
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 
@@ -42,10 +39,11 @@ fun ExploreTeaMasterCard(
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 프로필 이미지
-        Image(
-            painter = painterResource(id = master.profileImageRes),
+        AsyncImage(
+            model = master.profileImageUrl,
             contentDescription = master.name,
+            placeholder = painterResource(id = SharedR.drawable.ic_profile_1),
+            error = painterResource(id = SharedR.drawable.ic_profile_1),
             modifier = Modifier
                 .size(52.dp)
                 .clip(CircleShape),
@@ -76,7 +74,6 @@ fun ExploreTeaMasterCard(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // 팔로우 / 팔로잉 버튼 디자인 계산
         val buttonText = if (isFollowing) "팔로잉" else "+ 팔로우"
         val containerColor = if (isFollowing) colors.primary.copy(alpha = 0.08f) else colors.background
         val contentColor = colors.primary
@@ -111,9 +108,10 @@ private fun ExploreTeaMasterCardPreview() {
         Box(modifier = Modifier.padding(16.dp)) {
             ExploreTeaMasterCard(
                 master = ExploreTeaMasterUi(
+                    id = "1",
                     name = "그린티 마니아",
                     title = "녹차 & 블렌딩 전문가",
-                    profileImageRes = SharedR.drawable.ic_profile_1,
+                    profileImageUrl = null,
                     isFollowing = false
                 )
             )

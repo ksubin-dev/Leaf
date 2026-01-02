@@ -1,5 +1,7 @@
 package com.leafy.features.note.ui.sections
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -15,10 +17,11 @@ import com.leafy.features.note.ui.components.LeafyFieldLabel
 import com.leafy.features.note.ui.components.WeatherOptionButton
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.leafy.shared.ui.utils.LeafyTimeUtils
+import java.time.Instant
+import java.time.ZoneId
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TastingContextSection(
@@ -32,11 +35,14 @@ fun TastingContextSection(
 ) {
     val colors = MaterialTheme.colorScheme
 
-    val datePickerState = rememberDatePickerState()
+    val initialDate = remember(dateTime) { LeafyTimeUtils.parseToDate(dateTime) }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialDate.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+    )
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
-        // 섹션 타이틀
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(id = SharedR.drawable.ic_note_section_context),
@@ -53,29 +59,30 @@ fun TastingContextSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Date & Time
-        LeafyFieldLabel(text = "Date & Time")
+        LeafyFieldLabel(text = "Date")
         OutlinedTextField(
-            value = dateTime,
-            onValueChange = { /* readOnly */ },
+            value = LeafyTimeUtils.formatToDisplay(dateTime),
+            onValueChange = { },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 4.dp)
                 .clickable { showDatePicker = true },
             readOnly = true,
-            singleLine = true,
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = colors.onSurface,
+                disabledBorderColor = colors.outline,
+                disabledTrailingIconColor = colors.primary,
+                disabledPlaceholderColor = colors.tertiary
+            ),
             trailingIcon = {
-                IconButton(onClick = { showDatePicker = true }) {
-                    Icon(
-                        painter = painterResource(id = SharedR.drawable.ic_calendar),
-                        contentDescription = "Pick date",
-                        tint = colors.primary
-                    )
-                }
+                Icon(
+                    painter = painterResource(id = SharedR.drawable.ic_calendar),
+                    contentDescription = "Pick date"
+                )
             }
         )
 
-        // DatePicker Dialog 로직
         if (showDatePicker) {
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -84,22 +91,24 @@ fun TastingContextSection(
                         onClick = {
                             showDatePicker = false
                             datePickerState.selectedDateMillis?.let { millis ->
-                                val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                val formattedDate = formatter.format(Date(millis))
-                                onDateTimeChange(formattedDate)
+                                val selectedDate = Instant.ofEpochMilli(millis)
+                                    .atZone(ZoneId.of("UTC"))
+                                    .toLocalDate()
+                                onDateTimeChange(LeafyTimeUtils.formatToString(selectedDate))
                             }
                         }
-                    ) { Text("OK") }
+                    ) { Text("확인") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                    TextButton(onClick = { showDatePicker = false }) { Text("취소") }
                 }
-            ) { DatePicker(state = datePickerState) }
+            ) {
+                DatePicker(state = datePickerState)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Weather
         LeafyFieldLabel(text = "Weather")
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -127,26 +136,26 @@ fun TastingContextSection(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // With People
         LeafyFieldLabel(text = "With")
         OutlinedTextField(
             value = withPeople,
             onValueChange = onWithPeopleChange,
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
             singleLine = true,
-            placeholder = { Text(text = "e.g. Minjae, Subin", color = colors.tertiary) }
+            placeholder = { Text(text = "누구와 함께 마셨나요?", color = colors.tertiary) }
         )
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 private fun TastingContextSectionPreview() {
     LeafyTheme {
         TastingContextSection(
-            dateTime = "12/17/2025",
+            dateTime = "2025-12-30",
             selectedWeather = WeatherType.CLEAR,
-            withPeople = "Subin",
+            withPeople = "수빈",
             onDateTimeChange = {},
             onWeatherSelected = {},
             onWithPeopleChange = {},

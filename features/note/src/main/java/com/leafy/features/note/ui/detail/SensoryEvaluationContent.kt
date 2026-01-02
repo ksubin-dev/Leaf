@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,7 +69,12 @@ fun SensoryEvaluationContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        DetailInfoRow(label = "Body", value = evaluation.bodyType.name)
+        val bodyLabel = when(evaluation.bodyType) {
+            BodyType.LIGHT -> "Light Body"
+            BodyType.MEDIUM -> "Medium Body"
+            BodyType.FULL -> "Full Body"
+        }
+        DetailInfoRow(label = "Body", value = bodyLabel)
         DetailInfoRow(label = "Finish", value = evaluation.getFinishLabel())
 
         Spacer(modifier = Modifier.height(24.dp))

@@ -4,7 +4,6 @@ import java.util.Date
 import java.util.UUID
 
 data class BrewingNote(
-    //uuid 호출
     val id: String,
     val ownerId : String,
     val teaInfo: TeaInfo,

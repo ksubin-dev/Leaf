@@ -3,6 +3,7 @@ package com.leafy.features.community.ui.section
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -10,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import com.leafy.features.community.ui.component.ExploreSectionHeader
 import com.leafy.features.community.ui.component.ExploreTeaMasterCard
 import com.leafy.features.community.ui.component.ExploreTeaMasterUi
-import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 
 /**
@@ -25,11 +25,10 @@ fun ExploreTrendingTeaMasterSection(
     onFollowToggle: (ExploreTeaMasterUi, Boolean) -> Unit = { _, _ -> }
 ) {
     Column(modifier = modifier) {
-        // 유저님이 만드신 공통 헤더 사용
         ExploreSectionHeader(
             title = "이번 달 티 마스터 추천",
             showMore = true,
-            onMoreClick = { /* TODO */ }
+            onMoreClick = { /* TODO: 마스터 더보기 이동 */ }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -56,19 +55,24 @@ private fun ExploreTrendingTeaMasterSectionPreview() {
     LeafyTheme {
         val dummyMasters = listOf(
             ExploreTeaMasterUi(
-                profileImageRes = SharedR.drawable.ic_profile_4,
+                id = "m1",
+                profileImageUrl = null,
                 name = "그린티 마니아",
                 title = "녹차 & 블렌딩 전문가",
                 isFollowing = false
             ),
             ExploreTeaMasterUi(
-                profileImageRes = SharedR.drawable.ic_profile_5,
+                id = "m2",
+                profileImageUrl = null,
                 name = "허브티 큐레이터",
                 title = "허브티 & 웰니스 컨설턴트",
-                isFollowing = false
+                isFollowing = true
             )
         )
 
-        ExploreTrendingTeaMasterSection(masters = dummyMasters)
+        ExploreTrendingTeaMasterSection(
+            modifier = Modifier.padding(16.dp),
+            masters = dummyMasters
+        )
     }
 }

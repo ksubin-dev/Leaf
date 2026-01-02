@@ -2,7 +2,10 @@ package com.subin.leafy.di
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.subin.leafy.data.remote.fakes.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.subin.leafy.data.remote.firestore.*
 import com.subin.leafy.data.repository.*
 import com.subin.leafy.domain.usecase.*
 import com.subin.leafy.domain.usecase.community.*
@@ -10,31 +13,46 @@ import com.subin.leafy.domain.usecase.note.*
 import com.subin.leafy.domain.usecase.timer.GetPresetsUseCase
 import com.subin.leafy.domain.usecase.user.*
 import com.leafy.shared.di.ApplicationContainer
+import com.subin.leafy.domain.repository.AuthRepository
 import com.subin.leafy.domain.usecase.auth.GetAuthUserUseCase
 import com.subin.leafy.domain.usecase.auth.LoginUseCase
 import com.subin.leafy.domain.usecase.auth.LogoutUseCase
 import com.subin.leafy.domain.usecase.auth.SignUpUseCase
 
-class ApplicationContainerImpl : ApplicationContainer {
+class ApplicationContainerImpl() : ApplicationContainer {
 
-    // 1. DataSources
-    private val communityDataSource = FakeCommunityDataSourceImpl()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val firebaseStorage: FirebaseStorage = FirebaseStorage.getInstance()
+
+
+    // 2. DataSources
     @RequiresApi(Build.VERSION_CODES.O)
-    private val noteDataSource = FakeNoteDataSourceImpl()
-    private val timerDataSource = FakeTimerDataSourceImpl()
-    private val userDataSource = FakeUserDataSourceImpl()
+    private val noteDataSource = FirestoreNoteDataSourceImpl(firestore)
+
+    private val storageDataSource = FirebaseStorageDataSourceImpl(firebaseStorage)
+    private val userDataSource = FirestoreUserDataSourceImpl(firebaseAuth, firestore)
+    private val timerDataSource = FirestoreTimerDataSourceImpl(firestore)
+    private val communityDataSource = FirestoreCommunityDataSourceImpl(firestore)
 
     // 2. Repositories
     val communityRepository = CommunityRepositoryImpl(communityDataSource)
-    val noteRepository = NoteRepositoryImpl(noteDataSource)
+    @RequiresApi(Build.VERSION_CODES.O)
+    val noteRepository = NoteRepositoryImpl(
+        dataSource = noteDataSource,
+        storageDataSource = storageDataSource
+    )
     val timerRepository = TimerRepositoryImpl(timerDataSource)
     val userRepository = UserRepositoryImpl(userDataSource)
     val userStatsRepository = UserStatsRepositoryImpl(userDataSource)
 
-    // Auth Repository 추가 (내일 Firebase 연동 시 이 부분만 교체하면 됩니다)
-    val authRepository = FakeAuthRepositoryImpl()
+    val authRepository: AuthRepository = FirebaseAuthRepositoryImpl(
+        firebaseAuth = firebaseAuth,
+        firestore = firestore
+    )
 
     // 3. Note UseCases
+    @RequiresApi(Build.VERSION_CODES.O)
     override val noteUseCases = NoteUseCases(
         getNotes = GetNotesUseCase(noteRepository),
         getNoteById = GetNoteByIdUseCase(noteRepository),
@@ -71,7 +89,7 @@ class ApplicationContainerImpl : ApplicationContainer {
     )
 
     // 7. Auth UseCases
-    override val authUserUseCase = AuthUseCases(
+    override val authUseCases = AuthUseCases(
         signUp = SignUpUseCase(authRepository),
         login = LoginUseCase(authRepository),
         logout = LogoutUseCase(authRepository),

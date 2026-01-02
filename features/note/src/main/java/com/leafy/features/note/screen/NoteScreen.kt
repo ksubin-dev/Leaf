@@ -1,5 +1,9 @@
 package com.leafy.features.note.screen
 
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +27,7 @@ import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.showToast
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NoteScreen(
     viewModel: NoteViewModel,
@@ -32,11 +37,27 @@ fun NoteScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
 
+    val dryLeafLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { viewModel.updateContext(dryUri = it.toString()) } }
+
+    val liquorLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { viewModel.updateContext(liqUri = it.toString()) } }
+
+    val teawareLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { viewModel.updateContext(teaUri = it.toString()) } }
+
+    val additionalLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { viewModel.updateContext(addUri = it.toString()) } }
+
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is NoteUiEffect.ShowToast -> {
-                    showToast(context = context, effect.message)
+                is NoteUiEffect.ShowSnackbar -> {
+                    showToast(context = context, message = effect.message)
                 }
                 is NoteUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -50,6 +71,10 @@ fun NoteScreen(
         isProcessing = isProcessing,
         onNavigateBack = onNavigateBack,
         onSave = { viewModel.saveNote() },
+        onClickDryLeaf = { dryLeafLauncher.launch("image/*") },
+        onClickLiquor = { liquorLauncher.launch("image/*") },
+        onClickTeaware = { teawareLauncher.launch("image/*") },
+        onClickAdditional = { additionalLauncher.launch("image/*") },
         onUpdateTeaInfo = { name, brand, type, style, processing, grade ->
             viewModel.updateTeaInfo(name, brand, type, style, processing, grade)
         },
@@ -68,6 +93,7 @@ fun NoteScreen(
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NoteContent(
@@ -75,6 +101,10 @@ private fun NoteContent(
     isProcessing: Boolean,
     onNavigateBack: () -> Unit,
     onSave: () -> Unit,
+    onClickDryLeaf: () -> Unit,
+    onClickLiquor: () -> Unit,
+    onClickTeaware: () -> Unit,
+    onClickAdditional: () -> Unit,
     onUpdateTeaInfo: (String?, String?, String?, String?, String?, String?) -> Unit,
     onUpdateContext: (String?, WeatherType?, String?, String?, String?, String?, String?) -> Unit,
     onUpdateCondition: (String?, String?, String?, String?, String?) -> Unit,
@@ -88,7 +118,7 @@ private fun NoteContent(
             TopAppBar(
                 title = {
                     Text(
-                        text = "New Brewing Note",
+                        text = if (uiState.isSaved) "Edit Brewing Note" else "New Brewing Note",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -129,16 +159,15 @@ private fun NoteContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
-
             PhotosSection(
                 dryLeafUri = uiState.dryLeafUri,
                 liquorUri = uiState.liquorUri,
                 teawareUri = uiState.teawareUri,
                 additionalUri = uiState.additionalUri,
-                onClickDryLeaf = { /* 갤러리 연동 시 it 자리에 uri 입력 */ onUpdateContext(null, null, null, "sample_uri", null, null, null) },
-                onClickTeaLiquor = { onUpdateContext(null, null, null, null, "sample_uri", null, null) },
-                onClickTeaware = { onUpdateContext(null, null, null, null, null, "sample_uri", null) },
-                onClickAdditional = { onUpdateContext(null, null, null, null, null, null, "sample_uri") }
+                onClickDryLeaf = onClickDryLeaf,
+                onClickTeaLiquor = onClickLiquor,
+                onClickTeaware = onClickTeaware,
+                onClickAdditional = onClickAdditional
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -221,15 +250,21 @@ private fun NoteContent(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 private fun NoteScreenPreview() {
     LeafyTheme {
         val mockUiState = NoteUiState(
             teaName = "Dragon Well",
+            brandName = "West Lake Tea",
             dateTime = "12/17/2025",
             weather = WeatherType.CLEAR,
-            bodyType = BodyType.MEDIUM
+            bodyType = BodyType.MEDIUM,
+            waterTemp = "85",
+            leafAmount = "3.0",
+            brewTime = "2:00",
+            memo = "Great green tea experience."
         )
 
         NoteContent(
@@ -237,8 +272,12 @@ private fun NoteScreenPreview() {
             isProcessing = false,
             onNavigateBack = {},
             onSave = {},
+            onClickDryLeaf = {},
+            onClickLiquor = {},
+            onClickTeaware = {},
+            onClickAdditional = {},
             onUpdateTeaInfo = { _, _, _, _, _, _ -> },
-            onUpdateContext = { _, _, _, _, _, _, _ -> }, // 7개 인자 프리뷰 반영
+            onUpdateContext = { _, _, _, _, _, _, _ -> },
             onUpdateCondition = { _, _, _, _, _ -> },
             onUpdateSensory = { _, _, _, _, _, _, _, _, _ -> },
             onUpdateRating = { _, _ -> }

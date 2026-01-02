@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -47,6 +48,7 @@ dependencies {
     implementation(project(":shared"))
     implementation(project(":domain"))
     implementation(project(":data"))
+    implementation(project(":features:auth"))
     implementation(project(":features:note"))
     implementation(project(":features:home"))
     implementation(project(":features:community"))
@@ -61,6 +63,11 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.bundles.firebase.libraries)
+
+    implementation(libs.firebase.auth)
     implementation(libs.androidx.core.splashscreen)
 
 

@@ -6,7 +6,7 @@ import com.subin.leafy.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
 
 class GetMonthlyRecordsUseCase(private val repository: NoteRepository) {
-    operator fun invoke(year: Int, month: Int): Flow<DataResourceResult<List<BrewingRecord>>> {
-        return repository.getRecordsByMonth(year, month)
+    operator fun invoke(userId: String, year: Int, month: Int): Flow<DataResourceResult<List<BrewingRecord>>> {
+        return repository.getRecordsByMonth(userId,year, month)
     }
 }

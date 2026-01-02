@@ -60,7 +60,8 @@ fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
     dateString = this.dateTime.ifBlank { TimeUtils.toDateString(Date(this.createdAt)) },
     teaName = this.teaName,
     metaInfo = "${this.waterTemp} · ${this.brewTime} · ${this.brewCount}회 우림",
-    rating = this.stars
+    rating = this.stars,
+    imageUrl = liquorUri ?: dryLeafUri ?: teawareUri ?: additionalUri
 )
 
 /**

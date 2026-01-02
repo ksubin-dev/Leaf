@@ -7,6 +7,8 @@ import com.subin.leafy.domain.model.TeaMaster
 import kotlinx.coroutines.flow.Flow
 
 interface CommunityRepository {
+    //필요없는데다가 굳이 flow 쓰지 말기 남발하지말기
+    //cud는 flow는 잘안쓴다
     // Trending 탭용 데이터
     //각각 impl 작업
     fun getPopularNotes(): Flow<DataResourceResult<List<CommunityPost>>>

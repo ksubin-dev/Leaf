@@ -39,7 +39,8 @@ fun BrewingCalendar(
     val firstDayOffset = CalendarUtil.getFirstDayOffset(currentMonth)
     val daysInMonth = CalendarUtil.getDaysInMonth(currentMonth)
 
-    val today = LeafyTimeUtils.now().toLocalDate()
+    val today = LeafyTimeUtils.now()
+
     val isCurrentMonth = currentMonth.year == today.year && currentMonth.monthValue == today.monthValue
 
     Card(
@@ -51,7 +52,6 @@ fun BrewingCalendar(
         border = androidx.compose.foundation.BorderStroke(1.dp, colors.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            // 헤더 (이전/다음 버튼 포함)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,17 +64,16 @@ fun BrewingCalendar(
                 )
                 Row {
                     IconButton(onClick = onPrevMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "이전 달")
                     }
                     IconButton(onClick = onNextMonth) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "다음 달")
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 요일 라벨
             Row(modifier = Modifier.fillMaxWidth()) {
                 listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
                     Text(
@@ -92,7 +91,7 @@ fun BrewingCalendar(
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
-                modifier = Modifier.height(240.dp),
+                modifier = Modifier.heightIn(min = 250.dp, max = 300.dp),
                 userScrollEnabled = false,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
