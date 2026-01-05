@@ -2,26 +2,13 @@ package com.subin.leafy.data.mapper
 
 import com.subin.leafy.data.model.dto.BrewingNoteDTO
 import com.subin.leafy.domain.model.*
-import java.text.SimpleDateFormat
+import com.leafy.shared.ui.utils.LeafyTimeUtils
 import java.util.Date
-import java.util.Locale
-
-
-/**
- * 날짜 변환을 위한 유틸리티 객체
- */
-object TimeUtils {
-    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
-    fun toDateString(date: Date): String = dateFormatter.format(date)
-
-    fun fromDateString(dateString: String): Date {
-        return runCatching { dateFormatter.parse(dateString) }.getOrNull() ?: Date()
-    }
-}
+import java.time.Instant
+import java.time.ZoneId
 
 /**
- * DTO -> 상세 BrewingNote (상세 화면용)
+ * DTO -> 상세 BrewingNote (Domain 계층으로 변환)
  */
 fun BrewingNoteDTO.toDomainNote() = BrewingNote(
     id = this._id,
@@ -49,7 +36,11 @@ fun BrewingNoteDTO.toDomainNote() = BrewingNote(
         withPeople = this.withPeople, dryLeafUri = this.dryLeafUri,
         liquorUri = this.liquorUri, teawareUri = this.teawareUri, additionalUri = this.additionalUri
     ),
-    createdAt = Date(this.createdAt)
+    createdAt = Date(this.createdAt),
+    likeCount = this.likeCount,
+    bookmarkCount = this.bookmarkCount,
+    viewCount = this.viewCount,
+    commentCount = this.commentCount
 )
 
 /**
@@ -57,7 +48,13 @@ fun BrewingNoteDTO.toDomainNote() = BrewingNote(
  */
 fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
     id = this._id,
-    dateString = this.dateTime.ifBlank { TimeUtils.toDateString(Date(this.createdAt)) },
+    // dateTime이 없으면 createdAt(Long)을 yyyy-MM-dd 문자열로 변환하여 사용
+    dateString = this.dateTime.ifBlank {
+        val localDate = Instant.ofEpochMilli(this.createdAt)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+        LeafyTimeUtils.formatToString(localDate)
+    },
     teaName = this.teaName,
     metaInfo = "${this.waterTemp} · ${this.brewTime} · ${this.brewCount}회 우림",
     rating = this.stars,
@@ -65,7 +62,7 @@ fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
 )
 
 /**
- * BrewingNote(Domain) -> BrewingNoteDTO (Data Layer 저장용)
+ * BrewingNote(Domain) -> BrewingNoteDTO (저장용)
  */
 fun BrewingNote.toDTO() = BrewingNoteDTO(
     _id = this.id,
@@ -99,40 +96,27 @@ fun BrewingNote.toDTO() = BrewingNoteDTO(
     liquorUri = this.context.liquorUri,
     teawareUri = this.context.teawareUri,
     additionalUri = this.context.additionalUri,
-    createdAt = this.createdAt.time
+    createdAt = this.createdAt.time,
+    likeCount = this.likeCount,
+    bookmarkCount = this.bookmarkCount,
+    viewCount = this.viewCount,
+    commentCount = this.commentCount
 )
 
 /**
- * 상세 BrewingNote -> Firestore용 Map (저장용)
- */
-fun BrewingNote.toFirestoreMap(): Map<String, Any?> = this.toDTO().let { dto ->
-    mapOf(
-        "_id" to dto._id, "userId" to dto.userId, "teaName" to dto.teaName,
-        "teaBrand" to dto.teaBrand, "teaType" to dto.teaType, "leafStyle" to dto.leafStyle,
-        "processing" to dto.processing, "teaGrade" to dto.teaGrade, "waterTemp" to dto.waterTemp,
-        "leafAmount" to dto.leafAmount, "brewTime" to dto.brewTime, "brewCount" to dto.brewCount,
-        "teaware" to dto.teaware, "selectedTags" to dto.selectedTags, "sweetness" to dto.sweetness,
-        "sourness" to dto.sourness, "bitterness" to dto.bitterness, "saltiness" to dto.saltiness,
-        "umami" to dto.umami, "bodyType" to dto.bodyType, "finishLevel" to dto.finishLevel,
-        "memo" to dto.memo, "stars" to dto.stars, "purchaseAgain" to dto.purchaseAgain,
-        "dateTime" to dto.dateTime, "weather" to dto.weather, "withPeople" to dto.withPeople,
-        "dryLeafUri" to dto.dryLeafUri, "liquorUri" to dto.liquorUri, "teawareUri" to dto.teawareUri,
-        "additionalUri" to dto.additionalUri, "createdAt" to dto.createdAt
-    )
-}
-
-/**
- * 상세 BrewingNote -> BrewingRecord(요약)
+ * 상세 BrewingNote -> BrewingRecord(요약본) 변환
  */
 fun BrewingNote.toRecord() = BrewingRecord(
     id = this.id,
-    dateString = this.context.dateTime.ifBlank { TimeUtils.toDateString(this.createdAt) },
+    dateString = this.context.dateTime.ifBlank { LeafyTimeUtils.nowToString() },
     teaName = this.teaInfo.name,
     metaInfo = "${this.condition.waterTemp} · ${this.condition.brewTime} · ${this.condition.brewCount}회 우림",
-    rating = this.ratingInfo.stars
+    rating = this.ratingInfo.stars,
+    imageUrl = this.context.liquorUri ?: this.context.dryLeafUri ?: this.context.teawareUri ?: this.context.additionalUri
 )
 
 /**
- * 리스트 변환 유틸리티
+ * 리스트 변환 헬퍼
  */
 fun List<BrewingNoteDTO>.toDomainRecordList() = this.map { it.toDomainRecord() }
+

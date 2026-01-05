@@ -20,22 +20,21 @@ fun ExploreFollowingFeedSection(
     modifier: Modifier = Modifier,
     notes: List<ExploreNoteUi>,
     onNoteClick: (ExploreNoteUi) -> Unit = {},
-    onLikeClick: (ExploreNoteUi) -> Unit = {}
+    onLikeClick: (ExploreNoteUi) -> Unit = {},
+    onCommentClick: (ExploreNoteUi) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(16.dp)
     ) {
-        items(
-            items = notes,
-            key = { it.id }
-        ) { note ->
+        items(items = notes, key = { it.id }) { note ->
             ExploreFollowingNoteCard(
                 note = note,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onNoteClick(note) },
-                onLikeClick = { onLikeClick(note) }
+                onLikeClick = { onLikeClick(note) },
+                onCommentClick = { onCommentClick(note) }
             )
         }
     }

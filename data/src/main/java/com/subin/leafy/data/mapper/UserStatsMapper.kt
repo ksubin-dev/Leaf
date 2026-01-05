@@ -4,9 +4,13 @@ import com.subin.leafy.data.model.dto.UserStatsDTO
 import com.subin.leafy.domain.model.UserStats
 
 fun UserStatsDTO.toDomain() = UserStats(
-    weeklyBrewingCount = this.weeklyCount,
+    totalBrewingCount = this.totalCount,
+    currentStreak = this.streak,
     monthlyBrewingCount = this.monthlyCount,
+    preferredTimeSlot = this.timeSlot,
+    averageBrewingTime = this.avgBrewingTime,
+    weeklyBrewingCount = this.weeklyCount,
     averageRating = this.avgRating,
-    preferredTea = this.favoriteTea,
-    averageBrewingTime = this.avgBrewingTime
+    myTeaChestCount = this.teaChestCount,
+    wishlistCount = this.wishCount
 )

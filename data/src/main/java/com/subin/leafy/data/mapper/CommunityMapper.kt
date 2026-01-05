@@ -1,11 +1,12 @@
 package com.subin.leafy.data.mapper
 
+import com.subin.leafy.data.model.dto.CommentDTO
 import com.subin.leafy.data.model.dto.CommunityPostDTO
-import com.subin.leafy.data.model.dto.CommunityTagDTO
 import com.subin.leafy.data.model.dto.TeaMasterDTO
+import com.subin.leafy.domain.model.Comment
 import com.subin.leafy.domain.model.CommunityPost
-import com.subin.leafy.domain.model.CommunityTag
 import com.subin.leafy.domain.model.TeaMaster
+import java.util.Date
 
 /**
  * DTO -> Domain 모델 변환
@@ -19,14 +20,16 @@ fun CommunityPostDTO.toDomain() = CommunityPost(
     subtitle = this.subtitle,
     content = this.content,
     teaTag = this.teaTag,
-    imageUrl = this.imageUrl ?: this.liquorUri ?: this.dryLeafUri,
+    imageUrl = this.imageUrl ?: this.liquorUri ?: this.dryLeafUri ?: this.teawareUri,
     rating = this.rating,
     metaInfo = this.metaInfo,
     brewingSteps = this.brewingSteps,
     likeCount = this.likeCount,
-    savedCount = this.savedCount,
+    bookmarkCount = this.savedCount,
+    commentCount = this.commentCount,
+    viewCount = this.viewCount,
     isLiked = this.isLiked,
-    isSaved = this.isSaved,
+    isBookmarked = this.isSaved,
     createdAt = this.createdAt
 )
 
@@ -38,14 +41,21 @@ fun TeaMasterDTO.toDomain() = TeaMaster(
     isFollowing = this.isFollowing
 )
 
-fun CommunityTagDTO.toDomain() = CommunityTag(
+
+
+fun CommentDTO.toDomain() = Comment(
     id = this.id,
-    label = this.label,
-    isTrendingUp = this.isTrendingUp
+    postId = this.postId,
+    authorId = this.authorId,
+    authorName = this.authorName,
+    authorProfileUrl = this.authorProfileUrl,
+    content = this.content,
+    createdAt = this.createdAt ?: Date()
 )
 
 /**
  * Domain 모델 -> Firestore용 Map 변환 (CUD 작업용)
+ * Firestore 서버에 데이터를 저장할 때 사용할 키-값 쌍 정의
  */
 fun CommunityPost.toFirestoreMap(): Map<String, Any?> = mapOf(
     "_id" to this.id,
@@ -61,9 +71,10 @@ fun CommunityPost.toFirestoreMap(): Map<String, Any?> = mapOf(
     "metaInfo" to this.metaInfo,
     "brewingSteps" to this.brewingSteps,
     "likeCount" to this.likeCount,
-    "savedCount" to this.savedCount,
+    "bookmarkCount" to this.bookmarkCount,
+    "viewCount" to this.viewCount,
     "isLiked" to this.isLiked,
-    "isSaved" to this.isSaved,
+    "isBookmarked" to this.isBookmarked,
     "createdAt" to this.createdAt
 )
 
@@ -72,4 +83,4 @@ fun CommunityPost.toFirestoreMap(): Map<String, Any?> = mapOf(
  */
 fun List<CommunityPostDTO>.toDomainList() = this.map { it.toDomain() }
 fun List<TeaMasterDTO>.toDomainMasterList() = this.map { it.toDomain() }
-fun List<CommunityTagDTO>.toDomainTagList() = this.map { it.toDomain() }
+fun List<CommentDTO>.toDomainCommentList() = this.map { it.toDomain() }

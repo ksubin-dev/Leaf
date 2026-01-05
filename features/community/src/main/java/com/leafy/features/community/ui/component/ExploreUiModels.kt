@@ -25,7 +25,8 @@ data class ExploreNoteUi(
     val brewingChips: List<String> = emptyList(),
     val reviewLabel: String = "",           // "Rebrew 가능" 등
     val comment: String = "",               // 베스트 댓글 등
-    val likerProfileUrls: List<String> = emptyList() // 좋아요 누른 사람들 URL 리스트
+    val likerProfileUrls: List<String> = emptyList(), // 좋아요 누른 사람들 URL 리스트
+    val commentCount: Int = 0,
 )
 
 /**
@@ -39,11 +40,3 @@ data class ExploreTeaMasterUi(
     val isFollowing: Boolean = false
 )
 
-/**
- * 태그 UI 모델
- */
-data class ExploreTagUi(
-    val id: String = "",
-    val label: String,
-    val isTrendingUp: Boolean = true
-)

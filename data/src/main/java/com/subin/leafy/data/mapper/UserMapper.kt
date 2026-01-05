@@ -6,5 +6,8 @@ import com.subin.leafy.domain.model.User
 fun UserDTO.toDomain() = User(
     id = this.uid,
     username = this.displayName,
-    profileImageUrl = this.photoUrl
+    profileImageUrl = this.photoUrl,
+    bio = this.bio,
+    followerCount = this.followerCount,
+    followingCount = this.followingCount
 )

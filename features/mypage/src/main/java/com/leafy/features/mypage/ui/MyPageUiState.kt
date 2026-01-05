@@ -1,21 +1,20 @@
 package com.leafy.features.mypage.ui
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.subin.leafy.domain.model.BrewingInsight
 import com.subin.leafy.domain.model.BrewingRecord
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserStats
 import java.time.LocalDate
 import java.time.YearMonth
 
-@RequiresApi(Build.VERSION_CODES.O)
 data class MyPageUiState(
     val user: User? = null,
     val userStats: UserStats? = null,
     val selectedDate: LocalDate = LeafyTimeUtils.now(),
     val recordedDays: List<Int> = emptyList(),
     val monthlyRecords: List<BrewingRecord> = emptyList(),
+    val brewingInsights: List<BrewingInsight> = emptyList(),
     val selectedRecord: BrewingRecord? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
@@ -29,9 +28,18 @@ data class MyPageUiState(
     val displayMonth: String
         get() = "${selectedDate.year}년 ${selectedDate.monthValue}월"
 
+    val selectedDateString: String
+        get() = LeafyTimeUtils.formatToString(selectedDate)
+
     fun hasRecordOnSelectedDay(): Boolean =
         recordedDays.contains(selectedDate.dayOfMonth)
 
-    val selectedDateString: String
-        get() = LeafyTimeUtils.formatToString(selectedDate)
+    val dailyRecords: List<BrewingRecord>
+        get() = monthlyRecords.filter { it.dateString == selectedDateString }
+
+    val selectedDayRecordCount: Int
+        get() = dailyRecords.size
+
+    val isDailyRecordsEmpty: Boolean
+        get() = dailyRecords.isEmpty()
 }

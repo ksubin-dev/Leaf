@@ -27,7 +27,6 @@ class ApplicationContainerImpl() : ApplicationContainer {
 
 
     // 2. DataSources
-    @RequiresApi(Build.VERSION_CODES.O)
     private val noteDataSource = FirestoreNoteDataSourceImpl(firestore)
 
     private val storageDataSource = FirebaseStorageDataSourceImpl(firebaseStorage)
@@ -36,8 +35,6 @@ class ApplicationContainerImpl() : ApplicationContainer {
     private val communityDataSource = FirestoreCommunityDataSourceImpl(firestore)
 
     // 2. Repositories
-    val communityRepository = CommunityRepositoryImpl(communityDataSource)
-    @RequiresApi(Build.VERSION_CODES.O)
     val noteRepository = NoteRepositoryImpl(
         dataSource = noteDataSource,
         storageDataSource = storageDataSource
@@ -48,11 +45,17 @@ class ApplicationContainerImpl() : ApplicationContainer {
 
     val authRepository: AuthRepository = FirebaseAuthRepositoryImpl(
         firebaseAuth = firebaseAuth,
-        firestore = firestore
+        firestore = firestore,
+        firebaseStorage  = firebaseStorage
+    )
+    val communityRepository = CommunityRepositoryImpl(
+        targetDataSource = communityDataSource,
+        authRepository = authRepository
     )
 
+    private val insightAnalyzer = InsightAnalyzerImpl()
+
     // 3. Note UseCases
-    @RequiresApi(Build.VERSION_CODES.O)
     override val noteUseCases = NoteUseCases(
         getNotes = GetNotesUseCase(noteRepository),
         getNoteById = GetNoteByIdUseCase(noteRepository),
@@ -61,7 +64,8 @@ class ApplicationContainerImpl() : ApplicationContainer {
         deleteNote = DeleteNoteUseCase(noteRepository),
         getCurrentUserId = GetCurrentUserIdUseCase(userRepository),
         getMonthlyRecords = GetMonthlyRecordsUseCase(noteRepository),
-        getRecordByDate = GetRecordByDateUseCase(noteRepository)
+        getRecordByDate = GetRecordByDateUseCase(noteRepository),
+        getBrewingInsights = GetBrewingInsightsUseCase(noteRepository, insightAnalyzer)
     )
 
     // 4. Timer UseCases
@@ -73,7 +77,8 @@ class ApplicationContainerImpl() : ApplicationContainer {
     override val userUseCases = UserUseCases(
         getCurrentUserId = GetCurrentUserIdUseCase(userRepository),
         getUser = GetUserUseCase(userRepository),
-        getUserStats = GetUserStatsUseCase(userStatsRepository)
+        getUserStats = GetUserStatsUseCase(userStatsRepository),
+        updateProfile = UpdateProfileUseCase(userRepository)
     )
 
     // 6. Community UseCases
@@ -85,7 +90,11 @@ class ApplicationContainerImpl() : ApplicationContainer {
         getPopularTags = GetPopularTagsUseCase(communityRepository),
         getFollowingFeed = GetFollowingFeedUseCase(communityRepository),
         toggleLike = ToggleLikeUseCase(communityRepository),
-        toggleFollow = ToggleFollowUseCase(communityRepository)
+        toggleSave = ToggleSaveUseCase(communityRepository),
+        toggleFollow = ToggleFollowUseCase(communityRepository),
+        getComments = GetCommentsUseCase(communityRepository),
+        addComment = AddCommentUseCase(communityRepository),
+        deleteComment = DeleteCommentUseCase(communityRepository)
     )
 
     // 7. Auth UseCases

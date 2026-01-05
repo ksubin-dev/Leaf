@@ -23,7 +23,6 @@ import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.CalendarUtil
 import com.leafy.shared.ui.utils.LeafyTimeUtils
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BrewingCalendar(
     modifier: Modifier = Modifier,
@@ -89,40 +88,43 @@ fun BrewingCalendar(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(7),
-                modifier = Modifier.heightIn(min = 250.dp, max = 300.dp),
-                userScrollEnabled = false,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    count = daysInMonth + firstDayOffset,
-                    key = { it }
-                ) { index ->
-                    if (index >= firstDayOffset) {
-                        val day = index - firstDayOffset + 1
-                        CalendarDayItem(
-                            day = day,
-                            isSelected = day == selectedDay,
-                            isToday = isCurrentMonth && day == today.dayOfMonth,
-                            hasRecord = recordedDays.contains(day),
-                            onClick = { onDateClick(day) }
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.size(40.dp))
+            val totalSlots = daysInMonth + firstDayOffset
+            val rows = (totalSlots + 6) / 7
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (row in 0 until rows) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        for (col in 0 until 7) {
+                            val index = row * 7 + col
+                            val day = index - firstDayOffset + 1
+
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                if (index in firstDayOffset until (daysInMonth + firstDayOffset)) {
+                                    CalendarDayItem(
+                                        day = day,
+                                        isSelected = day == selectedDay,
+                                        isToday = isCurrentMonth && day == today.dayOfMonth,
+                                        hasRecord = recordedDays.contains(day),
+                                        onClick = { onDateClick(day) }
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.size(40.dp))
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
+            Spacer(modifier = Modifier.height(16.dp))
             bottomContent()
         }
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun BrewingCalendarPreview() {

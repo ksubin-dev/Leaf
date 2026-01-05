@@ -20,6 +20,8 @@ data class CommunityPostDTO(
     val brewingSteps: List<String> = emptyList(),
     val likeCount: Int = 0,
     val savedCount: Int = 0,
+    val commentCount: Int = 0,
+    val viewCount: Int = 0,
     val isLiked: Boolean = false,
     val isSaved: Boolean = false,
     val createdAt: String = ""
@@ -34,9 +36,3 @@ data class TeaMasterDTO(
     val isFollowing: Boolean = false
 )
 
-// 커뮤니티 태그 DTO
-data class CommunityTagDTO(
-    val id: String = "",
-    val label: String = "",
-    val isTrendingUp: Boolean = true
-)

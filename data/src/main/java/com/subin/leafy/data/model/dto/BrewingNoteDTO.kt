@@ -43,6 +43,10 @@ data class BrewingNoteDTO(
     val teawareUri: String? = null,
     val additionalUri: String? = null,
 
-    // 6. Timestamp (시스템 관리용)
+    val likeCount: Int = 0,
+    val bookmarkCount: Int = 0,
+    val viewCount: Int = 0,
+    val commentCount: Int = 0,
+
     val createdAt: Long = 0L
 )

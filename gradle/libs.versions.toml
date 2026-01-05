@@ -30,6 +30,9 @@ ui = "1.9.5"
 foundation = "1.9.5"
 runtime = "1.10.0"
 lifecycleViewmodelKtx = "2.10.0"
+firebaseFirestoreKtxVersion = "26.0.2"
+material3 = "1.4.0"
+foundationVersion = "1.10.0"
 
 
 
@@ -68,6 +71,9 @@ firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtxVersion" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
 
 
 [plugins]

@@ -1,48 +1,53 @@
 package com.leafy.features.community.ui.section
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.features.community.ui.component.ExploreSavedNoteCard
 import com.leafy.features.community.ui.component.ExploreNoteUi
-import com.leafy.features.community.ui.component.ExploreSectionHeader
+import com.leafy.shared.ui.component.LeafySectionHeader
 import com.leafy.shared.ui.theme.LeafyTheme
 
-/**
- * Explore - Trending 탭
- * "가장 많이 저장된 노트" 섹션 (세로 리스트 형태)
- */
 @Composable
 fun ExploreTrendingSavedSection(
     modifier: Modifier = Modifier,
     notes: List<ExploreNoteUi>,
-    onNoteClick: (ExploreNoteUi) -> Unit = {}
+    onNoteClick: (ExploreNoteUi) -> Unit = {},
+    onSaveToggle: (ExploreNoteUi) -> Unit = {}
 ) {
-    Column(modifier = modifier) {
-
-        ExploreSectionHeader(
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+    ) {
+        LeafySectionHeader(
             title = "가장 많이 저장된 노트",
-            showMore = true,
-            onMoreClick = { /* TODO: 전체 보기 페이지 이동 */ }
+            titleStyle = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            onMoreClick = { /* 전체보기 이동 */ }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Column(
+            modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             notes.forEach { note ->
                 ExploreSavedNoteCard(
                     note = note,
-                    onClick = { onNoteClick(note) }
+                    onClick = { onNoteClick(note) },
+                    onSaveClick = { onSaveToggle(note) }
                 )
             }
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 private fun ExploreTrendingSavedSectionPreview() {

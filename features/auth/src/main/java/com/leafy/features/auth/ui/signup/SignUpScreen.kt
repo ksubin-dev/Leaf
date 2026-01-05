@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafy.features.auth.ui.common.AuthButton
 import com.leafy.features.auth.ui.common.AuthTextField
+import com.leafy.shared.common.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
@@ -45,16 +46,26 @@ fun SignUpScreen(
         }
     }
 
-    SignUpContent(
-        uiState = uiState,
-        onUsernameChange = viewModel::onUsernameChanged,
-        onEmailChange = viewModel::onEmailChanged,
-        onPasswordChange = viewModel::onPasswordChanged,
-        onConfirmPasswordChange = viewModel::onConfirmPasswordChanged,
-        onProfileImageClick = { imagePickerLauncher.launch("image/*") },
-        onSignUpClick = viewModel::signUp,
-        onBackClick = onBackClick
-    )
+    Box(modifier = Modifier.fillMaxSize()){
+        SignUpContent(
+            uiState = uiState,
+            onUsernameChange = viewModel::onUsernameChanged,
+            onEmailChange = viewModel::onEmailChanged,
+            onPasswordChange = viewModel::onPasswordChanged,
+            onConfirmPasswordChange = viewModel::onConfirmPasswordChanged,
+            onProfileImageClick = { imagePickerLauncher.launch("image/*") },
+            onSignUpClick = viewModel::signUp,
+            onBackClick = onBackClick
+        )
+
+        LoadingOverlay(
+            isLoading = uiState.isProcessing,
+            message = "계정을 생성하고 사진을 업로드 중입니다..."
+        )
+    }
+
+
+
 }
 
 @Composable

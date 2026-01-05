@@ -1,14 +1,10 @@
 package com.leafy.features.mypage.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,112 +17,103 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.User
-import com.subin.leafy.domain.model.UserStats
 
 @Composable
 fun ProfileHeader(
-    user: User,
-    stats: UserStats,
-    onSettingsClick: () -> Unit
+    user: User
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .padding(horizontal = 24.dp, vertical = 24.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                            shape = CircleShape
-                        )
-                ) {
-                    if (!user.profileImageUrl.isNullOrBlank()) {
-                        AsyncImage(
-                            model = user.profileImageUrl,
-                            contentDescription = "Profile Image",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize().padding(12.dp),
-                            tint = MaterialTheme.colorScheme.outline
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column {
-                    Text(
-                        text = user.username,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "이번 주: ${stats.weeklyBrewingCount}회 브루잉 · 평균 ${stats.averageRating}★",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            IconButton(onClick = onSettingsClick) {
+            if (!user.profileImageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = user.profileImageUrl,
+                    contentDescription = "Profile",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
                 Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    tint = MaterialTheme.colorScheme.outline
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.width(20.dp))
 
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Column(
+            modifier = Modifier.weight(1f)
         ) {
-            SnapshotChip(label = "선호 티", value = stats.preferredTea.ifBlank { "-" })
-            SnapshotChip(label = "평균 우림", value = stats.averageBrewingTime)
-            SnapshotChip(label = "이번 달", value = "${stats.monthlyBrewingCount}회")
+            Text(
+                text = user.username,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Text(
+                text = user.bio.takeIf { it?.isNotBlank() == true } ?: "찻잎과의 여정을 시작합니다",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 팔로우 정보
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${user.followerCount}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = " 팔로워",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "${user.followingCount}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = " 팔로잉",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun ProfileHeaderPreview() {
-    val mockUser = User(id = "1", username = "Leafy", profileImageUrl = null)
-    val mockStats = UserStats(
-        weeklyBrewingCount = 3,
-        averageRating = 4.5,
-        preferredTea = "Oolong",
-        averageBrewingTime = "3:00",
-        monthlyBrewingCount = 12
+    val mockUser = User(
+        id = "1",
+        username = "Leafy",
+        profileImageUrl = null,
+        bio = "매일 아침 우롱차 한 잔🍵",
+        followerCount = 120,
+        followingCount = 85
     )
 
     LeafyTheme {
-        ProfileHeader(
-            user = mockUser,
-            stats = mockStats,
-            onSettingsClick = {}
-        )
+        ProfileHeader(user = mockUser)
     }
 }

@@ -48,16 +48,18 @@ fun NoteDetailHeader(
     teaName: String,
     teaType: String,
     imageUrl: String?,
+    isAuthor: Boolean,
+    isLiked: Boolean,
+    isBookmarked: Boolean,
     onBackClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onLikeClick: () -> Unit,
+    onBookmarkClick: () -> Unit
 ) {
-
-    // 메뉴의 표시 상태를 관리
     var showMenu by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxWidth().height(320.dp)) {
-        // 🎯 이미지 레이어
         if (!imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = imageUrl,
@@ -110,6 +112,7 @@ fun NoteDetailHeader(
             )
         }
 
+        // 상단 버튼 영역 (뒤로가기 & [메뉴 or 소셜])
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -118,6 +121,7 @@ fun NoteDetailHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 1. 뒤로가기 버튼
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier.background(Color.Black.copy(alpha = 0.2f), CircleShape)
@@ -125,45 +129,101 @@ fun NoteDetailHeader(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
             }
 
-            Box {
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.background(Color.Black.copy(alpha = 0.2f), CircleShape)
-                ) {
-                    Icon(Icons.Default.MoreVert, "More", tint = Color.White)
-                }
+            // 2. 우측 버튼 영역 (isAuthor에 따른 분기)
+            if (isAuthor) {
+                // --- [본인 글] 수정/삭제 드롭다운 ---
+                Box {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.background(Color.Black.copy(alpha = 0.2f), CircleShape)
+                    ) {
+                        Icon(Icons.Default.MoreVert, "More", tint = Color.White)
+                    }
 
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Edit Note") },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        onClick = { showMenu = false; onEditClick() }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete Note") },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
-                        onClick = { showMenu = false; onDeleteClick() }
-                    )
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("수정하기") },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            onClick = { showMenu = false; onEditClick() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("삭제하기", color = Color.Red) },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
+                            onClick = { showMenu = false; onDeleteClick() }
+                        )
+                    }
+                }
+            } else {
+                // --- [타인 글] 좋아요 & 북마크 ---
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // 좋아요 버튼
+                    IconButton(
+                        onClick = onLikeClick,
+                        modifier = Modifier.background(Color.Black.copy(alpha = 0.2f), CircleShape)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                id = if (isLiked) SharedR.drawable.ic_like_filled else SharedR.drawable.ic_like
+                            ),
+                            contentDescription = "Like",
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onBookmarkClick,
+                        modifier = Modifier.background(Color.Black.copy(alpha = 0.2f), CircleShape)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                id = if (isBookmarked) SharedR.drawable.ic_bookmark_filled else SharedR.drawable.ic_bookmark_outline
+                            ),
+                            contentDescription = "Bookmark",
+                        )
+                    }
                 }
             }
         }
     }
 }
-
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "본인 글일 때 (수정/삭제)")
 @Composable
-fun NoteDetailHeaderPreview() {
+fun NoteDetailHeaderAuthorPreview() {
     LeafyTheme {
         NoteDetailHeader(
-            teaName = "Earl Grey Supreme",
-            teaType = "Black Tea Blend",
+            teaName = "동정오롱차 (Author)",
+            teaType = "Oolong Tea",
             imageUrl = null,
+            isAuthor = true,
+            isLiked = false,
+            isBookmarked = false,
             onBackClick = {},
             onEditClick = {},
-            onDeleteClick = {}
+            onDeleteClick = {},
+            onLikeClick = {},
+            onBookmarkClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "타인 글일 때 (좋아요/북마크)")
+@Composable
+fun NoteDetailHeaderViewerPreview() {
+    LeafyTheme {
+        NoteDetailHeader(
+            teaName = "우전 녹차 (Viewer)",
+            teaType = "Green Tea",
+            imageUrl = "https://example.com/tea.jpg",
+            isAuthor = false,
+            isLiked = true,
+            isBookmarked = true,
+            onBackClick = {},
+            onEditClick = {},
+            onDeleteClick = {},
+            onLikeClick = {},
+            onBookmarkClick = {}
         )
     }
 }

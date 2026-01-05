@@ -6,8 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface NoteDataSource {
     suspend fun create(note: BrewingNote): DataResourceResult<Unit>
-    fun read(userId: String): Flow<List<BrewingNote>>
-
+    fun read(userId: String): Flow<DataResourceResult<List<BrewingNote>>>
     suspend fun update(note: BrewingNote): DataResourceResult<Unit>
     suspend fun delete(id : String): DataResourceResult<Unit>
 }

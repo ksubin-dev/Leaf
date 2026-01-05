@@ -5,8 +5,8 @@ import com.subin.leafy.domain.model.CommunityPost
 import com.subin.leafy.domain.repository.CommunityRepository
 import kotlinx.coroutines.flow.Flow
 
-class GetRisingNotesUseCase(private val repository: CommunityRepository) {
-    operator fun invoke(): Flow<DataResourceResult<List<CommunityPost>>> {
-        return repository.getRisingNotes()
+class GetCommunityNoteDetailUseCase(private val repository: CommunityRepository) {
+    operator fun invoke(postId: String): Flow<DataResourceResult<CommunityPost>> {
+        return repository.getNoteDetail(postId)
     }
 }

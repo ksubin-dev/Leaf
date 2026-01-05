@@ -10,9 +10,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import com.leafy.shared.R as SharedR
-import com.leafy.shared.ui.theme.LeafyTheme
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +30,6 @@ fun MyPageTopAppBar(
                 color = colors.onSurface
             )
         },
-        // 설정 아이콘 버튼
         actions = {
             IconButton(onClick = onSettingsClick) {
                 Icon(
@@ -47,12 +44,4 @@ fun MyPageTopAppBar(
             titleContentColor = colors.onBackground
         )
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MyPageTopAppBarPreview() {
-    LeafyTheme {
-        MyPageTopAppBar(onSettingsClick = {})
-    }
 }
