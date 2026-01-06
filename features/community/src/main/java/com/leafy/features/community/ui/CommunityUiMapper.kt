@@ -13,11 +13,11 @@ fun List<CommunityPost>.toNoteUi(): List<ExploreNoteUi> = this.map { post ->
         subtitle = post.subtitle,
         imageUrl = post.imageUrl,
         rating = post.rating,
-        savedCount = post.savedCount,
+        savedCount = post.bookmarkCount,
         likeCount = post.likeCount,
         commentCount = post.commentCount,
         isLiked = post.isLiked,
-        isSaved = post.isSaved,
+        isSaved = post.isBookmarked,
 
         // 작성자 및 피드 정보
         authorName = post.authorName,

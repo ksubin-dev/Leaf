@@ -3,7 +3,6 @@ package com.subin.leafy.domain.usecase
 import com.subin.leafy.domain.usecase.community.AddCommentUseCase
 import com.subin.leafy.domain.usecase.community.DeleteCommentUseCase
 import com.subin.leafy.domain.usecase.community.GetCommentsUseCase
-import com.subin.leafy.domain.usecase.community.GetCommunityNoteDetailUseCase
 import com.subin.leafy.domain.usecase.community.GetFollowingFeedUseCase
 import com.subin.leafy.domain.usecase.community.GetMostSavedNotesUseCase
 import com.subin.leafy.domain.usecase.community.GetPopularNotesUseCase
@@ -17,7 +16,6 @@ data class CommunityUseCases(
     val getMostSavedNotes: GetMostSavedNotesUseCase,
     val getRecommendedMasters: GetRecommendedMastersUseCase,
     val getFollowingFeed: GetFollowingFeedUseCase,
-    val getNoteDetail: GetCommunityNoteDetailUseCase,
     val toggleLike: ToggleLikeUseCase,
     val toggleSave: ToggleSaveUseCase,
     val toggleFollow: ToggleFollowUseCase,

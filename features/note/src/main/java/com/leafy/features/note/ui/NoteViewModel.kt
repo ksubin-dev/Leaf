@@ -28,10 +28,8 @@ class NoteViewModel(
     val isProcessing = _isProcessing.asStateFlow()
 
     private val _initialDataSource: Flow<NoteUiState> = flow {
-        val currentUserId = noteUseCases.getCurrentUserId() ?: ""
-
         if (noteId != null) {
-            noteUseCases.getNoteById(currentUserId, noteId)
+            noteUseCases.getNoteById(noteId)
                 .collect { result ->
                     if (result is DataResourceResult.Success) {
                         emit(result.data.toUiState())
@@ -107,7 +105,11 @@ class NoteViewModel(
             val domainNote = currentState.toDomain(ownerId, finalId)
 
             val operation = if (noteId != null) {
-                noteUseCases.updateNote(ownerId, domainNote, imageMap)
+                noteUseCases.updateNote(
+                    currentUserId = ownerId,
+                    note = domainNote,
+                    localImageUris = imageMap
+                )
             } else {
                 noteUseCases.insertNote(domainNote, imageMap)
             }

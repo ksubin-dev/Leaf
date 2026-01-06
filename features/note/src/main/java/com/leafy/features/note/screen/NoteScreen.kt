@@ -28,7 +28,6 @@ import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.showToast
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NoteScreen(
     viewModel: NoteViewModel,
@@ -259,7 +258,6 @@ private fun NoteContent(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 private fun NoteScreenPreview() {

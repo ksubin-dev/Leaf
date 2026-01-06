@@ -14,6 +14,17 @@ object LeafyTimeUtils {
     // 2. 화면 표시용 포맷 (예: Jan 02, 2026)
     private val displayFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
 
+    /** Long(밀리초) -> "yyyy-MM-dd" (String) */
+    fun formatLongToString(timestamp: Long): String {
+        if (timestamp <= 0L) return nowToString()
+        return runCatching {
+            val localDate = java.time.Instant.ofEpochMilli(timestamp)
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDate()
+            formatToString(localDate)
+        }.getOrElse { nowToString() }
+    }
+
     /** 현재 날짜를 "yyyy-MM-dd" 형식으로 반환 */
     fun nowToString(): String = LocalDate.now().format(dbFormatter)
 

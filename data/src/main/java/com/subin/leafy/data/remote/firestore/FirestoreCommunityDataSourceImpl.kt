@@ -8,6 +8,7 @@ import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.data.datasource.CommunityDataSource
 import com.subin.leafy.data.mapper.*
 import com.subin.leafy.data.model.dto.*
+import com.subin.leafy.data.model.dto.CommunityPostDTO
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.*
 import kotlinx.coroutines.channels.awaitClose
@@ -22,7 +23,7 @@ class FirestoreCommunityDataSourceImpl(
 ) : CommunityDataSource {
 
     companion object {
-        const val COL_POSTS = "community_posts"
+        const val COL_POSTS = "brewing_notes"
         const val COL_MASTERS = "tea_masters"
         const val COL_COMMENTS = "comments"
         const val COL_LIKES = "likes"
@@ -54,49 +55,128 @@ class FirestoreCommunityDataSourceImpl(
         awaitClose { subscription.remove() }
     }.onStart { emit(DataResourceResult.Loading) }
 
+    private suspend fun getFallbackPosts(limit: Long): List<CommunityPostDTO> {
+        return postsCol.orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(limit)
+            .get()
+            .await()
+            .toObjects(CommunityPostDTO::class.java)
+    }
+
     // --- [1. 커뮤니티 게시글 조회 관련] ---
 
-    override fun getPopularNotes() = postsCol.asSnapshotFlow(
-        queryCustomizer = {
-            val oneWeekAgo = LeafyTimeUtils.getOneWeekAgo()
-            it.whereGreaterThan("createdAt", oneWeekAgo)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .orderBy("likeCount", Query.Direction.DESCENDING)
-                .limit(10)
-        },
-        dtoClass = CommunityPostDTO::class.java,
-        mapper = { it.toDomainList() }
-    )
+    override fun getPopularNotes() = callbackFlow {
+        val subscription = postsCol
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(10)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(DataResourceResult.Failure(error))
+                    return@addSnapshotListener
+                }
+                val dtos = snapshot?.toObjects(BrewingNoteDTO::class.java) ?: emptyList()
+
+                if (dtos.size < 3) {
+                    postsCol.orderBy("createdAt", Query.Direction.DESCENDING).limit(10).get()
+                        .addOnSuccessListener { fallbackSnapshot ->
+                            val fallbackDtos = fallbackSnapshot.toObjects(BrewingNoteDTO::class.java)
+                            trySend(DataResourceResult.Success(fallbackDtos.toDomainListFromBrewing()))
+                        }
+                } else {
+                    trySend(DataResourceResult.Success(dtos.toDomainListFromBrewing()))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }.onStart { emit(DataResourceResult.Loading) }
 
 
 
-    override fun getMostSavedNotes() = postsCol.asSnapshotFlow(
-        queryCustomizer = { it.orderBy("savedCount", Query.Direction.DESCENDING).limit(10) },
-        dtoClass = CommunityPostDTO::class.java,
-        mapper = { it.toDomainList() }
-    )
+    override fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
+        val subscription = postsCol
+            .orderBy("bookmarkCount", Query.Direction.DESCENDING)
+            .limit(10)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(DataResourceResult.Failure(error))
+                    return@addSnapshotListener
+                }
 
-    override fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>> {
-        if (followingIds.isEmpty()) return flowOf(DataResourceResult.Success(emptyList()))
+                val dtos = snapshot?.toObjects(BrewingNoteDTO::class.java) ?: emptyList()
 
-        return postsCol.asSnapshotFlow(
-            queryCustomizer = {
-                it.whereIn("authorId", followingIds)
-                    .orderBy("createdAt", Query.Direction.DESCENDING)
-                    .limit(20)
-            },
-            dtoClass = CommunityPostDTO::class.java,
-            mapper = { it.toDomainList() }
-        )
-    }
+                if (dtos.size < 2) {
+                    postsCol.orderBy("createdAt", Query.Direction.DESCENDING)
+                        .limit(10)
+                        .get()
+                        .addOnSuccessListener { fallbackSnapshot ->
+                            val fallbackDtos = fallbackSnapshot.toObjects(BrewingNoteDTO::class.java)
+                            trySend(DataResourceResult.Success(fallbackDtos.toDomainListFromBrewing()))
+                        }
+                        .addOnFailureListener { trySend(DataResourceResult.Failure(it)) }
+                } else {
+                    trySend(DataResourceResult.Success(dtos.toDomainListFromBrewing()))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }.onStart { emit(DataResourceResult.Loading) }
+
+    override fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
+        if (followingIds.isEmpty()) {
+            trySend(DataResourceResult.Success(emptyList()))
+            return@callbackFlow
+        }
+
+        val subscription = postsCol
+            .whereIn("userId", followingIds)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(20)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(DataResourceResult.Failure(error))
+                    return@addSnapshotListener
+                }
+                val dtos = snapshot?.toObjects(BrewingNoteDTO::class.java) ?: emptyList()
+                trySend(DataResourceResult.Success(dtos.toDomainListFromBrewing()))
+            }
+        awaitClose { subscription.remove() }
+    }.onStart { emit(DataResourceResult.Loading) }
 
     // --- [2. 티 마스터] ---
 
-    override fun getRecommendedMasters() = mastersCol.asSnapshotFlow(
-        queryCustomizer = { it.limit(10) },
-        dtoClass = TeaMasterDTO::class.java,
-        mapper = { dtos -> dtos.map { it.toDomain() } }
-    )
+    override fun getRecommendedMasters() = callbackFlow {
+        val subscription = mastersCol.limit(10)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(DataResourceResult.Failure(error))
+                    return@addSnapshotListener
+                }
+
+                val dtos = snapshot?.toObjects(TeaMasterDTO::class.java) ?: emptyList()
+                if (dtos.isEmpty()) {
+                    firestore.collection("users")
+                        .orderBy("createdAt", Query.Direction.DESCENDING)
+                        .limit(10)
+                        .get()
+                        .addOnSuccessListener { userSnapshot ->
+                            val fallbackMasters = userSnapshot.documents.map { doc ->
+                                TeaMasterDTO(
+                                    id = doc.id,
+                                    name = doc.getString("username") ?: "신규 마스터",
+                                    title = "취향을 기록하는 티 러버",
+                                    profileImageUrl = doc.getString("profileUrl"),
+                                    isFollowing = false
+                                )
+                            }
+                            trySend(DataResourceResult.Success(fallbackMasters.map { it.toDomain() }))
+                        }
+                        .addOnFailureListener {
+                            trySend(DataResourceResult.Failure(it))
+                        }
+                } else {
+                    trySend(DataResourceResult.Success(dtos.map { it.toDomain() }))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }.onStart { emit(DataResourceResult.Loading) }
 
 
     // --- [3. 댓글 기능 관련] ---
@@ -147,27 +227,6 @@ class FirestoreCommunityDataSourceImpl(
     }.getOrElse { DataResourceResult.Failure(it) }
 
     // --- [4. 소셜 액션 관련 구현] ---
-
-    override fun getNoteDetail(postId: String): Flow<DataResourceResult<CommunityPostDTO>> = callbackFlow {
-        val subscription = postsCol.document(postId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    trySend(DataResourceResult.Failure(error))
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null && snapshot.exists()) {
-                    val dto = snapshot.toObject(CommunityPostDTO::class.java)
-                    if (dto != null) {
-                        trySend(DataResourceResult.Success(dto))
-                    }
-                } else {
-                    trySend(DataResourceResult.Failure(Exception("게시글을 찾을 수 없습니다.")))
-                }
-            }
-        awaitClose { subscription.remove() }
-    }.onStart { emit(DataResourceResult.Loading) }
-
     override suspend fun toggleLike(userId: String, postId: String, isLiked: Boolean): DataResourceResult<Unit> = runCatching {
         val batch = firestore.batch()
         val postRef = postsCol.document(postId)
@@ -194,10 +253,10 @@ class FirestoreCommunityDataSourceImpl(
 
         if (isSaved) {
             batch.delete(saveRef)
-            batch.update(postRef, "savedCount", FieldValue.increment(-1))
+            batch.update(postRef, "bookmarkCount", FieldValue.increment(-1))
         } else {
             batch.set(saveRef, mapOf("userId" to userId, "postId" to postId, "timestamp" to FieldValue.serverTimestamp()))
-            batch.update(postRef, "savedCount", FieldValue.increment(1))
+            batch.update(postRef, "bookmarkCount", FieldValue.increment(1))
         }
         batch.commit().await()
         DataResourceResult.Success(Unit)

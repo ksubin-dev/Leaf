@@ -11,6 +11,7 @@ import java.util.Date
 /**
  * DTO -> Domain 모델 변환
  */
+
 fun CommunityPostDTO.toDomain() = CommunityPost(
     id = this._id,
     authorId = this.authorId,

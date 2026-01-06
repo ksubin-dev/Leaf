@@ -1,7 +1,6 @@
 package com.leafy.features.community.ui
 
 import com.leafy.features.community.ui.component.ExploreNoteUi
-import com.leafy.features.community.ui.component.ExploreTagUi
 import com.leafy.features.community.ui.component.ExploreTeaMasterUi
 import com.subin.leafy.domain.model.ExploreTab
 
@@ -15,9 +14,6 @@ data class CommunityUiState(
 
     // 2. 가장 많이 저장된 노트
     val mostSavedNotes: List<ExploreNoteUi> = emptyList(),
-
-    // 3. 지금 인기 있는 태그
-    val popularTags: List<ExploreTagUi> = emptyList(),
 
     // 4. 이번 달 티 마스터 추천
     val teaMasters: List<ExploreTeaMasterUi> = emptyList(),

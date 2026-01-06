@@ -10,8 +10,6 @@ interface CommunityRepository {
     fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>>
     fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>>
 
-    fun getNoteDetail(postId: String): Flow<DataResourceResult<CommunityPost>>
-
     // --- [2. 마스터 ] ---
     fun getRecommendedMasters(): Flow<DataResourceResult<List<TeaMaster>>>
 

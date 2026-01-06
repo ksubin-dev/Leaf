@@ -11,7 +11,6 @@ interface CommunityDataSource {
     fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>>
     fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>>
     fun getRecommendedMasters(): Flow<DataResourceResult<List<TeaMaster>>>
-    fun getNoteDetail(postId: String): Flow<DataResourceResult<CommunityPostDTO>>
 
 
     // 댓글 관련

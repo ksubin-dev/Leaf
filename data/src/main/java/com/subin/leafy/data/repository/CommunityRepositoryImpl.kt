@@ -21,7 +21,7 @@ class CommunityRepositoryImpl(
         return posts.map { post ->
             post.copy(
                 isLiked = currentUser.likedPostIds.contains(post.id),
-                isSaved = currentUser.savedPostIds.contains(post.id)
+                isBookmarked = currentUser.savedPostIds.contains(post.id)
             )
         }
     }
@@ -42,19 +42,6 @@ class CommunityRepositoryImpl(
     override fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>> = observeDataSource {
         targetDataSource.getMostSavedNotes().map { result ->
             result.mapData { posts -> composePostStates(posts) }
-        }
-    }
-
-    override fun getNoteDetail(postId: String): Flow<DataResourceResult<CommunityPost>> = observeDataSource {
-        targetDataSource.getNoteDetail(postId).map { result ->
-            result.mapData { postDto ->
-                val post = postDto.toDomain()
-                val currentUser = authRepository.getCurrentUser()
-                post.copy(
-                    isLiked = currentUser?.likedPostIds?.contains(post.id) ?: false,
-                    isSaved = currentUser?.savedPostIds?.contains(post.id) ?: false
-                )
-            }
         }
     }
 

@@ -70,4 +70,23 @@ class FirestoreNoteDataSourceImpl(
         noteCollection.document(id).delete().await()
         DataResourceResult.Success(Unit)
     }.getOrElse { DataResourceResult.Failure(it) }
+
+    override fun getNoteById(noteId: String): Flow<DataResourceResult<BrewingNote>> = callbackFlow {
+        val subscription = noteCollection.document(noteId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(DataResourceResult.Failure(error))
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    val dto = snapshot.toObject(BrewingNoteDTO::class.java)
+                    dto?.let {
+                        trySend(DataResourceResult.Success(it.toDomainNote()))
+                    } ?: trySend(DataResourceResult.Failure(Exception("데이터 변환 실패")))
+                } else {
+                    trySend(DataResourceResult.Failure(Exception("노트를 찾을 수 없습니다.")))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }.onStart { emit(DataResourceResult.Loading) }
 }

@@ -12,8 +12,9 @@ interface NoteRepository {
     fun update(note: BrewingNote, localImageUris: Map<String, String?>): Flow<DataResourceResult<Unit>>
     fun delete(id: String): Flow<DataResourceResult<Unit>>
 
+
     // --- [2. 상세 및 캘린더 조회] ---
-    fun getNoteById(userId: String, noteId: String): Flow<DataResourceResult<BrewingNote>>
+    fun getNoteById(noteId: String): Flow<DataResourceResult<BrewingNote>>
     fun getRecordsByMonth(userId: String, year: Int, month: Int): Flow<DataResourceResult<List<BrewingRecord>>>
     suspend fun getRecordByDate(userId: String, dateString: String): DataResourceResult<BrewingRecord?>
 }

@@ -1,5 +1,7 @@
 package com.leafy.features.mypage.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.ui.utils.LeafyTimeUtils
@@ -39,16 +41,16 @@ class MyPageViewModel(
     )
     val effect = _effect.asSharedFlow()
 
-    private val userStaticDataFlow = flow {
-        val currentId = getCurrentUserIdUseCase() ?: return@flow
-        combine(
-            getUserUseCase(currentId),
-            getUserStatsUseCase(currentId),
-            getBrewingInsightsUseCase(currentId)
-        ) { user, stats, insights ->
-            Triple(user, stats, insights)
-        }.collect { emit(it) }
-    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val userInfoFlow = flow { emit(getCurrentUserIdUseCase()) }
+        .filterNotNull()
+        .flatMapLatest { id ->
+            combine(
+                getUserUseCase(id),
+                getUserStatsUseCase(id),
+                getBrewingInsightsUseCase(id).map { DataResourceResult.Success(it) }
+            ) { user, stats, insights -> Triple(user, stats, insights) }
+        }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val monthlyRecordsFlow = _selectedDate
@@ -60,7 +62,7 @@ class MyPageViewModel(
         }
 
     val uiState: StateFlow<MyPageUiState> = combine(
-        userStaticDataFlow,
+        userInfoFlow,
         monthlyRecordsFlow,
         _selectedDate
     ) { (userRes, statsRes, insightRes), recordsRes, selectedDate ->
@@ -73,8 +75,8 @@ class MyPageViewModel(
         val insights = (insightRes as? DataResourceResult.Success)?.data ?: emptyList()
 
         MyPageUiState(
-            user = (userRes as? DataResourceResult.Success)?.data ?: User.empty(),
-            userStats = (statsRes as? DataResourceResult.Success)?.data ?: UserStats.empty(),
+            user = (userRes as? DataResourceResult.Success)?.data,
+            userStats = (statsRes as? DataResourceResult.Success)?.data,
             selectedDate = selectedDate,
             monthlyRecords = records,
             brewingInsights = insights,
@@ -82,7 +84,7 @@ class MyPageViewModel(
                 runCatching { LeafyTimeUtils.parseToDate(record.dateString).dayOfMonth }.getOrNull()
             }.distinct(),
             selectedRecord = records.find { it.dateString == LeafyTimeUtils.formatToString(selectedDate) },
-            isLoading = recordsRes is DataResourceResult.Loading,
+            isLoading = recordsRes is DataResourceResult.Loading || userRes is DataResourceResult.Loading,
             errorMessage = error
         )
     }.stateIn(

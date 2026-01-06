@@ -52,7 +52,8 @@ data class NoteUiState(
     val viewCount: Int = 0,
     val commentCount: Int = 0,
     val isLiked: Boolean = false,
-    val isBookmarked: Boolean = false
+    val isBookmarked: Boolean = false,
+    val createdAt: Long = 0L,
 ) {
     val isError: Boolean get() = errorMessage != null
     val socialSummary: String
@@ -110,6 +111,7 @@ fun BrewingNote.toUiState(): NoteUiState {
         commentCount = this.commentCount,
         isLiked = this.isLiked,
         isBookmarked = this.isBookmarked,
+        createdAt = this.createdAt.time,
         isLoading = false
     )
 }
@@ -160,7 +162,7 @@ fun NoteUiState.toDomain(ownerId: String, id: String): BrewingNote {
             teawareUri = teawareUri,
             additionalUri = additionalUri
         ),
-        createdAt = java.util.Date(),
+        createdAt = if (this.createdAt > 0L) java.util.Date(this.createdAt) else java.util.Date(),
         likeCount = this.likeCount,
         bookmarkCount = this.bookmarkCount,
         viewCount = this.viewCount,

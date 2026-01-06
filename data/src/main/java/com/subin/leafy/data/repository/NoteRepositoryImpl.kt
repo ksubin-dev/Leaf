@@ -58,12 +58,8 @@ class NoteRepositoryImpl(
     override fun read(userId: String): Flow<DataResourceResult<List<BrewingNote>>> =
         dataSource.read(userId).flowOn(Dispatchers.IO)
 
-    override fun getNoteById(userId: String, noteId: String): Flow<DataResourceResult<BrewingNote>> =
-        dataSource.read(userId).map { result ->
-            result.mapData { list ->
-                list.find { it.id == noteId } ?: throw Exception("노트를 찾을 수 없습니다.")
-            }
-        }.flowOn(Dispatchers.IO)
+    override fun getNoteById(noteId: String): Flow<DataResourceResult<BrewingNote>> =
+        dataSource.getNoteById(noteId).flowOn(Dispatchers.IO)
 
     override fun getRecordsByMonth(userId: String, year: Int, month: Int): Flow<DataResourceResult<List<BrewingRecord>>> =
         dataSource.read(userId).map { result ->
@@ -83,4 +79,6 @@ class NoteRepositoryImpl(
             DataResourceResult.Failure(e)
         }
     }
+
+
 }

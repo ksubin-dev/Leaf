@@ -30,13 +30,13 @@ fun BrewingNoteDTO.toDomainNote() = BrewingNote(
         finishLevel = this.finishLevel, memo = this.memo
     ),
     ratingInfo = RatingInfo(stars = this.stars, purchaseAgain = this.purchaseAgain),
+    createdAt = Date(this.createdAt),
     context = NoteContext(
         dateTime = this.dateTime,
         weather = runCatching { WeatherType.valueOf(this.weather) }.getOrDefault(WeatherType.INDOOR),
         withPeople = this.withPeople, dryLeafUri = this.dryLeafUri,
         liquorUri = this.liquorUri, teawareUri = this.teawareUri, additionalUri = this.additionalUri
     ),
-    createdAt = Date(this.createdAt),
     likeCount = this.likeCount,
     bookmarkCount = this.bookmarkCount,
     viewCount = this.viewCount,
@@ -48,12 +48,8 @@ fun BrewingNoteDTO.toDomainNote() = BrewingNote(
  */
 fun BrewingNoteDTO.toDomainRecord() = BrewingRecord(
     id = this._id,
-    // dateTime이 없으면 createdAt(Long)을 yyyy-MM-dd 문자열로 변환하여 사용
     dateString = this.dateTime.ifBlank {
-        val localDate = Instant.ofEpochMilli(this.createdAt)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-        LeafyTimeUtils.formatToString(localDate)
+        LeafyTimeUtils.formatLongToString(this.createdAt)
     },
     teaName = this.teaName,
     metaInfo = "${this.waterTemp} · ${this.brewTime} · ${this.brewCount}회 우림",
@@ -114,9 +110,35 @@ fun BrewingNote.toRecord() = BrewingRecord(
     rating = this.ratingInfo.stars,
     imageUrl = this.context.liquorUri ?: this.context.dryLeafUri ?: this.context.teawareUri ?: this.context.additionalUri
 )
-
+/**
+ * BrewingNoteDTO -> CommunityPost (커뮤니티용 도메인 모델로 변환)
+ */
+fun BrewingNoteDTO.toCommunityDomain() = CommunityPost(
+    id = this._id,
+    authorId = this.userId,
+    authorName = "사용자", // TODO: 나중에 유저 닉네임을 가져올 로직이 있다면 연결
+    authorProfileUrl = null,
+    title = this.teaName,
+    subtitle = this.teaBrand,
+    content = this.memo,
+    teaTag = this.teaType,
+    imageUrl = this.liquorUri ?: this.dryLeafUri ?: this.teawareUri,
+    rating = this.stars.toFloat(),
+    metaInfo = "${this.waterTemp}℃ / ${this.leafAmount}g / ${this.brewTime}",
+    brewingSteps = emptyList(),
+    likeCount = this.likeCount,
+    bookmarkCount = this.bookmarkCount,
+    commentCount = this.commentCount,
+    viewCount = this.viewCount,
+    isLiked = false,
+    isBookmarked = false,
+    createdAt = this.dateTime.ifBlank {
+        LeafyTimeUtils.formatLongToString(this.createdAt)
+    }
+)
 /**
  * 리스트 변환 헬퍼
  */
 fun List<BrewingNoteDTO>.toDomainRecordList() = this.map { it.toDomainRecord() }
+fun List<BrewingNoteDTO>.toDomainListFromBrewing() = this.map { it.toCommunityDomain() }
 
