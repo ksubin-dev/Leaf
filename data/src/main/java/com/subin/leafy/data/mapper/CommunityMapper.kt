@@ -44,15 +44,18 @@ fun TeaMasterDTO.toDomain() = TeaMaster(
 
 
 
-fun CommentDTO.toDomain() = Comment(
-    id = this.id,
-    postId = this.postId,
-    authorId = this.authorId,
-    authorName = this.authorName,
-    authorProfileUrl = this.authorProfileUrl,
-    content = this.content,
-    createdAt = this.createdAt ?: Date()
-)
+fun CommentDTO.toDomain(): Comment {
+    return Comment(
+        id = id,
+        postId = postId,
+        authorId = authorId,
+        authorName = authorName,
+        authorProfileUrl = authorProfileUrl,
+        content = content,
+        createdAt = createdAt ?: Date(),
+        isMine = false
+    )
+}
 
 /**
  * Domain 모델 -> Firestore용 Map 변환 (CUD 작업용)

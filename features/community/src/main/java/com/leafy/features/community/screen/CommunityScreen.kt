@@ -13,7 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.community.ui.*
 import com.leafy.features.community.ui.component.*
 import com.leafy.features.community.ui.section.*
-import com.subin.leafy.domain.model.ExploreTab
+import com.subin.leafy.domain.model.ExploreContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +63,7 @@ fun CommunityScreen(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else {
                     when (uiState.selectedTab) {
-                        ExploreTab.TRENDING -> TrendingTabContent(
+                        ExploreContent.TRENDING -> TrendingTabContent(
                             uiState = uiState,
                             onNoteClick = { onNoteClick(it.id) },
                             onMasterClick = { onMasterClick(it.id) },
@@ -71,7 +71,7 @@ fun CommunityScreen(
                                 viewModel.toggleFollow(master.id, isFollowing)
                             }
                         )
-                        ExploreTab.FOLLOWING -> FollowingTabContent(
+                        ExploreContent.FOLLOWING -> FollowingTabContent(
                             uiState = uiState,
                             onNoteClick = { onNoteClick(it.id) },
                             onLikeClick = { note -> viewModel.toggleLike(note.id, note.isLiked) },
@@ -166,7 +166,7 @@ fun PreviewCommunityScreen() {
     MaterialTheme {
         val mockState = CommunityUiState(
             isLoading = false,
-            selectedTab = ExploreTab.TRENDING,
+            selectedTab = ExploreContent.TRENDING,
             popularNotes = listOf(
                 ExploreNoteUi(id = "1", title = "우전 녹차", subtitle = "2024년 첫 수확", rating = 4.8f)
             ),

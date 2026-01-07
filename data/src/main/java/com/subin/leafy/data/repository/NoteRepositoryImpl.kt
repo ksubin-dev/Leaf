@@ -30,7 +30,7 @@ class NoteRepositoryImpl(
         val updatedUrls = localUris.mapValues { (key, uri) ->
             if (uri != null && uri.startsWith("content://")) {
                 val result = storageDataSource.uploadImage(uri, "notes/${note.ownerId}/${note.id}/$key")
-                if (result is DataResourceResult.Success) result.data else uri
+                if (result is DataResourceResult.Success) result.data else null
             } else { uri }
         }
         return note.copy(

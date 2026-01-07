@@ -1,14 +1,14 @@
 package com.subin.leafy.data.model.dto
 
-import com.google.firebase.firestore.ServerTimestamp
-import java.util.Date
+import kotlinx.serialization.Serializable
 
-data class CommentDTO(
+@Serializable
+data class CommentDto(
     val id: String = "",
     val postId: String = "",
     val authorId: String = "",
     val authorName: String = "",
     val authorProfileUrl: String? = null,
     val content: String = "",
-    @ServerTimestamp val createdAt: Date? = null
+    val createdAt: Long = System.currentTimeMillis()
 )

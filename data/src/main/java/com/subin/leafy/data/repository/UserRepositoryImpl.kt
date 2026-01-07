@@ -15,13 +15,11 @@ class UserRepositoryImpl(
 
     override suspend fun getCurrentUserId(): String? = dataSource.getCurrentUserId()
 
-    override fun getUser(userId: String): Flow<DataResourceResult<User>> = flow {
-        emit(dataSource.getUser(userId))
-    }.onStart {
-        emit(DataResourceResult.Loading)
-    }.catch { e ->
-        emit(DataResourceResult.Failure(e))
-    }.flowOn(Dispatchers.IO)
+    override fun getUser(userId: String): Flow<DataResourceResult<User>> =
+        dataSource.getUserFlow(userId)
+            .onStart { emit(DataResourceResult.Loading) }
+            .catch { e -> emit(DataResourceResult.Failure(e)) }
+            .flowOn(Dispatchers.IO)
 
     override fun updateProfile(user: User): Flow<DataResourceResult<Unit>> = flow {
         val result = dataSource.updateUser(user)

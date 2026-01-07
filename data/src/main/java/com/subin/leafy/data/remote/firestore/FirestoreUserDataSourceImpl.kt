@@ -94,14 +94,12 @@ class FirestoreUserDataSourceImpl(
         DataResourceResult.Failure(it)
     }
 
-    /**
-     * 🎯 팔로우 처리 (Atomic Batch 사용)
-     * 내 팔로잉 증가와 상대 팔로워 증가를 한 번에 처리합니다.
-     */
+
     override suspend fun followUser(myId: String, targetUserId: String): DataResourceResult<Unit> = runCatching {
         val batch = firestore.batch()
+        val myRef = firestore.collection(COLLECTION_USERS).document(myId)
+        val targetRef = firestore.collection(COLLECTION_USERS).document(targetUserId)
 
-        // 1. 팔로우 관계 문서 생성 (중복 방지 ID 사용)
         val followRef = firestore.collection(COLLECTION_FOLLOWS).document("${myId}_$targetUserId")
         batch.set(followRef, mapOf(
             "fromId" to myId,
@@ -109,12 +107,9 @@ class FirestoreUserDataSourceImpl(
             "createdAt" to System.currentTimeMillis()
         ))
 
-        // 2. 내 팔로잉 수 증가
-        val myRef = firestore.collection(COLLECTION_USERS).document(myId)
         batch.update(myRef, "followingCount", FieldValue.increment(1))
+        batch.update(myRef, "followingIds", FieldValue.arrayUnion(targetUserId))
 
-        // 3. 상대 팔로워 수 증가
-        val targetRef = firestore.collection(COLLECTION_USERS).document(targetUserId)
         batch.update(targetRef, "followerCount", FieldValue.increment(1))
 
         batch.commit().await()
@@ -123,16 +118,47 @@ class FirestoreUserDataSourceImpl(
 
     override suspend fun unfollowUser(myId: String, targetUserId: String): DataResourceResult<Unit> = runCatching {
         val batch = firestore.batch()
+        val myRef = firestore.collection(COLLECTION_USERS).document(myId)
+        val targetRef = firestore.collection(COLLECTION_USERS).document(targetUserId)
 
-        // 1. 팔로우 관계 문서 삭제
         val followRef = firestore.collection(COLLECTION_FOLLOWS).document("${myId}_$targetUserId")
         batch.delete(followRef)
 
-        // 2. 카운트 감소
-        batch.update(firestore.collection(COLLECTION_USERS).document(myId), "followingCount", FieldValue.increment(-1))
-        batch.update(firestore.collection(COLLECTION_USERS).document(targetUserId), "followerCount", FieldValue.increment(-1))
+        batch.update(myRef, "followingCount", FieldValue.increment(-1))
+        batch.update(myRef, "followingIds", FieldValue.arrayRemove(targetUserId))
+
+        batch.update(targetRef, "followerCount", FieldValue.increment(-1))
 
         batch.commit().await()
+        DataResourceResult.Success(Unit)
+    }.getOrElse { DataResourceResult.Failure(it) }
+
+    suspend fun toggleLike(userId: String, postId: String, isLiked: Boolean): DataResourceResult<Unit> = runCatching {
+        val batch = firestore.batch()
+        val userRef = firestore.collection(COLLECTION_USERS).document(userId)
+        val postRef = firestore.collection("brewing_notes").document(postId)
+
+        if (isLiked) {
+            batch.update(userRef, "likedPostIds", FieldValue.arrayRemove(postId))
+            batch.update(postRef, "likeCount", FieldValue.increment(-1))
+        } else {
+            batch.update(userRef, "likedPostIds", FieldValue.arrayUnion(postId))
+            batch.update(postRef, "likeCount", FieldValue.increment(1))
+        }
+
+        batch.commit().await()
+        DataResourceResult.Success(Unit)
+    }.getOrElse { DataResourceResult.Failure(it) }
+
+    suspend fun toggleSave(userId: String, postId: String, isSaved: Boolean): DataResourceResult<Unit> = runCatching {
+        val userRef = firestore.collection(COLLECTION_USERS).document(userId)
+
+        if (isSaved) {
+            userRef.update("savedPostIds", FieldValue.arrayRemove(postId)).await()
+        } else {
+            userRef.update("savedPostIds", FieldValue.arrayUnion(postId)).await()
+        }
+
         DataResourceResult.Success(Unit)
     }.getOrElse { DataResourceResult.Failure(it) }
 
@@ -143,7 +169,7 @@ class FirestoreUserDataSourceImpl(
 
     override suspend fun fetchTopUsers(limit: Int): DataResourceResult<List<User>> = runCatching {
         val snapshot = firestore.collection(COLLECTION_USERS)
-            .orderBy("followerCount", Query.Direction.DESCENDING) // 🎯 DESCENDING 에러 해결됨
+            .orderBy("followerCount", Query.Direction.DESCENDING)
             .limit(limit.toLong())
             .get().await()
 

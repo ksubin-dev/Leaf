@@ -2,12 +2,12 @@ package com.leafy.features.community.ui
 
 import com.leafy.features.community.ui.component.ExploreNoteUi
 import com.leafy.features.community.ui.component.ExploreTeaMasterUi
-import com.subin.leafy.domain.model.ExploreTab
+import com.subin.leafy.domain.model.ExploreContent
 
 data class CommunityUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val selectedTab: ExploreTab = ExploreTab.TRENDING,
+    val selectedTab: ExploreContent = ExploreContent.TRENDING,
 
     // 1. 이번 주 인기 노트
     val popularNotes: List<ExploreNoteUi> = emptyList(),
@@ -23,9 +23,9 @@ data class CommunityUiState(
     val comments: List<CommunityCommentUi> = emptyList(),
     val isCommentsLoading: Boolean = false,
 
-) {
+    ) {
     val hasError: Boolean get() = errorMessage != null
 
     // 현재 선택된 탭이 추천(Trending)인지 확인
-    val isTrendingTab: Boolean get() = selectedTab == ExploreTab.TRENDING
+    val isTrendingTab: Boolean get() = selectedTab == ExploreContent.TRENDING
 }

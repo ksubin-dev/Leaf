@@ -2,33 +2,26 @@ package com.subin.leafy.domain.model
 
 data class CommunityPost(
     val id: String,
-    val authorId: String,
-    val authorName: String,
-    val authorProfileUrl: String?,
+    val author: PostAuthor,
     val title: String,
-    val subtitle: String,
     val content: String,
-    val teaTag: String,         // 예: "Oolong", "Green Tea"
-    val imageUrl: String?,
-    val rating: Float,
-    val metaInfo: String,       // 예: "대만 · 중배화"
-    val brewingSteps: List<String>, // ["95℃", "3m", "5g"]
-    val likeCount: Int,
-    val bookmarkCount: Int,
-    val commentCount: Int,
-    val viewCount: Int,
-    val isLiked: Boolean,
-    val isBookmarked: Boolean,
-    val createdAt: String,      // "2시간 전" 등
-    val topComment: String? = null
+    val imageUrls: List<String>,
+    val originNoteId: String? = null,
+    val teaType: TeaType? = null,
+    val rating: Int? = null,
+    val tags: List<String> = emptyList(),
+    val brewingSummary: String? = null,    // "95℃ · 3m · 5g"
+
+    val stats: SocialStatistics,
+    val myState: UserSocialState,
+    val createdAt: Long,
+    val topComment: Comment? = null
 )
 
-// 2. 티 마스터 모델
-data class TeaMaster(
+data class PostAuthor(
     val id: String,
-    val name: String,
-    val title: String,          // 예: "녹차 & 말차 전문가"
+    val nickname: String,
     val profileImageUrl: String?,
-    val isFollowing: Boolean
+    val isFollowing: Boolean = false
 )
 

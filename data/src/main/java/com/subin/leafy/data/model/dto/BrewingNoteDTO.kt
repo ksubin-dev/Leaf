@@ -1,54 +1,52 @@
 package com.subin.leafy.data.model.dto
 
 
-//여기에 작성한 사람의 이름과 프로필 이미지를 저장하여 매칭?
-data class BrewingNoteDTO(
-    val _id: String = "",
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class BrewingNoteDto(
+    val id: String = "",
     val userId: String = "",
 
     // 1. TeaInfo
     val teaName: String = "",
     val teaBrand: String = "",
     val teaType: String = "",
-    val leafStyle: String = "",
-    val processing: String = "",
+    val teaOrigin: String = "",
+    val teaLeafStyle: String = "",
     val teaGrade: String = "",
 
-    // 2. BrewingCondition
-    val waterTemp: String = "",
-    val leafAmount: String = "",
-    val brewTime: String = "",
-    val brewCount: String = "",
+    // 2. BrewingRecipe
+    val waterTemp: Int = 0,
+    val leafAmount: Float = 0f,
+    val waterAmount: Int = 0,
+    val brewTimeSeconds: Int = 0,
+    val infusionCount: Int = 1,
     val teaware: String = "",
 
-    // 3. SensoryEvaluation
-    val selectedTags: List<String> = emptyList(),
-    val sweetness: Float = 0f,
-    val sourness: Float = 0f,
-    val bitterness: Float = 0f,
-    val saltiness: Float = 0f,
-    val umami: Float = 0f,
+    // 3. SensoryEvaluation (맛 평가)
+    val flavorNotes: List<String> = emptyList(),
+    val sweetness: Int = 0,
+    val sourness: Int = 0,
+    val bitterness: Int = 0,
+    val astringency: Int = 0,
+    val umami: Int = 0,
     val bodyType: String = "MEDIUM",
     val finishLevel: Float = 0.5f,
     val memo: String = "",
 
-    // 4. RatingInfo
+    // 4. Rating & Metadata
     val stars: Int = 0,
     val purchaseAgain: Boolean? = null,
+    val weather: String = "SUNNY",
+    val mood: String = "",
+    val imageUrls: List<String> = emptyList(),
 
-    // 5. NoteContext
-    val dateTime: String = "",
-    val weather: String = "INDOOR",
-    val withPeople: String = "",
-    val dryLeafUri: String? = null,
-    val liquorUri: String? = null,
-    val teawareUri: String? = null,
-    val additionalUri: String? = null,
-
+    // 5. SocialInteraction
     val likeCount: Int = 0,
     val bookmarkCount: Int = 0,
-    val viewCount: Int = 0,
     val commentCount: Int = 0,
+    val viewCount: Int = 0,
 
-    val createdAt: Long = 0L
+    val createdAt: Long = System.currentTimeMillis()
 )
