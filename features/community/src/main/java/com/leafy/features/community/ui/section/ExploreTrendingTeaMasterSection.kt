@@ -1,49 +1,49 @@
 package com.leafy.features.community.ui.section
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.ui.component.ExploreSectionHeader
 import com.leafy.features.community.ui.component.ExploreTeaMasterCard
 import com.leafy.features.community.ui.component.ExploreTeaMasterUi
+import com.leafy.shared.ui.component.LeafySectionHeader
 import com.leafy.shared.ui.theme.LeafyTheme
 
-/**
- * Explore - Trending 탭
- * "이번 달 티 마스터 추천" 섹션
- */
 @Composable
 fun ExploreTrendingTeaMasterSection(
     modifier: Modifier = Modifier,
     masters: List<ExploreTeaMasterUi>,
     onMasterClick: (ExploreTeaMasterUi) -> Unit = {},
-    onFollowToggle: (ExploreTeaMasterUi, Boolean) -> Unit = { _, _ -> }
+    onFollowToggle: (ExploreTeaMasterUi, Boolean) -> Unit = { _, _ -> },
+    onMoreClick: () -> Unit = {}
 ) {
     Column(modifier = modifier) {
-        ExploreSectionHeader(
+        LeafySectionHeader(
             title = "이번 달 티 마스터 추천",
+            titleStyle = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
             showMore = true,
-            onMoreClick = { /* TODO: 마스터 더보기 이동 */ }
+            onMoreClick = onMoreClick
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        masters.forEachIndexed { index, master ->
-            ExploreTeaMasterCard(
-                master = master,
-                onClick = { onMasterClick(master) },
-                onFollowToggle = { isFollowing ->
-                    onFollowToggle(master, isFollowing)
-                }
-            )
-
-            if (index != masters.lastIndex) {
-                Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            masters.forEach { master ->
+                ExploreTeaMasterCard(
+                    master = master,
+                    onClick = { onMasterClick(master) },
+                    onFollowToggle = { isFollowing ->
+                        onFollowToggle(master, isFollowing)
+                    }
+                )
             }
         }
     }

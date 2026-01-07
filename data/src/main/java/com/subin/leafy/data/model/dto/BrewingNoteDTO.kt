@@ -1,5 +1,7 @@
 package com.subin.leafy.data.model.dto
 
+
+//여기에 작성한 사람의 이름과 프로필 이미지를 저장하여 매칭?
 data class BrewingNoteDTO(
     val _id: String = "",
     val userId: String = "",
@@ -43,6 +45,10 @@ data class BrewingNoteDTO(
     val teawareUri: String? = null,
     val additionalUri: String? = null,
 
-    // 6. Timestamp (시스템 관리용)
+    val likeCount: Int = 0,
+    val bookmarkCount: Int = 0,
+    val viewCount: Int = 0,
+    val commentCount: Int = 0,
+
     val createdAt: Long = 0L
 )

@@ -55,7 +55,8 @@ class SignUpViewModel(
             val result = authUseCases.signUp(
                 email = currentState.email,
                 password = currentState.password,
-                username = currentState.username
+                username = currentState.username,
+                profileImageUri = currentState.profileImageUri?.toString(),
             )
 
             when (result) {

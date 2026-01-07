@@ -16,14 +16,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.leafy.shared.ui.component.LeafyProfileImage
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.component.RatingStars
 import com.leafy.shared.R as SharedR
 
-/**
- * 노트 요약 카드 - 간결한 버전
- * '이번 주 인기 노트' 등 섹션에서 사용됩니다.
- */
+
 @Composable
 fun ExploreSummaryNoteCard(
     note: ExploreNoteUi,
@@ -119,18 +117,10 @@ fun ExploreSummaryNoteCard(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    if (note.authorProfileUrl != null) {
-                        AsyncImage(
-                            model = note.authorProfileUrl,
-                            contentDescription = "Author avatar",
-                            placeholder = painterResource(id = SharedR.drawable.ic_profile_1),
-                            error = painterResource(id = SharedR.drawable.ic_profile_1),
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
+                    LeafyProfileImage(
+                        imageUrl = note.authorProfileUrl,
+                        size = 28.dp
+                    )
                 }
             }
         }

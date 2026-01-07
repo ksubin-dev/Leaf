@@ -11,7 +11,14 @@ data class BrewingNote(
     val evaluation: SensoryEvaluation,
     val ratingInfo: RatingInfo,
     val context: NoteContext,
-    val createdAt: Date = Date()
+    val createdAt: Date = Date(),
+    val likeCount: Int = 0,
+    val bookmarkCount: Int = 0,
+    val viewCount: Int = 0,
+    val commentCount: Int = 0,
+
+    val isLiked: Boolean = false,
+    val isBookmarked: Boolean = false
 )
 
 // 차에 대한 기본 정보

@@ -14,9 +14,11 @@ data class CommunityPost(
     val metaInfo: String,       // 예: "대만 · 중배화"
     val brewingSteps: List<String>, // ["95℃", "3m", "5g"]
     val likeCount: Int,
-    val savedCount: Int,
+    val bookmarkCount: Int,
+    val commentCount: Int,
+    val viewCount: Int,
     val isLiked: Boolean,
-    val isSaved: Boolean,
+    val isBookmarked: Boolean,
     val createdAt: String,      // "2시간 전" 등
     val topComment: String? = null
 )
@@ -30,9 +32,3 @@ data class TeaMaster(
     val isFollowing: Boolean
 )
 
-// 3. 인기 태그 모델
-data class CommunityTag(
-    val id: String,
-    val label: String,
-    val isTrendingUp: Boolean = true
-)

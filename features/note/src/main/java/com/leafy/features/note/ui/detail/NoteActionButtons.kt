@@ -27,7 +27,7 @@ import com.leafy.shared.R as SharedR
 @Composable
 fun NoteActionButtons(
     modifier: Modifier = Modifier,
-    onEditClick: () -> Unit,
+    onEditClick: (() -> Unit)? = null,
     onShareClick: () -> Unit
 ) {
     Column(
@@ -36,22 +36,29 @@ fun NoteActionButtons(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Button(
-            onClick = onEditClick,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Icon(
-                painter = painterResource(id = SharedR.drawable.ic_edit),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.surface
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Edit Tasting Note", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color =MaterialTheme.colorScheme.onPrimary)
+        if (onEditClick != null) {
+            Button(
+                onClick = onEditClick,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = SharedR.drawable.ic_edit),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Edit Tasting Note",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
 
         OutlinedButton(
@@ -67,7 +74,12 @@ fun NoteActionButtons(
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.width(8.dp))
-            Text("Share Note", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            Text(
+                "Share Note",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
         }
     }
 }

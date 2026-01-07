@@ -8,7 +8,8 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable
     data class NoteTab(
         val initialRecords: String? = null,
-        val noteId: String? = null
+        val noteId: String? = null,
+        val date: String? = null
     ) : MainNavigationRoute
 
     @Serializable
@@ -16,4 +17,7 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object CommunityTab : MainNavigationRoute
     @Serializable data object TimerTab : MainNavigationRoute
     @Serializable data object MyPageTab : MainNavigationRoute
+    @Serializable data class DailyRecords(val date: String) : MainNavigationRoute
+
+    @Serializable data object AnalysisReport : MainNavigationRoute
 }

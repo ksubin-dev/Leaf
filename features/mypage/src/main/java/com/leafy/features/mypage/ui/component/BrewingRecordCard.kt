@@ -13,14 +13,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.leafy.shared.ui.component.RatingStars
 
 @Composable
 fun BrewingRecordCard(
     modifier: Modifier = Modifier,
+    imageUrl: String?,
     teaName: String,
     metaInfo: String,
     rating: Int,
@@ -38,13 +41,22 @@ fun BrewingRecordCard(
     ) {
         Box(
             modifier = Modifier
-                .size(52.dp)
+                .size(56.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(MaterialTheme.colorScheme.surface)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text("🍵", fontSize = 24.sp)
+            if (!imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = "차 사진",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text("🍵", fontSize = 24.sp)
+            }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -57,25 +69,29 @@ fun BrewingRecordCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RatingStars(rating = rating, size = 12.dp)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = metaInfo,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.secondary // 강조색 변경
-                )
-            }
+            Text(
+                text = metaInfo,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            RatingStars(rating = rating, size = 12.dp)
         }
+
+        Spacer(modifier = Modifier.width(8.dp))
 
         Surface(
             onClick = onEditClick,
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 1.dp,
-            modifier = Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+            modifier = Modifier
+                .size(36.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(

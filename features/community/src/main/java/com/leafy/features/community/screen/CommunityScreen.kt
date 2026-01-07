@@ -4,23 +4,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.leafy.features.community.ui.CommunityUiEffect
-import com.leafy.features.community.ui.CommunityUiState
-import com.leafy.features.community.ui.CommunityViewModel
-import com.leafy.features.community.ui.component.CustomExploreTabRow
-import com.leafy.features.community.ui.component.ExploreNoteUi
-import com.leafy.features.community.ui.component.ExploreTeaMasterUi
+import com.leafy.features.community.ui.*
+import com.leafy.features.community.ui.component.*
 import com.leafy.features.community.ui.section.*
 import com.subin.leafy.domain.model.ExploreTab
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityScreen(
     viewModel: CommunityViewModel,
@@ -30,14 +25,20 @@ fun CommunityScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // 댓글 바텀시트 상태 관리
+    var showCommentSheet by remember { mutableStateOf(false) }
+    var selectedPostId by remember { mutableStateOf("") }
+
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is CommunityUiEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(
-                        message = effect.message,
-                        duration = SnackbarDuration.Short
-                    )
+                    snackbarHostState.showSnackbar(message = effect.message)
+                }
+                is CommunityUiEffect.NavigateToComments -> {
+                    selectedPostId = effect.postId
+                    viewModel.loadComments(effect.postId)
+                    showCommentSheet = true
                 }
             }
         }
@@ -52,13 +53,11 @@ fun CommunityScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // 탭 바
             CustomExploreTabRow(
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { viewModel.onTabSelected(it) }
             )
 
-            // 메인 컨텐츠
             Box(modifier = Modifier.fillMaxSize()) {
                 if (uiState.isLoading && uiState.popularNotes.isEmpty()) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -69,24 +68,35 @@ fun CommunityScreen(
                             onNoteClick = { onNoteClick(it.id) },
                             onMasterClick = { onMasterClick(it.id) },
                             onFollowToggle = { master, isFollowing ->
-                                // TODO: viewModel.toggleFollow(master.id) 호출
+                                viewModel.toggleFollow(master.id, isFollowing)
                             }
                         )
                         ExploreTab.FOLLOWING -> FollowingTabContent(
                             uiState = uiState,
                             onNoteClick = { onNoteClick(it.id) },
-                            onLikeClick = { note -> viewModel.toggleLike(note.id) }
+                            onLikeClick = { note -> viewModel.toggleLike(note.id, note.isLiked) },
+                            onCommentClick = { note ->
+                                selectedPostId = note.id
+                                viewModel.loadComments(note.id)
+                                showCommentSheet = true
+                            }
                         )
                     }
                 }
             }
         }
     }
+
+    if (showCommentSheet) {
+        NoteCommentBottomSheet(
+            onDismissRequest = { showCommentSheet = false },
+            comments = uiState.comments,
+            onSendComment = { content -> viewModel.sendComment(selectedPostId, content) },
+            onReplyClick = { /* 필요 시 구현 */ }
+        )
+    }
 }
 
-/**
- * Trending 탭 레이아웃
- */
 @Composable
 private fun TrendingTabContent(
     uiState: CommunityUiState,
@@ -101,32 +111,17 @@ private fun TrendingTabContent(
             .padding(vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(36.dp)
     ) {
-        // 섹션 1: 이번 주 인기 노트
         ExploreTrendingTopSection(
             notes = uiState.popularNotes,
             onNoteClick = onNoteClick
         )
 
-        // 섹션 2: 지금 급상승 중
-        ExploreTrendingRisingSection(
-            notes = uiState.risingNotes,
-            onNoteClick = onNoteClick
-        )
-
-        // 섹션 3: 인기 태그
-        ExploreTrendingPopularTagsSection(
-            tags = uiState.popularTags,
-            onTagClick = { /* TODO: 태그 검색 결과 이동 */ }
-        )
-
-        // 섹션 4: 많이 저장된 노트
         ExploreTrendingSavedSection(
             notes = uiState.mostSavedNotes,
             onNoteClick = onNoteClick,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        // 섹션 5: 티 마스터 추천
         ExploreTrendingTeaMasterSection(
             masters = uiState.teaMasters,
             onMasterClick = onMasterClick,
@@ -138,14 +133,12 @@ private fun TrendingTabContent(
     }
 }
 
-/**
- * Following 탭 레이아웃 (스크롤 가능한 피드)
- */
 @Composable
 private fun FollowingTabContent(
     uiState: CommunityUiState,
     onNoteClick: (ExploreNoteUi) -> Unit,
-    onLikeClick: (ExploreNoteUi) -> Unit
+    onLikeClick: (ExploreNoteUi) -> Unit,
+    onCommentClick: (ExploreNoteUi) -> Unit
 ) {
     if (uiState.followingFeed.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -160,7 +153,33 @@ private fun FollowingTabContent(
             notes = uiState.followingFeed,
             onNoteClick = onNoteClick,
             onLikeClick = onLikeClick,
+            onCommentClick = onCommentClick,
             modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewCommunityScreen() {
+    MaterialTheme {
+        val mockState = CommunityUiState(
+            isLoading = false,
+            selectedTab = ExploreTab.TRENDING,
+            popularNotes = listOf(
+                ExploreNoteUi(id = "1", title = "우전 녹차", subtitle = "2024년 첫 수확", rating = 4.8f)
+            ),
+            teaMasters = listOf(
+                ExploreTeaMasterUi(id = "1", name = "차 마스터", title = "보이차 전문가", isFollowing = false)
+            )
+        )
+
+        TrendingTabContent(
+            uiState = mockState,
+            onNoteClick = {},
+            onMasterClick = {},
+            onFollowToggle = { _, _ -> }
         )
     }
 }

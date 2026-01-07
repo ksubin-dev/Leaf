@@ -28,7 +28,8 @@ fun ExploreFollowingNoteCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     onLikeClick: () -> Unit = {},
-    onBookmarkClick: () -> Unit = {}
+    onBookmarkClick: () -> Unit = {},
+    onCommentClick: () -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -194,7 +195,7 @@ fun ExploreFollowingNoteCard(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
 
-                IconButton(onClick = { /* 댓글 기능 TODO */ }) {
+                IconButton(onClick = onCommentClick) {
                     Icon(
                         painter = painterResource(id = SharedR.drawable.ic_comment),
                         contentDescription = "Comment",
@@ -206,7 +207,7 @@ fun ExploreFollowingNoteCard(
 
                 IconButton(onClick = onBookmarkClick) {
                     Icon(
-                        painter = painterResource(id = SharedR.drawable.ic_bookmark),
+                        painter = painterResource(id = SharedR.drawable.ic_bookmark_outline),
                         contentDescription = "Bookmark",
                         modifier = Modifier.size(20.dp),
                         tint = if (note.isSaved) colors.primary else colors.secondary

@@ -42,12 +42,15 @@ import com.subin.leafy.domain.model.WeatherType
 @Composable
 fun NoteDetailScreen(
     uiState: NoteUiState,
+    isAuthor: Boolean,
     isProcessing: Boolean,
     snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onEditClick: () -> Unit,
     onShareClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onLikeClick: () -> Unit,
+    onBookmarkClick: () -> Unit
 ) {
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -64,9 +67,14 @@ fun NoteDetailScreen(
                     teaName = uiState.teaName,
                     teaType = uiState.teaType,
                     imageUrl = uiState.liquorUri ?: uiState.dryLeafUri ?: uiState.teawareUri ?: uiState.additionalUri,
+                    isAuthor = isAuthor,
+                    isLiked = uiState.isLiked,
+                    isBookmarked = uiState.isBookmarked,
                     onBackClick = onNavigateBack,
                     onEditClick = onEditClick,
-                    onDeleteClick = onDeleteClick
+                    onDeleteClick = onDeleteClick,
+                    onLikeClick = onLikeClick,
+                    onBookmarkClick = onBookmarkClick
                 )
 
                 DetailSectionCard(title = "Tea Information") {
@@ -105,7 +113,7 @@ fun NoteDetailScreen(
                 )
 
                 NoteActionButtons(
-                    onEditClick = onEditClick,
+                    onEditClick = if (isAuthor) onEditClick else null,
                     onShareClick = onShareClick
                 )
 
@@ -156,13 +164,16 @@ fun FinalNoteDetailScreenPreview() {
         )
 
         NoteDetailScreen(
-            uiState = mockState,
+            uiState = NoteUiState(teaName = "Earl Grey Supreme", isLiked = true),
+            isAuthor = false,
             isProcessing = false,
-            snackbarHostState = snackbarHostState,
+            snackbarHostState = remember { SnackbarHostState() },
             onNavigateBack = {},
             onEditClick = {},
             onShareClick = {},
-            onDeleteClick = {}
+            onDeleteClick = {},
+            onLikeClick = {},
+            onBookmarkClick = {}
         )
     }
 }

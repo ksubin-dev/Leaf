@@ -5,9 +5,13 @@ import com.subin.leafy.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
-    /** 현재 로그인된 유저 ID 조회 (로그인 안 된 경우 null) */
     suspend fun getCurrentUserId(): String?
 
     fun getUser(userId: String): Flow<DataResourceResult<User>>
     fun updateProfile(user: User): Flow<DataResourceResult<Unit>>
+
+    fun toggleFollow(myId: String, targetUserId: String, isFollowing: Boolean): Flow<DataResourceResult<Unit>>
+    fun isFollowing(myId: String, targetUserId: String): Flow<DataResourceResult<Boolean>>
+
+    fun getTopUsers(limit: Int): Flow<DataResourceResult<List<User>>>
 }

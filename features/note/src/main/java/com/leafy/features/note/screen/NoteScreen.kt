@@ -21,13 +21,13 @@ import com.leafy.features.note.ui.NoteUiEffect
 import com.leafy.features.note.ui.NoteUiState
 import com.leafy.features.note.ui.NoteViewModel
 import com.leafy.features.note.ui.sections.*
+import com.leafy.shared.common.LoadingOverlay
 import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.WeatherType
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.showToast
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NoteScreen(
     viewModel: NoteViewModel,
@@ -66,31 +66,39 @@ fun NoteScreen(
         }
     }
 
-    NoteContent(
-        uiState = uiState,
-        isProcessing = isProcessing,
-        onNavigateBack = onNavigateBack,
-        onSave = { viewModel.saveNote() },
-        onClickDryLeaf = { dryLeafLauncher.launch("image/*") },
-        onClickLiquor = { liquorLauncher.launch("image/*") },
-        onClickTeaware = { teawareLauncher.launch("image/*") },
-        onClickAdditional = { additionalLauncher.launch("image/*") },
-        onUpdateTeaInfo = { name, brand, type, style, processing, grade ->
-            viewModel.updateTeaInfo(name, brand, type, style, processing, grade)
-        },
-        onUpdateContext = { dateTime, weather, withPeople, dry, liq, tea, add ->
-            viewModel.updateContext(dateTime, weather, withPeople, dry, liq, tea, add)
-        },
-        onUpdateCondition = { temp, amount, time, count, teaware ->
-            viewModel.updateCondition(temp, amount, time, count, teaware)
-        },
-        onUpdateSensory = { tags, sweet, sour, bitter, salt, umami, body, finish, memo ->
-            viewModel.updateSensory(tags, sweet, sour, bitter, salt, umami, body, finish, memo)
-        },
-        onUpdateRating = { rating, purchase ->
-            viewModel.updateRating(rating, purchase)
-        }
-    )
+    Box(modifier = Modifier.fillMaxSize()){
+        NoteContent(
+            uiState = uiState,
+            isProcessing = isProcessing,
+            onNavigateBack = onNavigateBack,
+            onSave = { viewModel.saveNote() },
+            onClickDryLeaf = { dryLeafLauncher.launch("image/*") },
+            onClickLiquor = { liquorLauncher.launch("image/*") },
+            onClickTeaware = { teawareLauncher.launch("image/*") },
+            onClickAdditional = { additionalLauncher.launch("image/*") },
+            onUpdateTeaInfo = { name, brand, type, style, processing, grade ->
+                viewModel.updateTeaInfo(name, brand, type, style, processing, grade)
+            },
+            onUpdateContext = { dateTime, weather, withPeople, dry, liq, tea, add ->
+                viewModel.updateContext(dateTime, weather, withPeople, dry, liq, tea, add)
+            },
+            onUpdateCondition = { temp, amount, time, count, teaware ->
+                viewModel.updateCondition(temp, amount, time, count, teaware)
+            },
+            onUpdateSensory = { tags, sweet, sour, bitter, salt, umami, body, finish, memo ->
+                viewModel.updateSensory(tags, sweet, sour, bitter, salt, umami, body, finish, memo)
+            },
+            onUpdateRating = { rating, purchase ->
+                viewModel.updateRating(rating, purchase)
+            }
+        )
+
+        LoadingOverlay(
+            isLoading = isProcessing,
+            message = "브루잉 노트를 저장 중입니다...\n사진이 많으면 시간이 걸릴 수 있어요."
+        )
+    }
+
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -250,7 +258,6 @@ private fun NoteContent(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 private fun NoteScreenPreview() {

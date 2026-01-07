@@ -3,7 +3,9 @@ package com.leafy.features.note.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.usecase.CommunityUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -14,19 +16,9 @@ sealed interface NoteDetailUiEffect {
 
 class NoteDetailViewModel(
     private val noteUseCases: NoteUseCases,
+    private val communityUseCases: CommunityUseCases,
     private val noteId: String
 ) : ViewModel() {
-
-    private val userId: StateFlow<String?> = flow {
-        emit(noteUseCases.getCurrentUserId())
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
-    )
-
-    private val _uiState = MutableStateFlow(NoteUiState())
-    val uiState = _uiState.asStateFlow()
 
     private val _isProcessing = MutableStateFlow(false)
     val isProcessing = _isProcessing.asStateFlow()
@@ -34,52 +26,79 @@ class NoteDetailViewModel(
     private val _effect = MutableSharedFlow<NoteDetailUiEffect>()
     val effect = _effect.asSharedFlow()
 
-    init {
-        loadNoteDetail()
+    val uiState: StateFlow<NoteUiState> = combine(
+        noteUseCases.getNoteById(noteId),
+        _isProcessing
+    ) { result, processing ->
+        when (result) {
+            is DataResourceResult.Loading -> NoteUiState(isLoading = true)
+            is DataResourceResult.Success -> {
+                result.data.toUiState().copy(isLoading = processing)
+            }
+            is DataResourceResult.Failure -> {
+                NoteUiState(isLoading = false, errorMessage = "데이터 로드 실패: ${result.exception.message}")
+            }
+            else -> NoteUiState(isLoading = false)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = NoteUiState(isLoading = true)
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val isAuthor: StateFlow<Boolean> = flow {
+        emit(noteUseCases.getCurrentUserId())
+    }.flatMapLatest { currentUserId ->
+        uiState.map { state ->
+            currentUserId != null && state.ownerId == currentUserId
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    // --- 기능 함수 (이벤트 처리) ---
+
+    fun toggleLike(currentStatus: Boolean) {
+        viewModelScope.launch {
+            communityUseCases.toggleLike(noteId, currentStatus)
+        }
     }
 
-    private fun loadNoteDetail() {
+    fun toggleSave(currentStatus: Boolean) {
         viewModelScope.launch {
-            val currentId = userId.value ?: noteUseCases.getCurrentUserId() ?: run {
-                _effect.emit(NoteDetailUiEffect.ShowSnackbar("로그인이 필요합니다."))
-                return@launch
-            }
-
-            noteUseCases.getNoteById(currentId, noteId).collectLatest { result ->
-                when (result) {
-                    is DataResourceResult.Loading -> _isProcessing.update { true }
-                    is DataResourceResult.Success -> {
-                        _isProcessing.update { false }
-                        _uiState.update { result.data.toUiState() }
-                    }
-                    is DataResourceResult.Failure -> {
-                        _isProcessing.update { false }
-                        _effect.emit(NoteDetailUiEffect.ShowSnackbar("데이터를 불러오지 못했습니다."))
-                    }
-                    else -> _isProcessing.update { false }
-                }
-            }
+            communityUseCases.toggleSave(noteId, currentStatus)
         }
     }
 
     fun deleteNote() {
         viewModelScope.launch {
-            val currentUserId = userId.value ?: return@launch
-            val noteToDelete = uiState.value.toDomain(currentUserId, noteId)
+            val currentUserId = noteUseCases.getCurrentUserId() ?: return@launch
+            val currentState = uiState.value
+            if (currentState.ownerId != currentUserId) {
+                _effect.emit(NoteDetailUiEffect.ShowSnackbar("삭제 권한이 없습니다."))
+                return@launch
+            }
 
-            noteUseCases.deleteNote(currentUserId, noteToDelete).collectLatest { result ->
+            _isProcessing.value = true
+            noteUseCases.deleteNote(
+                currentUserId = currentUserId,
+                noteId = noteId,
+                ownerId = currentState.ownerId
+            ).collect { result ->
                 when (result) {
-                    is DataResourceResult.Loading -> _isProcessing.update { true }
                     is DataResourceResult.Success -> {
-                        _isProcessing.update { false }
+                        _isProcessing.value = false
                         _effect.emit(NoteDetailUiEffect.ShowSnackbar("삭제되었습니다."))
                         _effect.emit(NoteDetailUiEffect.NavigateBack)
                     }
                     is DataResourceResult.Failure -> {
-                        _isProcessing.update { false }
-                        _effect.emit(NoteDetailUiEffect.ShowSnackbar("삭제 실패: ${result.exception.message}"))
+                        _isProcessing.value = false
+                        _effect.emit(NoteDetailUiEffect.ShowSnackbar("오류: ${result.exception.message}"))
                     }
-                    else -> _isProcessing.update { false }
+                    else -> Unit
                 }
             }
         }

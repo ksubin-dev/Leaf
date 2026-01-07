@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -16,14 +17,12 @@ import coil.compose.AsyncImage
 import com.leafy.features.community.util.toKiloFormat
 import com.leafy.shared.R as SharedR
 
-/**
- * "가장 많이 저장된 노트" 리스트용 카드
- */
 @Composable
 fun ExploreSavedNoteCard(
     note: ExploreNoteUi,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onSaveClick: () -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -31,11 +30,11 @@ fun ExploreSavedNoteCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = colors.surface
+            containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -75,21 +74,29 @@ fun ExploreSavedNoteCard(
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(start = 8.dp)
             ) {
-                Icon(
-                    painter = painterResource(id = SharedR.drawable.ic_bookmark),
-                    contentDescription = "Saved count",
-                    tint = colors.secondary,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
+                IconButton(
+                    onClick = onSaveClick,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = if (note.isSaved) SharedR.drawable.ic_bookmark_filled
+                            else SharedR.drawable.ic_bookmark_outline
+                        ),
+                        contentDescription = "Save Toggle",
+                        tint = if (note.isSaved) colors.primary else colors.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
                 Text(
                     text = note.savedCount.toKiloFormat(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.onSurfaceVariant,
-                    modifier = Modifier.widthIn(min = 32.dp)
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant
                 )
             }
         }
