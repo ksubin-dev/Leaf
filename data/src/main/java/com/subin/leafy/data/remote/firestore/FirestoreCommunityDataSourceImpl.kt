@@ -5,7 +5,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FieldValue
 import com.leafy.shared.ui.utils.LeafyTimeUtils
-import com.subin.leafy.data.datasource.CommunityDataSource
+import com.subin.leafy.data.datasource.remote.CommunityDataSource
 import com.subin.leafy.data.mapper.*
 import com.subin.leafy.data.model.dto.*
 import com.subin.leafy.data.model.dto.CommunityPostDTO

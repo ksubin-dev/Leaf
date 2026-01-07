@@ -3,7 +3,7 @@ package com.subin.leafy.data.remote.firestore
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.CollectionReference
-import com.subin.leafy.data.datasource.NoteDataSource
+import com.subin.leafy.data.datasource.remote.NoteDataSource
 import com.subin.leafy.data.model.dto.BrewingNoteDTO
 import com.subin.leafy.data.mapper.toDTO
 import com.subin.leafy.data.mapper.toDomainNote

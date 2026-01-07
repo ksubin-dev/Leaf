@@ -1,7 +1,7 @@
 package com.subin.leafy.data.remote.firestore
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.subin.leafy.data.datasource.TimerDataSource
+import com.subin.leafy.data.datasource.remote.TimerDataSource
 import com.subin.leafy.data.mapper.toDomainList
 import com.subin.leafy.data.model.dto.TimerPresetDTO
 import com.subin.leafy.domain.common.DataResourceResult

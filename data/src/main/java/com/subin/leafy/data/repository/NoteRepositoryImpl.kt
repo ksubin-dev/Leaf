@@ -1,8 +1,8 @@
 package com.subin.leafy.data.repository
 
 import com.leafy.shared.ui.utils.LeafyTimeUtils
-import com.subin.leafy.data.datasource.NoteDataSource
-import com.subin.leafy.data.datasource.StorageDataSource
+import com.subin.leafy.data.datasource.remote.NoteDataSource
+import com.subin.leafy.data.datasource.remote.storage.StorageDataSource
 import com.subin.leafy.data.mapper.toRecord
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.common.mapData

@@ -1,4 +1,4 @@
-package com.subin.leafy.data.datasource
+package com.subin.leafy.data.datasource.remote
 
 import kotlinx.coroutines.flow.Flow
 

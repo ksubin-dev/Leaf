@@ -1,4 +1,4 @@
-package com.subin.leafy.data.datasource
+package com.subin.leafy.data.datasource.remote.storage
 
 import com.subin.leafy.domain.common.DataResourceResult
 

@@ -1,6 +1,6 @@
 package com.subin.leafy.data.repository
 
-import com.subin.leafy.data.datasource.TimerDataSource
+import com.subin.leafy.data.datasource.remote.TimerDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.TimerRepository
 import kotlinx.coroutines.Dispatchers

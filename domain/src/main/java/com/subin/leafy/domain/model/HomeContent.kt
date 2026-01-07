@@ -22,7 +22,7 @@ data class HomeBanner(
 data class QuickBrewingGuide(
     val title: String = "빠른 브루잉 가이드",
     val temperature: Int,
-    val steepingTimeMinutes: Int,
+    val steepingTimeSeconds: Int,
     val amountGrams: Float
 )
 
@@ -39,7 +39,7 @@ data class RankingItem(
     val teaName: String,
     val teaType: TeaType,
     val origin: String,
-    val rating: Float,
+    val rating: Int,
     val reviewCount: Int,
     val imageUrl: String?
 )

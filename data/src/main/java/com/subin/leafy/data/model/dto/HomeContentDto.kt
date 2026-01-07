@@ -6,9 +6,9 @@ import kotlinx.serialization.Serializable
 data class HomeContentDto(
     val banners: List<HomeBannerDto> = emptyList(),
     val quickGuide: QuickBrewingGuideDto? = null,
-    val todayPickId: String = "",
-    val todayPickType: String = "POST", // "POST" 또는 "MASTER"
-    val popularRankingNoteIds: List<String> = emptyList()
+    val todayPickId: String = "",        // 추천할 대상의 ID
+    val todayPickType: String = "POST",  // "POST" 또는 "MASTER"
+    val popularRankingNoteIds: List<String> = emptyList() // 랭킹 1, 2, 3위의 ID들
 )
 
 @Serializable

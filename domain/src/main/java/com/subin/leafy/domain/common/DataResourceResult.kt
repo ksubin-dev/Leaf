@@ -1,7 +1,6 @@
 package com.subin.leafy.domain.common
 
 sealed class DataResourceResult<out T> {
-    data object DummyConstructor : DataResourceResult<Nothing>()
     data object Loading : DataResourceResult<Nothing>()
     data class Success<out T>(
         val data: T
@@ -16,14 +15,14 @@ inline fun <T, R> DataResourceResult<T>.mapData(transform: (T) -> R): DataResour
         is DataResourceResult.Success -> DataResourceResult.Success(transform(data))
         is DataResourceResult.Failure -> DataResourceResult.Failure(exception)
         is DataResourceResult.Loading -> DataResourceResult.Loading
-        is DataResourceResult.DummyConstructor -> DataResourceResult.DummyConstructor
     }
 }
 
-inline fun <T> Result<T>.toResourceResult(): DataResourceResult<T> {
-    return fold(
-        onSuccess = { DataResourceResult.Success(it) },
-        onFailure = { DataResourceResult.Failure(it) }
-    )
+inline fun <T> runCatchingToResource(block: () -> T): DataResourceResult<T> {
+    return try {
+        DataResourceResult.Success(block())
+    } catch (e: Exception) {
+        DataResourceResult.Failure(e)
+    }
 }
 

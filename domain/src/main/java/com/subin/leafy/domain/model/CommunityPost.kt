@@ -12,8 +12,8 @@ data class CommunityPost(
     val tags: List<String> = emptyList(),
     val brewingSummary: String? = null,    // "95℃ · 3m · 5g"
 
-    val stats: SocialStatistics,
-    val myState: UserSocialState,
+    val stats: PostStatistics,
+    val myState: PostSocialState,
     val createdAt: Long,
     val topComment: Comment? = null
 )

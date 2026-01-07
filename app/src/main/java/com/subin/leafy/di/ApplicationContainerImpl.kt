@@ -11,6 +11,7 @@ import com.subin.leafy.domain.usecase.note.*
 import com.subin.leafy.domain.usecase.timer.GetPresetsUseCase
 import com.subin.leafy.domain.usecase.user.*
 import com.leafy.shared.di.ApplicationContainer
+import com.subin.leafy.data.remote.storage.FirebaseStorageDataSourceImpl
 import com.subin.leafy.domain.repository.AuthRepository
 import com.subin.leafy.domain.usecase.auth.GetAuthUserUseCase
 import com.subin.leafy.domain.usecase.auth.LoginUseCase
@@ -40,7 +41,7 @@ class ApplicationContainerImpl() : ApplicationContainer {
     private val userRepository = UserRepositoryImpl(userDataSource)
     private val userStatsRepository = UserStatsRepositoryImpl(userDataSource)
 
-    private val authRepository: AuthRepository = FirebaseAuthRepositoryImpl(
+    private val authRepository: AuthRepository = AuthRepositoryImpl(
         firebaseAuth = firebaseAuth,
         firestore = firestore,
         firebaseStorage = firebaseStorage

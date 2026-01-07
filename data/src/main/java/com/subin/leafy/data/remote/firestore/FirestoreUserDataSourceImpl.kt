@@ -4,7 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.FieldValue
-import com.subin.leafy.data.datasource.UserDataSource
+import com.subin.leafy.data.datasource.remote.UserDataSource
 import com.subin.leafy.data.mapper.toDomain
 import com.subin.leafy.data.model.dto.UserDTO
 import com.subin.leafy.data.model.dto.UserStatsDTO

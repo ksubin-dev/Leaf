@@ -1,16 +1,30 @@
 package com.subin.leafy.domain.model
 
+// 유저 도메인 모델
 data class User(
     val id: String,
     val nickname: String,
     val profileImageUrl: String?,
     val bio: String?,
-    val followerCount: Int,
-    val followingCount: Int,
+
+    val socialStats: UserSocialStatistics,
+    val relationState: UserRelationState,
+
     val followingIds: List<String>,
     val likedPostIds: List<String>,
     val savedPostIds: List<String>,
     val createdAt: Long
+)
+
+// 유저용 소셜 수치
+data class UserSocialStatistics(
+    val followerCount: Int = 0,
+    val followingCount: Int = 0
+)
+
+// 관계 상태
+data class UserRelationState(
+    val isFollowing: Boolean = false
 )
 
 data class UserStats(

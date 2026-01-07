@@ -1,8 +1,8 @@
 package com.subin.leafy.data.repository
 
 import android.annotation.SuppressLint
-import com.subin.leafy.data.datasource.NoteDataSource
-import com.subin.leafy.data.datasource.UserDataSource
+import com.subin.leafy.data.datasource.remote.NoteDataSource
+import com.subin.leafy.data.datasource.remote.UserDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.common.mapData
 import com.subin.leafy.domain.model.BrewingNote

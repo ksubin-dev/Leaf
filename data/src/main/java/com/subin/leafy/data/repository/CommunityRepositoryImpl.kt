@@ -1,6 +1,6 @@
 package com.subin.leafy.data.repository
 
-import com.subin.leafy.data.datasource.CommunityDataSource
+import com.subin.leafy.data.datasource.remote.CommunityDataSource
 import com.subin.leafy.data.mapper.toDomain
 import com.subin.leafy.data.mapper.toDomainCommentList
 import com.subin.leafy.domain.common.DataResourceResult

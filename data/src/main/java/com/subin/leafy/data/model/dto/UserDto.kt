@@ -10,6 +10,9 @@ data class UserDto(
     val bio: String? = "",
     val followerCount: Int = 0,
     val followingCount: Int = 0,
+    val followingIds: List<String> = emptyList(),
+    val likedPostIds: List<String> = emptyList(),
+    val savedPostIds: List<String> = emptyList(),
     val fcmToken: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

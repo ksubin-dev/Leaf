@@ -1,6 +1,6 @@
 package com.subin.leafy.data.repository
 
-import com.subin.leafy.data.datasource.UserDataSource
+import com.subin.leafy.data.datasource.remote.UserDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.common.toResourceResult
 import com.subin.leafy.domain.model.User

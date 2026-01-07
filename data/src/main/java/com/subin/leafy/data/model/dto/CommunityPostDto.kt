@@ -18,7 +18,7 @@ data class CommunityPostDto(
 
     // 요약 정보들
     val teaType: String? = null,
-    val rating: Float = 0f,
+    val rating: Int = 0,
     val tags: List<String> = emptyList(),
     val brewingSummary: String? = null,
 

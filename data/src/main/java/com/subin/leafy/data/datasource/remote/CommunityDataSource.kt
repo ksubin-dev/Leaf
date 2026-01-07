@@ -1,9 +1,8 @@
-package com.subin.leafy.data.datasource
+package com.subin.leafy.data.datasource.remote
 
-import com.subin.leafy.data.model.dto.CommentDTO
-import com.subin.leafy.data.model.dto.CommunityPostDTO
 import com.subin.leafy.domain.common.DataResourceResult
-import com.subin.leafy.domain.model.*
+import com.subin.leafy.domain.model.CommunityPost
+import com.subin.leafy.domain.model.TeaMaster
 import kotlinx.coroutines.flow.Flow
 
 interface CommunityDataSource {

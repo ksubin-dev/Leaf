@@ -1,7 +1,7 @@
 package com.subin.leafy.domain.model
 
 // 수치 정보 통합
-data class SocialStatistics(
+data class PostStatistics(
     val likeCount: Int = 0,
     val bookmarkCount: Int = 0,
     val commentCount: Int = 0,
@@ -9,7 +9,7 @@ data class SocialStatistics(
 )
 
 // 나의 반응 상태 통합
-data class UserSocialState(
+data class PostSocialState(
     val isLiked: Boolean = false,
     val isBookmarked: Boolean = false
 )

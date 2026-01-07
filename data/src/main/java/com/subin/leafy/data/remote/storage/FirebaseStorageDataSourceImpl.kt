@@ -1,8 +1,8 @@
-package com.subin.leafy.data.remote.firestore
+package com.subin.leafy.data.remote.storage
 
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
-import com.subin.leafy.data.datasource.StorageDataSource
+import com.subin.leafy.data.datasource.remote.storage.StorageDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
