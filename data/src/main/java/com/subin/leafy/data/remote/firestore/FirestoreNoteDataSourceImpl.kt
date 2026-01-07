@@ -89,4 +89,24 @@ class FirestoreNoteDataSourceImpl(
             }
         awaitClose { subscription.remove() }
     }.onStart { emit(DataResourceResult.Loading) }
+
+
+    override suspend fun getNoteByDate(userId: String, dateString: String): DataResourceResult<BrewingNote?> = runCatching {
+        val snapshot = noteCollection
+            .whereEqualTo("userId", userId)
+            .whereEqualTo("dateTime", dateString)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .get()
+            .await()
+
+        val note = if (!snapshot.isEmpty) {
+            snapshot.documents[0].toObject(BrewingNoteDTO::class.java)?.toDomainNote()
+        } else {
+            null
+        }
+        DataResourceResult.Success(note)
+    }.getOrElse {
+        DataResourceResult.Failure(it)
+    }
+
 }

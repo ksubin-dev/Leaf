@@ -18,13 +18,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.subin.leafy.domain.model.ExploreTab
+import com.subin.leafy.domain.model.ExploreContent
 
 
 @Composable
 fun CustomExploreTabRow(
-    selectedTab: ExploreTab,
-    onTabSelected: (ExploreTab) -> Unit,
+    selectedTab: ExploreContent,
+    onTabSelected: (ExploreContent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -38,7 +38,7 @@ fun CustomExploreTabRow(
                 .height(44.dp)
                 .background(colors.background)
         ) {
-            ExploreTab.entries.forEach { tab ->
+            ExploreContent.entries.forEach { tab ->
                 val selected = tab == selectedTab
                 Column(
                     modifier = Modifier
@@ -83,7 +83,7 @@ fun CustomExploreTabRow(
 @Composable
 private fun CustomExploreTabRowPreview() {
     LeafyTheme {
-        var currentTab by remember { mutableStateOf(ExploreTab.TRENDING) }
+        var currentTab by remember { mutableStateOf(ExploreContent.TRENDING) }
 
         CustomExploreTabRow(
             selectedTab = currentTab,
@@ -99,7 +99,7 @@ private fun CustomExploreTabRowPreview() {
 private fun CustomExploreTabRowFollowingSelectedPreview() {
     LeafyTheme {
         CustomExploreTabRow(
-            selectedTab = ExploreTab.FOLLOWING,
+            selectedTab = ExploreContent.FOLLOWING,
             onTabSelected = { }
         )
     }

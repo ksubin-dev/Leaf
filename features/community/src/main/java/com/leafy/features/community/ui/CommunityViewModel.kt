@@ -17,7 +17,7 @@ class CommunityViewModel(
     private val communityUseCases: CommunityUseCases
 ) : ViewModel() {
 
-    private val _selectedTab = MutableStateFlow(ExploreTab.TRENDING)
+    private val _selectedTab = MutableStateFlow(ExploreContent.TRENDING)
     private val _comments = MutableStateFlow<List<CommunityCommentUi>>(emptyList())
     private val _isCommentsLoading = MutableStateFlow(false)
 
@@ -37,7 +37,7 @@ class CommunityViewModel(
         val saved = array[1] as DataResourceResult<List<CommunityPost>>
         val masters = array[2] as DataResourceResult<List<TeaMaster>>
         val following = array[3] as DataResourceResult<List<CommunityPost>>
-        val tab = array[4] as ExploreTab
+        val tab = array[4] as ExploreContent
         val comments = array[5] as List<CommunityCommentUi>
         val isCommentsLoading = array[6] as Boolean
 
@@ -64,7 +64,7 @@ class CommunityViewModel(
 
     // --- [인터랙션 함수] ---
 
-    fun onTabSelected(tab: ExploreTab) {
+    fun onTabSelected(tab: ExploreContent) {
         _selectedTab.value = tab
     }
 

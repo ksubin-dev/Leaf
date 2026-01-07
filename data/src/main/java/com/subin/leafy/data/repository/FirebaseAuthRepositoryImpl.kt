@@ -9,7 +9,11 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.common.toResourceResult
 import com.subin.leafy.domain.model.AuthUser
 import com.subin.leafy.domain.repository.AuthRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import androidx.core.net.toUri
 
 class FirebaseAuthRepositoryImpl(
     private val firebaseAuth: FirebaseAuth,
@@ -17,7 +21,10 @@ class FirebaseAuthRepositoryImpl(
     private val firebaseStorage: FirebaseStorage
 ) : AuthRepository {
 
-    private var _cachedUser: AuthUser? = null
+    private val _currentUserState = MutableStateFlow<AuthUser?>(null)
+
+    override val currentUserState: StateFlow<AuthUser?> = _currentUserState.asStateFlow()
+
 
     override suspend fun signUp(
         email: String,
@@ -31,7 +38,7 @@ class FirebaseAuthRepositoryImpl(
         var uploadedImageUrl: String? = null
         profileImageUri?.let { uriString ->
             val ref = firebaseStorage.reference.child("profiles/${firebaseUser.uid}.jpg")
-            ref.putFile(Uri.parse(uriString)).await()
+            ref.putFile(uriString.toUri()).await()
             uploadedImageUrl = ref.downloadUrl.await().toString()
         }
 
@@ -55,7 +62,8 @@ class FirebaseAuthRepositoryImpl(
             savedPostIds = emptyList(),
             followingIds = emptyList()
         )
-        _cachedUser = newUser
+
+        _currentUserState.value = newUser
         newUser
     }.toResourceResult()
 
@@ -77,26 +85,17 @@ class FirebaseAuthRepositoryImpl(
                 followingIds = userDto?.followingIds ?: emptyList()
             )
 
-            _cachedUser = authUser
+            _currentUserState.value = authUser
             authUser
         }.toResourceResult()
 
     override suspend fun logout(): DataResourceResult<Unit> = runCatching {
         firebaseAuth.signOut()
-        _cachedUser = null
+        _currentUserState.value = null
     }.toResourceResult()
 
     override fun getCurrentUser(): AuthUser? {
-        if (_cachedUser == null) {
-            val firebaseUser = firebaseAuth.currentUser ?: return null
-            _cachedUser = AuthUser(
-                id = firebaseUser.uid,
-                email = firebaseUser.email ?: "",
-                username = firebaseUser.displayName,
-                profileUrl = firebaseUser.photoUrl?.toString()
-            )
-        }
-        return _cachedUser
+        return _currentUserState.value
     }
 
     override fun updateCurrentUserState(
@@ -104,10 +103,11 @@ class FirebaseAuthRepositoryImpl(
         savedPostIds: List<String>?,
         followingIds: List<String>?
     ) {
-        _cachedUser = _cachedUser?.copy(
-            likedPostIds = likedPostIds ?: _cachedUser!!.likedPostIds,
-            savedPostIds = savedPostIds ?: _cachedUser!!.savedPostIds,
-            followingIds = followingIds ?: _cachedUser!!.followingIds
+        val current = _currentUserState.value ?: return
+        _currentUserState.value = current.copy(
+            likedPostIds = likedPostIds ?: current.likedPostIds,
+            savedPostIds = savedPostIds ?: current.savedPostIds,
+            followingIds = followingIds ?: current.followingIds
         )
     }
 }

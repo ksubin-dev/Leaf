@@ -9,5 +9,8 @@ fun UserDTO.toDomain() = User(
     profileImageUrl = this.photoUrl,
     bio = this.bio,
     followerCount = this.followerCount,
-    followingCount = this.followingCount
+    followingCount = this.followingCount,
+    followingIds = this.followingIds,
+    likedPostIds = this.likedPostIds,
+    savedPostIds = this.savedPostIds
 )

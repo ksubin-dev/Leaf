@@ -9,78 +9,88 @@ import com.subin.leafy.domain.model.*
 import com.subin.leafy.domain.repository.AuthRepository
 import com.subin.leafy.domain.repository.CommunityRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CommunityRepositoryImpl(
     private val targetDataSource: CommunityDataSource,
     private val authRepository: AuthRepository
 ) : CommunityRepository {
 
-    private fun composePostStates(posts: List<CommunityPost>): List<CommunityPost> {
-        val currentUser = authRepository.getCurrentUser() ?: return posts
+
+    private fun applyPostState(posts: List<CommunityPost>, user: AuthUser?): List<CommunityPost> {
         return posts.map { post ->
             post.copy(
-                isLiked = currentUser.likedPostIds.contains(post.id),
-                isBookmarked = currentUser.savedPostIds.contains(post.id)
+                isLiked = user?.likedPostIds?.contains(post.id) == true,
+                isBookmarked = user?.savedPostIds?.contains(post.id) == true
             )
         }
     }
+
+    // --- [1. 게시글 조회 관련] ---
+
+    override fun getPopularNotes(): Flow<DataResourceResult<List<CommunityPost>>> =
+        authRepository.currentUserState.flatMapLatest { user ->
+            targetDataSource.getPopularNotes().map { result ->
+                result.mapData { posts -> applyPostState(posts, user) }
+            }
+        }.flowOn(Dispatchers.IO)
+
+    override fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>> =
+        authRepository.currentUserState.flatMapLatest { user ->
+            targetDataSource.getMostSavedNotes().map { result ->
+                result.mapData { posts -> applyPostState(posts, user) }
+            }
+        }.flowOn(Dispatchers.IO)
+
+    override fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>> =
+        authRepository.currentUserState.flatMapLatest { user ->
+            if (user == null) {
+                flowOf(DataResourceResult.Failure(Exception("로그인이 필요합니다.")))
+            } else if (user.followingIds.isEmpty()) {
+                flowOf(DataResourceResult.Success(emptyList()))
+            } else {
+                targetDataSource.getFollowingFeed(user.followingIds).map { result ->
+                    result.mapData { posts -> applyPostState(posts, user) }
+                }
+            }
+        }.flowOn(Dispatchers.IO)
+
+    // --- [2. 마스터 관련] ---
+
+    override fun getRecommendedMasters(): Flow<DataResourceResult<List<TeaMaster>>> =
+        authRepository.currentUserState.flatMapLatest { user ->
+            targetDataSource.getRecommendedMasters().map { result ->
+                result.mapData { masters ->
+                    masters.map { master ->
+                        master.copy(
+                            isFollowing = user?.followingIds?.contains(master.id) == true
+                        )
+                    }
+                }
+            }
+        }.flowOn(Dispatchers.IO)
 
     private fun <T> observeDataSource(
         fetcher: () -> Flow<DataResourceResult<T>>
     ): Flow<DataResourceResult<T>> = fetcher().flowOn(Dispatchers.IO)
 
 
-    // --- [1. 게시글 조회 관련] ---
-
-    override fun getPopularNotes(): Flow<DataResourceResult<List<CommunityPost>>> = observeDataSource {
-        targetDataSource.getPopularNotes().map { result ->
-            result.mapData { posts -> composePostStates(posts) }
-        }
-    }
-
-    override fun getMostSavedNotes(): Flow<DataResourceResult<List<CommunityPost>>> = observeDataSource {
-        targetDataSource.getMostSavedNotes().map { result ->
-            result.mapData { posts -> composePostStates(posts) }
-        }
-    }
-
-    override fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>> = flow {
-        emit(DataResourceResult.Loading)
-        val currentUser = authRepository.getCurrentUser()
-
-        if (currentUser == null) {
-            emit(DataResourceResult.Failure(Exception("로그인이 필요합니다.")))
-            return@flow
-        }
-
-        if (currentUser.followingIds.isEmpty()) {
-            emit(DataResourceResult.Success(emptyList<CommunityPost>()))
-            return@flow
-        }
-
-        targetDataSource.getFollowingFeed(currentUser.followingIds)
-            .map { result ->
-                result.mapData { posts -> composePostStates(posts) }
-            }
-            .collect { emit(it) }
-
-    }.flowOn(Dispatchers.IO).catch { e ->
-        emit(DataResourceResult.Failure(Exception(e.message)))
-    }
-
-    override fun getRecommendedMasters() = observeDataSource {
-        targetDataSource.getRecommendedMasters()
-    }
-
-
     // --- [2. 댓글 기능] ---
 
-    override fun getComments(postId: String): Flow<DataResourceResult<List<Comment>>> = observeDataSource {
-        targetDataSource.getComments(postId).map { result ->
-            result.mapData { dtoList -> dtoList.toDomainCommentList() }
-        }
-    }
+    override fun getComments(postId: String): Flow<DataResourceResult<List<Comment>>> =
+        authRepository.currentUserState.flatMapLatest { user ->
+            targetDataSource.getComments(postId).map { result ->
+                result.mapData { dtoList ->
+                    dtoList.map { dto ->
+                        dto.toDomain().copy(
+                            isMine = (user != null && dto.authorId == user.id)
+                        )
+                    }
+                }
+            }
+        }.flowOn(Dispatchers.IO)
 
     override suspend fun addComment(postId: String, content: String): DataResourceResult<Unit> {
         val user = authRepository.getCurrentUser()
@@ -96,6 +106,8 @@ class CommunityRepositoryImpl(
     }
 
     override suspend fun deleteComment(commentId: String, postId: String): DataResourceResult<Unit> {
+        val user = authRepository.getCurrentUser()
+            ?: return DataResourceResult.Failure(Exception("로그인이 필요합니다."))
         return targetDataSource.deleteComment(commentId, postId)
     }
 

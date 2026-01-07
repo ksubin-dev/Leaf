@@ -4,12 +4,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TimerPreset(
-    val id: String = "",
-    val name: String = "",
-    val temp: String = "",
-    val baseTimeSeconds: Int = 0,
-    val leafAmount: String = "",
-    val teaType: String = "Green"
+    val id: String,
+    val name: String,           // 예: "나만의 우롱차 레시피"
+    val teaType: TeaType,       // String -> TeaType Enum으로
+    val temperature: Int,       // BrewingRecipe.waterTemp와 대응
+    val baseTimeSeconds: Int,   // 기준 우림 시간 (초)
+    val leafAmount: Float,      // BrewingRecipe.leafAmount와 대응
+    val waterAmount: Int        // BrewingRecipe.waterAmount와 대응
 )
 
 @Serializable

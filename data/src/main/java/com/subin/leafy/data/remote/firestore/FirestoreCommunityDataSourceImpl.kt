@@ -151,26 +151,25 @@ class FirestoreCommunityDataSourceImpl(
                 }
 
                 val dtos = snapshot?.toObjects(TeaMasterDTO::class.java) ?: emptyList()
+
                 if (dtos.isEmpty()) {
                     firestore.collection("users")
-                        .orderBy("createdAt", Query.Direction.DESCENDING)
+                        .orderBy("displayName")
                         .limit(10)
                         .get()
                         .addOnSuccessListener { userSnapshot ->
                             val fallbackMasters = userSnapshot.documents.map { doc ->
                                 TeaMasterDTO(
                                     id = doc.id,
-                                    name = doc.getString("username") ?: "신규 마스터",
+                                    name = doc.getString("displayName") ?: "신규 마스터",
                                     title = "취향을 기록하는 티 러버",
-                                    profileImageUrl = doc.getString("profileUrl"),
+                                    profileImageUrl = doc.getString("photoUrl"),
                                     isFollowing = false
                                 )
                             }
                             trySend(DataResourceResult.Success(fallbackMasters.map { it.toDomain() }))
                         }
-                        .addOnFailureListener {
-                            trySend(DataResourceResult.Failure(it))
-                        }
+                        .addOnFailureListener { trySend(DataResourceResult.Failure(it)) }
                 } else {
                     trySend(DataResourceResult.Success(dtos.map { it.toDomain() }))
                 }
@@ -188,7 +187,7 @@ class FirestoreCommunityDataSourceImpl(
                     .orderBy("createdAt", Query.Direction.ASCENDING)
             },
             dtoClass = CommentDTO::class.java,
-            mapper = { it } // DTO 리스트 그대로 반환 (Mapper는 Repository나 UI에서 사용)
+            mapper = { it }
         )
 
     override suspend fun addComment(
@@ -211,7 +210,6 @@ class FirestoreCommunityDataSourceImpl(
         )
 
         batch.set(commentRef, commentDTO)
-        // 게시글의 댓글 수 증가
         batch.update(postsCol.document(postId), "commentCount", FieldValue.increment(1))
 
         batch.commit().await()
