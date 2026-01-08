@@ -27,7 +27,7 @@ data class UserRelationState(
     val isFollowing: Boolean = false
 )
 
-data class UserStats(
+data class UserAnalysis(
     // 1. 기본 활동 데이터
     val totalBrewingCount: Int,       // 총 시음 횟수
     val currentStreakDays: Int,       // 연속 기록 일수

@@ -18,7 +18,7 @@ data class CommunityPostDto(
 
     // 요약 정보들
     val teaType: String? = null,
-    val rating: Int = 0,
+    val rating: Int? = null,
     val tags: List<String> = emptyList(),
     val brewingSummary: String? = null,
 
@@ -27,6 +27,7 @@ data class CommunityPostDto(
     val bookmarkCount: Int = 0,
     val commentCount: Int = 0,
     val viewCount: Int = 0,
+    val topComment: CommentDto? = null,
 
     val createdAt: Long = System.currentTimeMillis()
 )

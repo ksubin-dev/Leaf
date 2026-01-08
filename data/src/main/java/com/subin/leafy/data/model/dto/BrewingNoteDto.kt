@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BrewingNoteDto(
     val id: String = "",
-    val userId: String = "",
-
+    val ownerId: String = "",
+    val isPublic: Boolean = false,
     // 1. TeaInfo
     val teaName: String = "",
     val teaBrand: String = "",
@@ -38,7 +38,7 @@ data class BrewingNoteDto(
     // 4. Rating & Metadata
     val stars: Int = 0,
     val purchaseAgain: Boolean? = null,
-    val weather: String = "SUNNY",
+    val weather: String? = null,
     val mood: String = "",
     val imageUrls: List<String> = emptyList(),
 
@@ -48,5 +48,6 @@ data class BrewingNoteDto(
     val commentCount: Int = 0,
     val viewCount: Int = 0,
 
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long? = null
 )

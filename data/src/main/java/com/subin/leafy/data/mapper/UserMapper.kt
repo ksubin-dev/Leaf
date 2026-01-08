@@ -1,20 +1,20 @@
 package com.subin.leafy.data.mapper
 
 import com.subin.leafy.data.model.dto.UserDto
-import com.subin.leafy.data.model.dto.UserStatsDto
+import com.subin.leafy.data.model.dto.UserAnalysisDto
 import com.subin.leafy.domain.model.*
 
-
-// 1. UserDto -> User
+// 1. UserDto(Remote) -> User(Domain)
 fun UserDto.toUserDomain() = User(
     id = uid,
-    nickname = displayName,
-    profileImageUrl = photoUrl,
+    nickname = nickname,
+    profileImageUrl = profileImageUrl,
     bio = bio ?: "",
     socialStats = UserSocialStatistics(
         followerCount = followerCount,
         followingCount = followingCount
     ),
+    // 팔로우 여부는 Repository에서 계산해서 넣어주므로 초기값은 false
     relationState = UserRelationState(isFollowing = false),
     followingIds = followingIds,
     likedPostIds = likedPostIds,
@@ -22,7 +22,7 @@ fun UserDto.toUserDomain() = User(
     createdAt = createdAt
 )
 
-// 2. UserDto -> AuthUser (로그인한 본인 정보)
+// 2. UserDto -> AuthUser (로그인한 내 정보)
 fun UserDto.toAuthDomain(
     email: String,
     isNewUser: Boolean = false,
@@ -30,8 +30,8 @@ fun UserDto.toAuthDomain(
 ) = AuthUser(
     id = uid,
     email = email,
-    nickname = displayName,
-    profileUrl = photoUrl,
+    nickname = nickname,
+    profileUrl = profileImageUrl,
     followingIds = followingIds,
     likedPostIds = likedPostIds,
     savedPostIds = savedPostIds,
@@ -40,39 +40,43 @@ fun UserDto.toAuthDomain(
     providerId = providerId
 )
 
-// 3. UserDto -> PostAuthor (티 마스터 추천 리스트용)
+// 3. UserDto -> PostAuthor (게시글 작성자 정보 등)
 fun UserDto.toTeaMaster(isFollowing: Boolean = false) = PostAuthor(
     id = this.uid,
-    nickname = this.displayName,
-    profileImageUrl = this.photoUrl,
+    nickname = this.nickname,
+    profileImageUrl = this.profileImageUrl,
     isFollowing = isFollowing
 )
 
-// 4. UserStatsDto -> UserStats (통계 데이터 가공)
-fun UserStatsDto.toDomain() = UserStats(
+// 4. UserAnalysisDto(Local) -> UserAnalysis(Domain)
+fun UserAnalysisDto.toDomain() = UserAnalysis(
     totalBrewingCount = totalBrewingCount,
     currentStreakDays = currentStreakDays,
     monthlyBrewingCount = monthlyBrewingCount,
+
+    // 분석 데이터 매핑
     preferredTimeSlot = mostFrequentTimeSlot,
     averageBrewingTime = formatBrewTime(avgBrewTimeSeconds),
     preferredTemperature = favoriteTemperature,
     preferredBrewingSeconds = favoriteBrewTimeSeconds,
+
     weeklyCount = weeklyBrewingCount,
     dailyCaffeineAvg = dailyCaffeineAvgMg,
     weeklyCaffeineTrend = weeklyCaffeineTrendMg,
+
     averageRating = avgRating,
     favoriteTeaType = favoriteTeaName,
     teaTypeDistribution = teaTypeDistribution,
+
     myTeaChestCount = teaInventoryCount,
     wishlistCount = wishlistCount
 )
 
-// 5. AuthUser -> UserDto (로그인 정보 업데이트/저장용)
-// 사용자가 프로필을 수정하거나 FCM 토큰이 바뀔 때 서버로 보낼 데이터를 만듭니다.
+// 5. AuthUser -> UserDto (업데이트용)
 fun AuthUser.toDto(currentDto: UserDto) = currentDto.copy(
     uid = this.id,
-    displayName = this.nickname ?: currentDto.displayName,
-    photoUrl = this.profileUrl ?: currentDto.photoUrl,
+    nickname = this.nickname ?: currentDto.nickname,
+    profileImageUrl = this.profileUrl ?: currentDto.profileImageUrl,
     fcmToken = this.fcmToken,
     followingIds = this.followingIds,
     likedPostIds = this.likedPostIds,
@@ -81,12 +85,11 @@ fun AuthUser.toDto(currentDto: UserDto) = currentDto.copy(
 
 // --- 보조 함수 ---
 private fun formatBrewTime(seconds: Int): String {
+    if (seconds == 0) return "-"
     val min = seconds / 60
     val sec = seconds % 60
     return if (min > 0) "${min}분 ${sec}초" else "${sec}초"
 }
 
-/**
- * 리스트 변환 헬퍼
- */
+
 fun List<UserDto>.toTeaMasterList() = this.map { it.toTeaMaster() }

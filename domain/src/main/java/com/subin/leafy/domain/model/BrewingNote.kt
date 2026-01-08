@@ -3,6 +3,7 @@ package com.subin.leafy.domain.model
 data class BrewingNote(
     val id: String,
     val ownerId: String,
+    val isPublic: Boolean = false, // 공개 여부 (기본값 비공개)
     val teaInfo: TeaInfo,
     val recipe: BrewingRecipe,
     val evaluation: SensoryEvaluation,
@@ -10,7 +11,8 @@ data class BrewingNote(
     val metadata: NoteMetadata,
     val stats: PostStatistics,    // 좋아요, 댓글 수 등 (기존 socialStats)
     val myState: PostSocialState,   // 내가 좋아요 했는지 등 (기존 isLiked 등)
-    val createdAt: Long
+    val createdAt: Long,
+    val updatedAt: Long? = null
 )
 
 // 1. 차 정보
@@ -54,7 +56,7 @@ data class RatingInfo(
 
 // 5. 메타데이터
 data class NoteMetadata(
-    val weather: WeatherType,
+    val weather: WeatherType? = null,
     val mood: String = "",
     val imageUrls: List<String> = emptyList()
 )

@@ -3,7 +3,7 @@ package com.subin.leafy.data.model.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserStatsDto(
+data class UserAnalysisDto(
     // 1. 기본 활동 통계
     val totalBrewingCount: Int = 0,
     val currentStreakDays: Int = 0,
