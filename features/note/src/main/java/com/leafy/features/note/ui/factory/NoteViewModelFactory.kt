@@ -2,34 +2,29 @@ package com.leafy.features.note.ui.factory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.leafy.features.note.ui.NoteDetailViewModel
 import com.leafy.features.note.ui.NoteViewModel
-import com.subin.leafy.domain.model.InfusionRecord
-import com.subin.leafy.domain.usecase.CommunityUseCases
+import com.leafy.shared.util.ImageCompressor
+import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
+import com.subin.leafy.domain.usecase.UserUseCases
 
 class NoteViewModelFactory(
     private val noteUseCases: NoteUseCases,
-    private val communityUseCases: CommunityUseCases,
-    private val initialRecords: List<InfusionRecord>? = null,
-    private val noteId: String? = null,
-    private val selectedDate: String? = null
+    private val userUseCases: UserUseCases,
+    private val imageUseCases: ImageUseCases,
+    private val imageCompressor: ImageCompressor
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return when {
-            modelClass.isAssignableFrom(NoteViewModel::class.java) -> {
-                NoteViewModel(noteUseCases, initialRecords, noteId, selectedDate) as T
-            }
-            modelClass.isAssignableFrom(NoteDetailViewModel::class.java) -> {
-                NoteDetailViewModel(
-                    noteUseCases = noteUseCases,
-                    communityUseCases = communityUseCases,
-                    noteId = noteId ?: throw IllegalArgumentException("noteId is required")
-                ) as T
-            }
-            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        if (modelClass.isAssignableFrom(NoteViewModel::class.java)) {
+            return NoteViewModel(
+                noteUseCases = noteUseCases,
+                userUseCases = userUseCases,
+                imageUseCases = imageUseCases,
+                imageCompressor = imageCompressor
+            ) as T
         }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

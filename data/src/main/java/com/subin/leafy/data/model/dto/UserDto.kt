@@ -8,6 +8,7 @@ data class UserDto(
     val nickname: String = "",
     val profileImageUrl: String? = null,
     val bio: String? = "",
+    val masterTitle: String? = null,
 
     // 3. 소셜 수치
     val followerCount: Int = 0,        // 나를 팔로우하는 사람 수
@@ -15,7 +16,7 @@ data class UserDto(
 
     val followingIds: List<String> = emptyList(), // 내가 팔로우 중인 유저 UID 목록 (팔로잉 목록 조회용)
     val likedPostIds: List<String> = emptyList(), // 좋아요 누른 시음 노트 ID 목록
-    val savedPostIds: List<String> = emptyList(), // 북마크(저장)한 시음 노트 ID 목록
+    val bookmarkedPostIds: List<String> = emptyList(), // 북마크(저장)한 시음 노트 ID 목록
 
     // 5. 시스템 및 알림 설정
     val fcmToken: String? = null,      // 푸시 알림용 토큰

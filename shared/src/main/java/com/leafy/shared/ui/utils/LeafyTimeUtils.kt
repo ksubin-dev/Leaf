@@ -1,64 +1,53 @@
 package com.leafy.shared.ui.utils
 
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import kotlin.time.Instant
 
 object LeafyTimeUtils {
 
-    // 1. 저장 및 데이터베이스 비교용 표준 포맷 (yyyy-MM-dd)
-    private val dbFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault())
+    // 표준 포맷 (yyyy-MM-dd)
+    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
 
-    // 2. 화면 표시용 포맷 (예: Jan 02, 2026)
-    private val displayFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
-
-    /** Long(밀리초) -> "yyyy-MM-dd" (String) */
-    fun formatLongToString(timestamp: Long): String {
-        if (timestamp <= 0L) return nowToString()
-        return runCatching {
-            val localDate = java.time.Instant.ofEpochMilli(timestamp)
-                .atZone(java.time.ZoneId.systemDefault())
-                .toLocalDate()
-            formatToString(localDate)
-        }.getOrElse { nowToString() }
+    // 1. [초기값] 현재 날짜를 문자열로 반환
+    fun nowToString(): String {
+        return LocalDate.now().format(formatter)
     }
 
-    /** 현재 날짜를 "yyyy-MM-dd" 형식으로 반환 */
-    fun nowToString(): String = LocalDate.now().format(dbFormatter)
+    // 2. [UI 업데이트] Millis(Long) -> "yyyy-MM-dd" 변환
+    fun millisToDateString(millis: Long): String {
+        return Instant.ofEpochMilli(millis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .format(formatter)
+    }
 
-    /** LocalDate 객체를 "yyyy-MM-dd" 문자열로 변환 */
-    fun formatToString(date: LocalDate): String = date.format(dbFormatter)
+    // 3. [DB 저장] "yyyy-MM-dd" -> Timestamp(Long) 변환
+    fun dateStringToTimestamp(dateString: String): Long {
+        return try {
+            LocalDate.parse(dateString, formatter)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        } catch (e: Exception) {
+            System.currentTimeMillis()
+        }
+    }
 
-    /** 저장된 문자열을 LocalDate 객체로 변환 (실패 시 오늘 날짜 반환) */
+    // 4. [DatePicker 초기화]
     fun parseToDate(dateString: String): LocalDate {
-        return runCatching {
-            LocalDate.parse(dateString, dbFormatter)
-        }.getOrElse {
+        return try {
+            LocalDate.parse(dateString, formatter)
+        } catch (e: Exception) {
             LocalDate.now()
         }
     }
 
-    /** "2026-01-02" -> "Jan 02, 2026" (UI 표시용) */
-    fun formatToDisplay(dateString: String): String {
-        if (dateString.isBlank()) return ""
-        return parseToDate(dateString).format(displayFormatter)
-    }
+    // 5. [UI 표시]
+    fun formatToDisplay(dateString: String): String = dateString
 
-
-
-    /** Repository 월별 검색용 접두사 생성 (예: "2026-01") */
-    fun getMonthPrefix(year: Int, month: Int): String {
-        return String.format(Locale.getDefault(), "%04d-%02d", year, month)
-    }
-
-    /** 현재 날짜를 LocalDate 객체로 반환 */
-    fun now(): LocalDate = LocalDate.now()
-
-    fun getOneWeekAgo(): java.util.Date {
-        val calendar = java.util.Calendar.getInstance()
-        calendar.add(java.util.Calendar.DAY_OF_YEAR, -7)
-        return calendar.time
+    fun formatLongToString(timestamp: Long): String {
+        return millisToDateString(timestamp)
     }
 }

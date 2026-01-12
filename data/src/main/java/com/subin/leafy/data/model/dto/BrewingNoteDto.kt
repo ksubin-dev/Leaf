@@ -1,6 +1,5 @@
 package com.subin.leafy.data.model.dto
 
-
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8,6 +7,7 @@ data class BrewingNoteDto(
     val id: String = "",
     val ownerId: String = "",
     val isPublic: Boolean = false,
+
     // 1. TeaInfo
     val teaName: String = "",
     val teaBrand: String = "",
@@ -24,7 +24,7 @@ data class BrewingNoteDto(
     val infusionCount: Int = 1,
     val teaware: String = "",
 
-    // 3. SensoryEvaluation (맛 평가)
+    // 3. SensoryEvaluation
     val flavorNotes: List<String> = emptyList(),
     val sweetness: Int = 0,
     val sourness: Int = 0,
@@ -32,7 +32,7 @@ data class BrewingNoteDto(
     val astringency: Int = 0,
     val umami: Int = 0,
     val bodyType: String = "MEDIUM",
-    val finishLevel: Float = 0.5f,
+    val finishLevel: Int = 0,
     val memo: String = "",
 
     // 4. Rating & Metadata

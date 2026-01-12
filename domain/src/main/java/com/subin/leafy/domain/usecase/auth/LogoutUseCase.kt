@@ -4,9 +4,9 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.AuthRepository
 
 class LogoutUseCase(
-    private val repo: AuthRepository
+    private val authRepository: AuthRepository
 ) {
     suspend operator fun invoke(): DataResourceResult<Unit> {
-        return repo.logout()
+        return authRepository.signOut()
     }
 }

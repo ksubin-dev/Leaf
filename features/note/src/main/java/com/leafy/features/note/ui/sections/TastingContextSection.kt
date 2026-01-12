@@ -1,88 +1,77 @@
 package com.leafy.features.note.ui.sections
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.subin.leafy.domain.model.WeatherType
-import com.leafy.features.note.ui.components.LeafyFieldLabel
-import com.leafy.features.note.ui.components.WeatherOptionButton
-import com.leafy.shared.R as SharedR
+import com.leafy.features.note.ui.common.NoteInputTextField
+import com.leafy.features.note.ui.common.NoteSectionHeader
+import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.subin.leafy.domain.model.WeatherType
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TastingContextSection(
-    modifier: Modifier = Modifier,
     dateTime: String,
-    selectedWeather: WeatherType,
-    withPeople: String,
     onDateTimeChange: (String) -> Unit,
+    selectedWeather: WeatherType?,
     onWeatherSelected: (WeatherType) -> Unit,
-    onWithPeopleChange: (String) -> Unit
+    withPeople: String,
+    onWithPeopleChange: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val colors = MaterialTheme.colorScheme
-
-    val initialDate = remember(dateTime) { LeafyTimeUtils.parseToDate(dateTime) }
-
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialDate.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
-    )
+    // 날짜 선택 다이얼로그 상태
     var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
 
-    Column(modifier = modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(id = SharedR.drawable.ic_note_section_context),
-                contentDescription = "Tasting Context",
-                tint = colors.primary,
-                modifier = Modifier.height(18.dp).padding(end = 6.dp)
+    Column(modifier = modifier.fillMaxWidth()) {
+        NoteSectionHeader(
+            icon = painterResource(id = R.drawable.ic_note_section_context),
+            title = "테이스팅 환경"
+        )
+
+        // 1. 날짜 및 시간 (클릭 시 달력 호출)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            NoteInputTextField(
+                value = dateTime,
+                onValueChange = {},
+                label = "날짜",
+                placeholder = "YYYY-MM-DD",
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_calendar),
+                        contentDescription = "달력 열기",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
             )
-            Text(
-                text = "Tasting Context",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.primary
+
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(top = 24.dp)
+                    .clickable { showDatePicker = true }
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        LeafyFieldLabel(text = "Date")
-        OutlinedTextField(
-            value = LeafyTimeUtils.formatToDisplay(dateTime),
-            onValueChange = { },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-                .clickable { showDatePicker = true },
-            readOnly = true,
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = colors.onSurface,
-                disabledBorderColor = colors.outline,
-                disabledTrailingIconColor = colors.primary,
-                disabledPlaceholderColor = colors.tertiary
-            ),
-            trailingIcon = {
-                Icon(
-                    painter = painterResource(id = SharedR.drawable.ic_calendar),
-                    contentDescription = "Pick date"
-                )
-            }
-        )
-
+        // 날짜 선택 다이얼로그
         if (showDatePicker) {
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -94,7 +83,7 @@ fun TastingContextSection(
                                 val selectedDate = Instant.ofEpochMilli(millis)
                                     .atZone(ZoneId.of("UTC"))
                                     .toLocalDate()
-                                onDateTimeChange(LeafyTimeUtils.formatToString(selectedDate))
+                                onDateTimeChange(selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
                             }
                         }
                     ) { Text("확인") }
@@ -109,26 +98,23 @@ fun TastingContextSection(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LeafyFieldLabel(text = "Weather")
-        Spacer(modifier = Modifier.height(4.dp))
+        // 2. 날씨 (Weather Buttons)
+        Text(
+            text = "날씨",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            WeatherType.entries.forEach { weatherType ->
+            WeatherType.entries.forEach { type ->
                 WeatherOptionButton(
-                    type = weatherType,
-                    label = weatherType.name.lowercase().replaceFirstChar { it.uppercase() },
-                    iconRes = when(weatherType) {
-                        WeatherType.CLEAR -> SharedR.drawable.ic_weather_clear
-                        WeatherType.CLOUDY -> SharedR.drawable.ic_weather_cloudy
-                        WeatherType.RAINY -> SharedR.drawable.ic_weather_rainy
-                        WeatherType.SNOWY -> SharedR.drawable.ic_weather_snowy
-                        WeatherType.INDOOR -> SharedR.drawable.ic_weather_indoor
-                    },
-                    selectedWeather = selectedWeather,
-                    onSelected = onWeatherSelected,
+                    type = type,
+                    isSelected = selectedWeather == type,
+                    onClick = { onWeatherSelected(type) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -136,30 +122,86 @@ fun TastingContextSection(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LeafyFieldLabel(text = "With")
-        OutlinedTextField(
+        // 3. 함께한 사람
+        NoteInputTextField(
             value = withPeople,
             onValueChange = onWithPeopleChange,
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            singleLine = true,
-            placeholder = { Text(text = "누구와 함께 마셨나요?", color = colors.tertiary) }
+            label = "함께한 사람 (선택)",
+            placeholder = "친구, 가족, 혼자...",
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
+// ----------------------------------------------------------------------
+// Weather Option Button (내부 컴포넌트)
+// ----------------------------------------------------------------------
 @Composable
-private fun TastingContextSectionPreview() {
-    LeafyTheme {
-        TastingContextSection(
-            dateTime = "2025-12-30",
-            selectedWeather = WeatherType.CLEAR,
-            withPeople = "수빈",
-            onDateTimeChange = {},
-            onWeatherSelected = {},
-            onWithPeopleChange = {},
-            modifier = Modifier.padding(16.dp)
+fun WeatherOptionButton(
+    type: WeatherType,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+
+    val backgroundColor = if (isSelected) colors.secondaryContainer else colors.surface
+    val borderColor = if (isSelected) colors.secondary else colors.outlineVariant
+    val iconTint = if (isSelected) colors.secondary else colors.onSurfaceVariant.copy(alpha = 0.6f)
+    val textColor = if (isSelected) colors.secondary else colors.onSurfaceVariant
+
+    // 날씨별 아이콘 및 라벨 매핑
+    val (iconRes, label) = when (type) {
+        WeatherType.SUNNY -> R.drawable.ic_weather_clear to "맑음"
+        WeatherType.CLOUDY -> R.drawable.ic_weather_cloudy to "흐림"
+        WeatherType.RAINY -> R.drawable.ic_weather_rainy to "비"
+        WeatherType.SNOWY -> R.drawable.ic_weather_snowy to "눈"
+        WeatherType.INDOOR -> R.drawable.ic_weather_indoor to "실내"
+    }
+
+    Column(
+        modifier = modifier
+            .height(70.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(id = iconRes),
+            contentDescription = label,
+            tint = iconTint,
+            modifier = Modifier.size(24.dp)
         )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+            color = textColor
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Composable
+fun TastingContextSectionPreview() {
+    LeafyTheme {
+        var date by remember { mutableStateOf(LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)) }
+        var weather by remember { mutableStateOf<WeatherType?>(WeatherType.SUNNY) }
+        var people by remember { mutableStateOf("") }
+
+        Box(modifier = Modifier.padding(16.dp)) {
+            TastingContextSection(
+                dateTime = date,
+                onDateTimeChange = { date = it },
+                selectedWeather = weather,
+                onWeatherSelected = { weather = it },
+                withPeople = people,
+                onWithPeopleChange = { people = it }
+            )
+        }
     }
 }

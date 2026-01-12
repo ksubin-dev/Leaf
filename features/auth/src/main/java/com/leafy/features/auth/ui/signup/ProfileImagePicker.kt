@@ -1,31 +1,22 @@
 package com.leafy.features.auth.ui.signup
 
 import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
+import com.leafy.shared.ui.component.LeafyProfileImage
 
 @Composable
 fun ProfileImagePicker(
@@ -34,31 +25,33 @@ fun ProfileImagePicker(
     onImageClick: () -> Unit
 ) {
     Box(
-        modifier = modifier
-            .size(120.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
-            .border(1.dp, MaterialTheme.colorScheme.primaryContainer, CircleShape)
-            .clickable { onImageClick() },
-        contentAlignment = Alignment.Center
+        modifier = modifier,
+        contentAlignment = Alignment.BottomEnd
     ) {
-        if (profileImageUri != null) {
-            Image(
-                painter = rememberAsyncImagePainter(profileImageUri),
-                contentDescription = "선택된 프로필 이미지",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+        LeafyProfileImage(
+            imageUrl = profileImageUri?.toString(),
+            modifier = Modifier,
+            size = 120.dp,
+            borderWidth = 1.dp,
+            borderColor = MaterialTheme.colorScheme.outlineVariant,
+            onClick = onImageClick,
+            contentDescription = "프로필 사진 선택"
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = (-4).dp, y = (-4).dp)
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary)
+                .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.CameraAlt,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(18.dp)
             )
-        } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = Icons.Default.AddAPhoto,
-                    contentDescription = "사진 추가",
-                    tint = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.size(32.dp)
-                )
-
-            }
         }
     }
 }

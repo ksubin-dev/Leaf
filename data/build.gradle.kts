@@ -45,6 +45,10 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.bundles.firebase.libraries)
 
+    implementation(libs.bundles.room.libraries)
+    implementation(libs.gson)
+    implementation(libs.androidx.datastore.preferences)
+
     implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

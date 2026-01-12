@@ -2,6 +2,7 @@ package com.subin.leafy.data.mapper
 
 import com.subin.leafy.data.model.dto.UserDto
 import com.subin.leafy.data.model.dto.UserAnalysisDto
+import com.subin.leafy.data.model.dto.UserBadgeDto
 import com.subin.leafy.domain.model.*
 
 // 1. UserDto(Remote) -> User(Domain)
@@ -10,6 +11,7 @@ fun UserDto.toUserDomain() = User(
     nickname = nickname,
     profileImageUrl = profileImageUrl,
     bio = bio ?: "",
+    masterTitle = this.masterTitle,
     socialStats = UserSocialStatistics(
         followerCount = followerCount,
         followingCount = followingCount
@@ -18,7 +20,7 @@ fun UserDto.toUserDomain() = User(
     relationState = UserRelationState(isFollowing = false),
     followingIds = followingIds,
     likedPostIds = likedPostIds,
-    savedPostIds = savedPostIds,
+    bookmarkedPostIds = bookmarkedPostIds,
     createdAt = createdAt
 )
 
@@ -34,14 +36,14 @@ fun UserDto.toAuthDomain(
     profileUrl = profileImageUrl,
     followingIds = followingIds,
     likedPostIds = likedPostIds,
-    savedPostIds = savedPostIds,
+    bookmarkedPostIds = bookmarkedPostIds,
     fcmToken = fcmToken,
     isNewUser = isNewUser,
     providerId = providerId
 )
 
 // 3. UserDto -> PostAuthor (게시글 작성자 정보 등)
-fun UserDto.toTeaMaster(isFollowing: Boolean = false) = PostAuthor(
+fun UserDto.toPostAuthor(isFollowing: Boolean = false) = PostAuthor(
     id = this.uid,
     nickname = this.nickname,
     profileImageUrl = this.profileImageUrl,
@@ -68,8 +70,6 @@ fun UserAnalysisDto.toDomain() = UserAnalysis(
     favoriteTeaType = favoriteTeaName,
     teaTypeDistribution = teaTypeDistribution,
 
-    myTeaChestCount = teaInventoryCount,
-    wishlistCount = wishlistCount
 )
 
 // 5. AuthUser -> UserDto (업데이트용)
@@ -80,7 +80,23 @@ fun AuthUser.toDto(currentDto: UserDto) = currentDto.copy(
     fcmToken = this.fcmToken,
     followingIds = this.followingIds,
     likedPostIds = this.likedPostIds,
-    savedPostIds = this.savedPostIds
+    bookmarkedPostIds = bookmarkedPostIds,
+)
+
+fun UserBadgeDto.toDomain() = UserBadge(
+    id = this.id,
+    name = this.name,
+    description = this.description,
+    imageUrl = this.imageUrl,
+    obtainedAt = this.obtainedAt
+)
+
+fun UserBadge.toDto() = UserBadgeDto(
+    id = this.id,
+    name = this.name,
+    description = this.description,
+    imageUrl = this.imageUrl,
+    obtainedAt = this.obtainedAt
 )
 
 // --- 보조 함수 ---
@@ -92,4 +108,4 @@ private fun formatBrewTime(seconds: Int): String {
 }
 
 
-fun List<UserDto>.toTeaMasterList() = this.map { it.toTeaMaster() }
+fun List<UserDto>.toPostAuthorList() = this.map { it.toPostAuthor() }

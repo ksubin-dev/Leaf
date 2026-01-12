@@ -22,12 +22,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.leafy.shared.R as SharedR
+import com.leafy.shared.R
 
 @Composable
 fun NoteActionButtons(
     modifier: Modifier = Modifier,
-    onEditClick: (() -> Unit)? = null,
+    isAuthor: Boolean,
+    onEditClick: () -> Unit,
     onShareClick: () -> Unit
 ) {
     Column(
@@ -36,47 +37,54 @@ fun NoteActionButtons(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if (onEditClick != null) {
+        // [수정 버튼] - 작성자 본인만 표시
+        if (isAuthor) {
             Button(
                 onClick = onEditClick,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = SharedR.drawable.ic_edit),
+                    painter = painterResource(id = R.drawable.ic_edit),
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Edit Tasting Note",
+                    text = "노트 수정하기", // 한글화
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    fontSize = 16.sp
                 )
             }
         }
 
+        // [공유 버튼] - 누구나 표시
         OutlinedButton(
             onClick = onShareClick,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.primary
+            )
         ) {
             Icon(
-                painter = painterResource(id = SharedR.drawable.ic_share),
+                painter = painterResource(id = R.drawable.ic_share),
                 contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.primary
+                modifier = Modifier.size(18.dp)
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                "Share Note",
-                color = MaterialTheme.colorScheme.primary,
+                text = "공유하기",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp
             )

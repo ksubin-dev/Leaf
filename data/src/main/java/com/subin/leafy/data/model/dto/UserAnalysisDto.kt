@@ -27,8 +27,5 @@ data class UserAnalysisDto(
     val favoriteTeaName: String? = null,
     val topFlavorNote: String = "",
 
-    // 5. 자산 상태 및 업데이트 시각
-    val teaInventoryCount: Int = 0,
-    val wishlistCount: Int = 0,
     val lastUpdatedAt: Long = System.currentTimeMillis()
 )

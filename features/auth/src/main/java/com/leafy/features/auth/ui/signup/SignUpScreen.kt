@@ -3,25 +3,39 @@ package com.leafy.features.auth.ui.signup
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.leafy.features.auth.ui.common.AuthButton
-import com.leafy.features.auth.ui.common.AuthTextField
-import com.leafy.shared.common.LoadingOverlay
+import com.leafy.shared.common.clickableSingle
+import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.component.LeafyTextField
+import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
@@ -32,40 +46,53 @@ fun SignUpScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // 갤러리에서 이미지 가져오기 런처
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         viewModel.onProfileImageSelected(uri)
     }
 
-    // 성공 처리
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.userMessageShown()
+        }
+    }
+
+    // 회원가입 성공 처리
     LaunchedEffect(uiState.isSignUpSuccess) {
         if (uiState.isSignUpSuccess) {
             onSignUpSuccess()
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()){
-        SignUpContent(
-            uiState = uiState,
-            onUsernameChange = viewModel::onUsernameChanged,
-            onEmailChange = viewModel::onEmailChanged,
-            onPasswordChange = viewModel::onPasswordChanged,
-            onConfirmPasswordChange = viewModel::onConfirmPasswordChanged,
-            onProfileImageClick = { imagePickerLauncher.launch("image/*") },
-            onSignUpClick = viewModel::signUp,
-            onBackClick = onBackClick
-        )
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            SignUpContent(
+                uiState = uiState,
+                onUsernameChange = viewModel::onUsernameChanged,
+                onEmailChange = viewModel::onEmailChanged,
+                onPasswordChange = viewModel::onPasswordChanged,
+                onConfirmPasswordChange = viewModel::onConfirmPasswordChanged,
+                onProfileImageClick = { imagePickerLauncher.launch("image/*") },
+                onSignUpClick = viewModel::signUp,
+                onBackClick = onBackClick
+            )
 
-        LoadingOverlay(
-            isLoading = uiState.isProcessing,
-            message = "계정을 생성하고 사진을 업로드 중입니다..."
-        )
+            LoadingOverlay(
+                isLoading = uiState.isLoading,
+                message = "계정을 생성하고\n프로필을 설정하는 중입니다..."
+            )
+        }
     }
-
-
-
 }
 
 @Composable
@@ -96,58 +123,78 @@ fun SignUpContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        AuthTextField(
+        // 닉네임
+        LeafyTextField(
             value = uiState.username,
             onValueChange = onUsernameChange,
-            placeholder = "이름 (닉네임)"
+            label = "이름 (닉네임)",
+            placeholder = "앱에서 사용할 이름을 입력하세요",
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        AuthTextField(
+        // 이메일
+        LeafyTextField(
             value = uiState.email,
             onValueChange = onEmailChange,
-            placeholder = "이메일 주소"
+            label = "이메일",
+            placeholder = "name@example.com",
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        AuthTextField(
+        // 비밀번호
+        LeafyTextField(
             value = uiState.password,
             onValueChange = onPasswordChange,
-            placeholder = "비밀번호",
-            visualTransformation = PasswordVisualTransformation()
+            label = "비밀번호",
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Next
+            )
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        AuthTextField(
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 비밀번호 확인
+        val showPasswordMismatch = uiState.confirmPassword.isNotEmpty() && !uiState.isPasswordMatching
+
+        LeafyTextField(
             value = uiState.confirmPassword,
             onValueChange = onConfirmPasswordChange,
-            placeholder = "비밀번호 확인",
+            label = "비밀번호 확인",
             visualTransformation = PasswordVisualTransformation(),
-            // 비밀번호 확인란이 비어있지 않은데, 일치하지 않을 때만 에러 표시
-            isError = uiState.confirmPassword.isNotEmpty() && !uiState.isPasswordMatching,
-            errorMessage = "비밀번호가 일치하지 않습니다."
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            errorMessage = if (showPasswordMismatch) "비밀번호가 일치하지 않습니다." else null
         )
 
         Spacer(modifier = Modifier.height(40.dp))
-        
+
+        // 가입 버튼
         AuthButton(
             text = "회원가입 완료",
-            onClick = onSignUpClick,
-            enabled = !uiState.isProcessing &&
-                    uiState.username.isNotEmpty() &&
-                    uiState.email.isNotEmpty() &&
-                    uiState.password.isNotEmpty() &&
-                    uiState.confirmPassword.isNotEmpty() &&
+            onClick = singleClick { onSignUpClick() },
+            enabled = !uiState.isLoading &&
+                    uiState.username.isNotBlank() &&
+                    uiState.email.isNotBlank() &&
+                    uiState.password.isNotBlank() &&
                     uiState.isPasswordMatching
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // 로그인 이동 텍스트
         Text(
             text = "이미 계정이 있나요? 로그인하기",
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray,
-            modifier = Modifier.clickable { onBackClick() }
+            modifier = Modifier.clickableSingle { onBackClick() }
         )
 
         Spacer(modifier = Modifier.height(48.dp))

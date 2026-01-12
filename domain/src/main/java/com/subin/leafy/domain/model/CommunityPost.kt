@@ -3,9 +3,9 @@ package com.subin.leafy.domain.model
 data class CommunityPost(
     val id: String,
     val author: PostAuthor,
+    val imageUrls: List<String>,
     val title: String,
     val content: String,
-    val imageUrls: List<String>,
     val originNoteId: String? = null,
     val teaType: TeaType? = null,
     val rating: Int? = null,
@@ -14,8 +14,8 @@ data class CommunityPost(
 
     val stats: PostStatistics,
     val myState: PostSocialState,
-    val createdAt: Long,
-    val topComment: Comment? = null
+    val topComment: Comment? = null,
+    val createdAt: Long
 )
 
 data class PostAuthor(

@@ -169,6 +169,7 @@ fun NoteDetailHeader(
                                 id = if (isLiked) SharedR.drawable.ic_like_filled else SharedR.drawable.ic_like
                             ),
                             contentDescription = "Like",
+                            tint = if (isLiked) MaterialTheme.colorScheme.error else Color.White
                         )
                     }
 
@@ -181,6 +182,7 @@ fun NoteDetailHeader(
                                 id = if (isBookmarked) SharedR.drawable.ic_bookmark_filled else SharedR.drawable.ic_bookmark_outline
                             ),
                             contentDescription = "Bookmark",
+                            tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.White
                         )
                     }
                 }
@@ -188,13 +190,14 @@ fun NoteDetailHeader(
         }
     }
 }
-@Preview(showBackground = true, name = "본인 글일 때 (수정/삭제)")
+@Preview(showBackground = true, name = "1. 본인 글 (수정/삭제 메뉴)")
 @Composable
 fun NoteDetailHeaderAuthorPreview() {
     LeafyTheme {
+        // 본인 글인 경우: 우측 상단에 점 3개 메뉴가 보여야 함
         NoteDetailHeader(
-            teaName = "동정오롱차 (Author)",
-            teaType = "Oolong Tea",
+            teaName = "내가 마신 동정오롱",
+            teaType = "Oolong Tea (청차)",
             imageUrl = null,
             isAuthor = true,
             isLiked = false,
@@ -208,22 +211,26 @@ fun NoteDetailHeaderAuthorPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "타인 글일 때 (좋아요/북마크)")
+@Preview(showBackground = true, name = "2. 타인 글 (좋아요/북마크 동작)")
 @Composable
 fun NoteDetailHeaderViewerPreview() {
     LeafyTheme {
+        var isLiked by remember { mutableStateOf(false) }
+        var isBookmarked by remember { mutableStateOf(false) }
+
+        // 타인 글인 경우: 좋아요와 북마크 버튼이 보여야 함
         NoteDetailHeader(
-            teaName = "우전 녹차 (Viewer)",
-            teaType = "Green Tea",
-            imageUrl = "https://example.com/tea.jpg",
+            teaName = "티 소믈리에의 추천 녹차",
+            teaType = "Green Tea (녹차)",
+            imageUrl = null,
             isAuthor = false,
-            isLiked = true,
-            isBookmarked = true,
+            isLiked = isLiked,
+            isBookmarked = isBookmarked,
             onBackClick = {},
             onEditClick = {},
             onDeleteClick = {},
-            onLikeClick = {},
-            onBookmarkClick = {}
+            onLikeClick = { isLiked = !isLiked },
+            onBookmarkClick = { isBookmarked = !isBookmarked }
         )
     }
 }

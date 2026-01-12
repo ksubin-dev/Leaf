@@ -6,13 +6,14 @@ data class User(
     val nickname: String,
     val profileImageUrl: String?,
     val bio: String?,
+    val masterTitle: String? = null,
 
     val socialStats: UserSocialStatistics,
     val relationState: UserRelationState,
 
     val followingIds: List<String>,
     val likedPostIds: List<String>,
-    val savedPostIds: List<String>,
+    val bookmarkedPostIds: List<String>,
     val createdAt: Long
 )
 
@@ -49,7 +50,4 @@ data class UserAnalysis(
     val favoriteTeaType: String?,     // 가장 많이 마신 차 종류 (예: "우롱차")
     val teaTypeDistribution: Map<String, Double>, // 차 종류별 비율 (차트용)
 
-    // 5. 보관함 상태
-    val myTeaChestCount: Int,         // 내 차 보관함 개수
-    val wishlistCount: Int            // 위시리스트 개수
 )

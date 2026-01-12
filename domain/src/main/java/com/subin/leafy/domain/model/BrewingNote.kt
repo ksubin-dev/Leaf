@@ -37,14 +37,14 @@ data class BrewingRecipe(
 
 // 3. 맛 평가
 data class SensoryEvaluation(
-    val flavorNotes: Set<String> = emptySet(),
+    val flavorTags: List<FlavorTag> = emptyList(),
     val sweetness: Int = 0,       // 0~5 단계
     val sourness: Int = 0,
     val bitterness: Int = 0,
     val astringency: Int = 0,     // 떫은맛 (차의 핵심)
     val umami: Int = 0,
     val body: BodyType = BodyType.MEDIUM,
-    val finishLevel: Float = 0.5f,
+    val finishLevel: Int = 0,
     val memo: String = ""
 )
 
