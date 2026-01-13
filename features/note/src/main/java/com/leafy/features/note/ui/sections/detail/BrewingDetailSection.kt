@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.detail.sections
+package com.leafy.features.note.ui.sections.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +13,7 @@ import com.leafy.features.note.ui.common.DetailInfoRow
 import com.leafy.features.note.ui.common.DetailSectionCard
 import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.BrewingRecipe
 
 @Composable
@@ -24,7 +25,6 @@ fun BrewingRecipeSection(
         title = "우림 조건 (Brewing Conditions)",
         modifier = modifier
     ) {
-        // 1. 상단 4개 정보 카드 (Grid 형태)
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 BrewingInfoCard(
@@ -40,12 +40,11 @@ fun BrewingRecipeSection(
                     modifier = Modifier.weight(1f)
                 )
             }
-            // 두 번째 줄: 시간 | 횟수
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 BrewingInfoCard(
                     iconRes = R.drawable.ic_timer,
                     label = "우림 시간",
-                    value = formatSeconds(recipe.brewTimeSeconds),
+                    value = LeafyTimeUtils.formatSecondsToHangul(recipe.brewTimeSeconds),
                     modifier = Modifier.weight(1f)
                 )
                 BrewingInfoCard(
@@ -66,16 +65,7 @@ fun BrewingRecipeSection(
     }
 }
 
-// 초 단위를 "1분 30초" 형태로 변환하는 함수
-private fun formatSeconds(seconds: Int): String {
-    val min = seconds / 60
-    val sec = seconds % 60
-    return if (min > 0) "${min}분 ${sec}초" else "${sec}초"
-}
 
-// ----------------------------------------------------------------------
-// Preview
-// ----------------------------------------------------------------------
 @Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
 @Composable
 fun BrewingRecipeSectionPreview() {
@@ -83,7 +73,7 @@ fun BrewingRecipeSectionPreview() {
         waterTemp = 95,
         leafAmount = 2.5f,
         waterAmount = 150,
-        brewTimeSeconds = 270, // 4분 30초
+        brewTimeSeconds = 270,
         infusionCount = 3,
         teaware = "개완 (Gaiwan)"
     )

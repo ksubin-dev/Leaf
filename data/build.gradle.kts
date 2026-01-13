@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.google.ksp)
 }
 
 android {
@@ -48,6 +49,8 @@ dependencies {
     implementation(libs.bundles.room.libraries)
     implementation(libs.gson)
     implementation(libs.androidx.datastore.preferences)
+
+    ksp(libs.androidx.room.compiler)
 
     implementation(libs.material)
     testImplementation(libs.junit)

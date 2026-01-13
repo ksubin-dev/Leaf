@@ -118,5 +118,5 @@ fun Comment.toDto() = CommentDto(
 // 3. List 변환 헬퍼 (Extension Functions)
 // =================================================================
 
-fun List<CommunityPostDto>.toDomainList() = this.map { it.toDomain() }
-fun List<CommentDto>.toDomainList() = this.map { it.toDomain() }
+fun List<CommunityPostDto>.toPostDomainList() = this.map { it.toDomain() }
+fun List<CommentDto>.toCommentDomainList() = this.map { it.toDomain() }

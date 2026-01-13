@@ -21,17 +21,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.ui.DetailViewModel
-import com.leafy.features.note.ui.detail.DetailUiState
-import com.leafy.features.note.ui.detail.NoteActionButtons
-import com.leafy.features.note.ui.detail.NoteDetailHeader
-import com.leafy.features.note.ui.detail.sections.*
+import com.leafy.features.note.viewmodel.DetailViewModel
+import com.leafy.features.note.viewmodel.DetailUiState
+import com.leafy.features.note.ui.components.NoteActionButtons
+import com.leafy.features.note.ui.components.NoteDetailHeader
+import com.leafy.features.note.ui.sections.detail.BrewingRecipeSection
+import com.leafy.features.note.ui.sections.detail.FinalRatingSection
+import com.leafy.features.note.ui.sections.detail.PhotoDetailSection
+import com.leafy.features.note.ui.sections.detail.SensoryEvaluationSection
+import com.leafy.features.note.ui.sections.detail.TastingContextSection
+import com.leafy.features.note.ui.sections.detail.TeaInfoSection
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.*
 
-// ------------------------------------------------------------------------
-// 1. Stateful Screen (ViewModel 연결용)
-// ------------------------------------------------------------------------
 @Composable
 fun NoteDetailScreen(
     viewModel: DetailViewModel,
@@ -42,7 +44,6 @@ fun NoteDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Side Effects
     LaunchedEffect(noteId) {
         viewModel.loadNote(noteId)
     }
@@ -60,7 +61,6 @@ fun NoteDetailScreen(
         }
     }
 
-    // UI 그리기 (Stateless 컴포넌트 호출)
     NoteDetailContent(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
@@ -73,9 +73,6 @@ fun NoteDetailScreen(
     )
 }
 
-// ------------------------------------------------------------------------
-// 2. Stateless Content (순수 UI - 프리뷰 가능!)
-// ------------------------------------------------------------------------
 @Composable
 fun NoteDetailContent(
     uiState: DetailUiState,
@@ -105,7 +102,6 @@ fun NoteDetailContent(
                         contentPadding = PaddingValues(bottom = 32.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        // 1. 헤더
                         item {
                             NoteDetailHeader(
                                 teaName = note.teaInfo.name,
@@ -122,7 +118,6 @@ fun NoteDetailContent(
                             )
                         }
 
-                        // 2. 기본 정보
                         item {
                             TeaInfoSection(
                                 teaInfo = note.teaInfo,
@@ -130,7 +125,6 @@ fun NoteDetailContent(
                             )
                         }
 
-                        // 3. 우림 조건
                         item {
                             BrewingRecipeSection(
                                 recipe = note.recipe,
@@ -138,7 +132,6 @@ fun NoteDetailContent(
                             )
                         }
 
-                        // 4. 테이스팅 환경
                         item {
                             TastingContextSection(
                                 createdTimestamp = note.createdAt,
@@ -147,15 +140,13 @@ fun NoteDetailContent(
                             )
                         }
 
-                        // 5. 감각 평가
                         item {
                             SensoryEvaluationSection(
                                 evaluation = note.evaluation,
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
                         }
-
-                        // 6. 사진
+                        
                         item {
                             PhotoDetailSection(
                                 imageUrls = note.metadata.imageUrls,
@@ -164,7 +155,6 @@ fun NoteDetailContent(
                             )
                         }
 
-                        // 7. 최종 평가
                         item {
                             FinalRatingSection(
                                 rating = note.rating,
@@ -172,7 +162,6 @@ fun NoteDetailContent(
                             )
                         }
 
-                        // 8. 하단 버튼
                         item {
                             NoteActionButtons(
                                 isAuthor = uiState.isAuthor,
@@ -187,14 +176,10 @@ fun NoteDetailContent(
     }
 }
 
-// ------------------------------------------------------------------------
-// 3. Preview
-// ------------------------------------------------------------------------
-@Preview(showBackground = true, heightDp = 2000) // 전체 내용을 보기 위해 높이를 길게 설정
+@Preview(showBackground = true, heightDp = 2000)
 @Composable
 fun NoteDetailScreenPreview() {
     LeafyTheme {
-        // 더미 데이터 생성
         val mockNote = BrewingNote(
             id = "preview_id",
             ownerId = "user_id",
@@ -243,7 +228,7 @@ fun NoteDetailScreenPreview() {
             uiState = DetailUiState(
                 isLoading = false,
                 note = mockNote,
-                isAuthor = true, // 작성자 본인으로 테스트
+                isAuthor = true,
                 isLiked = true,
                 isBookmarked = false
             ),

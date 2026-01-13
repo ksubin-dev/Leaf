@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.*
 import com.subin.leafy.data.datasource.local.TimerDataSource
 import com.subin.leafy.data.datasource.local.room.dao.TimerDao
 import com.subin.leafy.data.mapper.toEntity
-import com.subin.leafy.data.mapper.toTimerDomainList
+import com.subin.leafy.data.mapper.toTimerDomainListFromEntity
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TimerPreset
 import com.subin.leafy.domain.model.TimerSettings
@@ -34,7 +34,7 @@ class LocalTimerDataSourceImpl(
     // =============================================================
 
     override fun getPresets(): Flow<List<TimerPreset>> {
-        return timerDao.getAllPresets().map { it.toTimerDomainList() }
+        return timerDao.getAllPresets().map { it.toTimerDomainListFromEntity() }
     }
 
     override suspend fun savePreset(preset: TimerPreset): DataResourceResult<Unit> {

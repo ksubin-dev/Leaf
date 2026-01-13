@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.detail
+package com.leafy.features.note.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -112,7 +112,6 @@ fun NoteDetailHeader(
             )
         }
 
-        // 상단 버튼 영역 (뒤로가기 & [메뉴 or 소셜])
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -121,7 +120,6 @@ fun NoteDetailHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 1. 뒤로가기 버튼
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier.background(Color.Black.copy(alpha = 0.2f), CircleShape)
@@ -129,9 +127,7 @@ fun NoteDetailHeader(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
             }
 
-            // 2. 우측 버튼 영역 (isAuthor에 따른 분기)
             if (isAuthor) {
-                // --- [본인 글] 수정/삭제 드롭다운 ---
                 Box {
                     IconButton(
                         onClick = { showMenu = true },
@@ -157,9 +153,7 @@ fun NoteDetailHeader(
                     }
                 }
             } else {
-                // --- [타인 글] 좋아요 & 북마크 ---
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // 좋아요 버튼
                     IconButton(
                         onClick = onLikeClick,
                         modifier = Modifier.background(Color.Black.copy(alpha = 0.2f), CircleShape)
@@ -194,7 +188,6 @@ fun NoteDetailHeader(
 @Composable
 fun NoteDetailHeaderAuthorPreview() {
     LeafyTheme {
-        // 본인 글인 경우: 우측 상단에 점 3개 메뉴가 보여야 함
         NoteDetailHeader(
             teaName = "내가 마신 동정오롱",
             teaType = "Oolong Tea (청차)",
@@ -218,7 +211,6 @@ fun NoteDetailHeaderViewerPreview() {
         var isLiked by remember { mutableStateOf(false) }
         var isBookmarked by remember { mutableStateOf(false) }
 
-        // 타인 글인 경우: 좋아요와 북마크 버튼이 보여야 함
         NoteDetailHeader(
             teaName = "티 소믈리에의 추천 녹차",
             teaType = "Green Tea (녹차)",

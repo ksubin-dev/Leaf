@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.detail.sections
+package com.leafy.features.note.ui.sections.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

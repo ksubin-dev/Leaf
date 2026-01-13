@@ -39,7 +39,7 @@ fun <T> NoteDropdownField(
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.SemiBold
             ),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
         )
 

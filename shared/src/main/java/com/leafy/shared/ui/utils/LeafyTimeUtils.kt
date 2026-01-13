@@ -50,4 +50,22 @@ object LeafyTimeUtils {
     fun formatLongToString(timestamp: Long): String {
         return millisToDateString(timestamp)
     }
+
+    /**
+     * 초(Int) -> "1분 30초" 또는 "30초" 형식으로 변환
+     */
+    fun formatSecondsToHangul(seconds: Int): String {
+        val min = seconds / 60
+        val sec = seconds % 60
+        return if (min > 0) "${min}분 ${sec}초" else "${sec}초"
+    }
+
+    /**
+     * 초(Int) -> "02:30" (디지털 타이머 형식) 변환
+     */
+    fun formatSecondsToTimer(seconds: Int): String {
+        val min = seconds / 60
+        val sec = seconds % 60
+        return "%02d:%02d".format(min, sec)
+    }
 }

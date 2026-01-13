@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.sections
+package com.leafy.features.note.ui.sections.create
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.leafy.features.note.ui.common.LeafyRatingInput
 import com.leafy.features.note.ui.common.NoteSectionHeader
 import com.leafy.shared.R
+import com.leafy.shared.ui.component.LeafySelectableButton
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
@@ -45,11 +46,10 @@ fun FinalRatingSection(
             title = "최종 평가"
         )
 
-        // 1. Overall Rating (별점)
         Text(
             text = "종합 별점",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = colors.primary,
+            color = colors.secondary,
             modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
         )
 
@@ -61,7 +61,6 @@ fun FinalRatingSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 2. 재구매 의사 (Would you purchase...)
         Text(
             text = "이 차를 다시 구매하시겠습니까?",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -73,53 +72,19 @@ fun FinalRatingSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Yes 버튼
-            SelectableButton(
-                text = "네 (Yes)",
+            LeafySelectableButton(
+                text = "네",
                 isSelected = purchaseAgain == true,
                 onClick = { onPurchaseAgainChange(true) },
                 modifier = Modifier.weight(1f)
             )
-
-            // No 버튼
-            SelectableButton(
-                text = "아니오 (No)",
+            LeafySelectableButton(
+                text = "아니오",
                 isSelected = purchaseAgain == false,
                 onClick = { onPurchaseAgainChange(false) },
                 modifier = Modifier.weight(1f)
             )
         }
-    }
-}
-
-@Composable
-private fun SelectableButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colors = MaterialTheme.colorScheme
-
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier.height(48.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = if (isSelected) colors.primary else colors.surface,
-            contentColor = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
-        ),
-        border = BorderStroke(
-            width = 1.dp,
-            color = if (isSelected) colors.primary else colors.outlineVariant
-        )
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-            )
-        )
     }
 }
 

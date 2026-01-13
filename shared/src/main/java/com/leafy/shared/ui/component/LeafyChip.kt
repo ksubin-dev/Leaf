@@ -15,21 +15,22 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun LeafyChip(
+    modifier: Modifier = Modifier,
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    selectedContainerColor: Color = MaterialTheme.colorScheme.secondary,
+    selectedContentColor: Color = MaterialTheme.colorScheme.onSecondary
 ) {
     val colors = MaterialTheme.colorScheme
 
-    // 선택되었을 때: Primary 색상 채움 / 안 됐을 때: 테두리만
-    val backgroundColor = if (isSelected) colors.primary else Color.Transparent
-    val contentColor = if (isSelected) colors.onPrimary else colors.onSurfaceVariant
+    val backgroundColor = if (isSelected) selectedContainerColor else Color.Transparent
+    val contentColor = if (isSelected) selectedContentColor else colors.onSurfaceVariant
     val border = if (isSelected) null else BorderStroke(1.dp, colors.outline.copy(alpha = 0.5f))
 
     Surface(
         modifier = modifier.clickable { onClick() },
-        shape = CircleShape, // 완전 둥근 알약 모양
+        shape = CircleShape,
         color = backgroundColor,
         contentColor = contentColor,
         border = border,

@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.sections
+package com.leafy.features.note.ui.sections.create
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,7 +49,7 @@ fun BasicInfoSection(
             title = "기본 정보"
         )
 
-        // 1. 차 이름 (필수)
+        // 1. 차 이름
         NoteInputTextField(
             value = teaName,
             onValueChange = onTeaNameChange,
@@ -69,14 +69,14 @@ fun BasicInfoSection(
                 .padding(top = 12.dp)
         )
 
-        // 3. Row: 차 종류 | 산지
+        // 3. Row: 차 종류 | 등급 (둘 다 짧은 항목끼리 묶음)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 차 종류 (Enum Dropdown)
+            // 차 종류
             NoteDropdownField(
                 label = "차 종류",
                 options = TeaType.entries,
@@ -86,34 +86,7 @@ fun BasicInfoSection(
                 modifier = Modifier.weight(1f)
             )
 
-            // 산지 (Text Field)
-            NoteInputTextField(
-                value = teaOrigin,
-                onValueChange = onTeaOriginChange,
-                label = "산지",
-                placeholder = "예: 보성",
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        // 4. Row: 찻잎 형태 | 등급
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // 찻잎 형태 (String Dropdown)
-            NoteDropdownField(
-                label = "형태",
-                options = leafStyleOptions,
-                selectedOption = teaLeafStyle.ifEmpty { leafStyleOptions[0] },
-                onOptionSelected = onTeaLeafStyleChange,
-                labelMapper = { it },
-                modifier = Modifier.weight(1f)
-            )
-
-            // 등급 (String Dropdown)
+            // 등급 (짧은 텍스트라 종류 옆에 두기 적절)
             NoteDropdownField(
                 label = "등급",
                 options = gradeOptions,
@@ -123,6 +96,29 @@ fun BasicInfoSection(
                 modifier = Modifier.weight(1f)
             )
         }
+
+        // 4. 산지 (Full Width로 변경하여 입력 편의성 증대)
+        NoteInputTextField(
+            value = teaOrigin,
+            onValueChange = onTeaOriginChange,
+            label = "산지",
+            placeholder = "예: 보성, 중국 운남성",
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
+        )
+
+        // 5. 형태 (Full Width로 변경하여 텍스트 잘림 방지)
+        NoteDropdownField(
+            label = "형태",
+            options = leafStyleOptions,
+            selectedOption = teaLeafStyle.ifEmpty { leafStyleOptions[0] },
+            onOptionSelected = onTeaLeafStyleChange,
+            labelMapper = { it }, // "잎차 (Loose Leaf)" 처럼 긴 텍스트도 이제 잘 보임
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
+        )
     }
 }
 

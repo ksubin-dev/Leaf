@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.sections
+package com.leafy.features.note.ui.sections.create
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -66,7 +67,6 @@ fun SensoryEvalSection(
             title = "감각 평가"
         )
 
-        // 1. 향 태그 (새로운 LeafyChip 사용)
         Text(
             text = "향 (Flavor & Aroma)",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -76,7 +76,7 @@ fun SensoryEvalSection(
 
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp), // 줄바꿈 시 간격
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(bottom = 24.dp)
         ) {
             FlavorTag.entries.forEach { tag ->
@@ -88,7 +88,6 @@ fun SensoryEvalSection(
             }
         }
 
-        // 2. 맛 슬라이더 (새로운 LeafySlider 사용 - 점 없음)
         Text(
             text = "맛의 강도 (0 ~ 5)",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -104,7 +103,6 @@ fun SensoryEvalSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 3. 바디감 (새로운 LeafySegmentedButton 사용)
         Text(
             text = "바디감 (Body)",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -127,7 +125,6 @@ fun SensoryEvalSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 4. 여운 (슬라이더)
         Text(
             text = "여운 (Finish)",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -138,14 +135,15 @@ fun SensoryEvalSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 5. 시음 노트
         NoteInputTextField(
             value = memo,
             onValueChange = onMemoChange,
             label = "시음 노트",
             placeholder = "맛과 향, 느낌을 자유롭게 기록하세요...",
             singleLine = false,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 250.dp)
         )
     }
 }
@@ -154,7 +152,6 @@ fun SensoryEvalSection(
 @Composable
 fun SensoryEvalSectionPreview() {
     LeafyTheme {
-        // 프리뷰에서 직접 조작해볼 수 있도록 상태(State)를 정의합니다.
         var selectedTags by remember { mutableStateOf(listOf(FlavorTag.FLORAL, FlavorTag.FRUITY)) }
         var sweetness by remember { mutableFloatStateOf(3f) }
         var sourness by remember { mutableFloatStateOf(1f) }
@@ -169,7 +166,7 @@ fun SensoryEvalSectionPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
-                .verticalScroll(rememberScrollState()) // 길어질 수 있으니 스크롤 가능하게
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
             SensoryEvalSection(

@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.detail.sections
+package com.leafy.features.note.ui.sections.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -21,10 +21,10 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SensoryIntensityBar(
+    modifier: Modifier = Modifier,
     label: String,
-    value: Int, // 0~5
-    max: Int = 5,
-    modifier: Modifier = Modifier
+    value: Int,
+    max: Int = 5
 ) {
     Row(
         modifier = modifier
@@ -32,7 +32,6 @@ fun SensoryIntensityBar(
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 1. 라벨 (고정 너비)
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
@@ -40,7 +39,6 @@ fun SensoryIntensityBar(
             modifier = Modifier.width(60.dp)
         )
 
-        // 2. 프로그레스 바 (가변 너비)
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -56,8 +54,6 @@ fun SensoryIntensityBar(
                     .background(MaterialTheme.colorScheme.primary)
             )
         }
-
-        // 3. 점수 (우측, 고정 너비)
         Text(
             text = "$value/$max",
             style = MaterialTheme.typography.bodyMedium,

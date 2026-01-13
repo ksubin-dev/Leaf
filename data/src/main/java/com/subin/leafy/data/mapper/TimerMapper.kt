@@ -89,7 +89,7 @@ fun TimerPresetDto.toDomain(): TimerPreset {
 // =================================================================
 
 // DTO 리스트 -> Domain 리스트
-fun List<TimerPresetDto>.toTimerDomainList() = this.map { it.toDomain() }
+fun List<TimerPresetDto>.toTimerDomainListFromDto() = this.map { it.toDomain() }
 
-// Entity 리스트 -> Domain 리스트
-fun List<TimerPresetEntity>.toTimerDomainList() = this.map { it.toDomain() }
+// Entity 리스트 -> Domain 리스트 (로컬 DB용)
+fun List<TimerPresetEntity>.toTimerDomainListFromEntity() = this.map { it.toDomain() }

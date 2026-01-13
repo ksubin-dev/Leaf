@@ -1,8 +1,7 @@
-package com.leafy.features.note.ui
+package com.leafy.features.note.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.note.ui.detail.DetailUiState
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.UserUseCases

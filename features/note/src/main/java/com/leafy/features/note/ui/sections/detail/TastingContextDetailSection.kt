@@ -1,15 +1,12 @@
-package com.leafy.features.note.ui.detail.sections
+package com.leafy.features.note.ui.sections.detail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.leafy.features.note.ui.common.DetailInfoRow
 import com.leafy.features.note.ui.common.DetailSectionCard
 import com.leafy.shared.R
+import com.leafy.shared.ui.component.LeafyChip
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.NoteMetadata
@@ -39,11 +37,9 @@ fun TastingContextSection(
         title = "테이스팅 환경 (Tasting Context)",
         modifier = modifier
     ) {
-        // 1. 날짜 (Long -> String 변환)
         val dateString = LeafyTimeUtils.formatLongToString(createdTimestamp)
         DetailInfoRow(label = "날짜", value = dateString)
 
-        // 2. 날씨 (아이콘 + 텍스트)
         if (metadata.weather != null) {
             Row(
                 modifier = Modifier
@@ -85,7 +81,6 @@ fun TastingContextSection(
             }
         }
 
-        // 3. 함께한 사람 (칩 형태)
         val withWhom = metadata.mood.ifBlank { "혼자" }
 
         Row(
@@ -100,39 +95,26 @@ fun TastingContextSection(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = withWhom,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            LeafyChip(
+                text = withWhom,
+                isSelected = true,
+                onClick = {},
+                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                selectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     }
 }
 
-// ----------------------------------------------------------------------
-// Preview
-// ----------------------------------------------------------------------
 @Preview(showBackground = true)
 @Composable
 fun TastingContextSectionPreview() {
     LeafyTheme {
         val mockMetadata = NoteMetadata(
             weather = WeatherType.CLOUDY,
-            mood = "친구들", // withPeople 정보를 mood 필드에 저장했다고 가정
+            mood = "친구들",
             imageUrls = emptyList()
         )
-        // 현재 시간(Timestamp)으로 테스트
         TastingContextSection(
             createdTimestamp = System.currentTimeMillis(),
             metadata = mockMetadata

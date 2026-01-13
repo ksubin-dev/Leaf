@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.detail.sections
+package com.leafy.features.note.ui.sections.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,11 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.features.note.ui.common.DetailInfoRow
 import com.leafy.features.note.ui.common.DetailSectionCard
+import com.leafy.shared.ui.component.LeafyChip
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.FlavorTag
@@ -36,7 +36,6 @@ fun SensoryEvaluationSection(
         title = "감각 평가 (Sensory Evaluation)",
         modifier = modifier
     ) {
-        // 1. Flavor Tags (칩 형태)
         if (evaluation.flavorTags.isNotEmpty()) {
             Text(
                 text = "향 (Flavor Notes)",
@@ -51,19 +50,11 @@ fun SensoryEvaluationSection(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 evaluation.flavorTags.forEach { tag ->
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = tag.label,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+                    LeafyChip(
+                        text = tag.label,
+                        isSelected = true,
+                        onClick = {}
+                    )
                 }
             }
 
@@ -74,7 +65,6 @@ fun SensoryEvaluationSection(
             )
         }
 
-        // 2. 맛 강도 (막대 그래프)
         SensoryIntensityBar(label = "단맛", value = evaluation.sweetness)
         SensoryIntensityBar(label = "신맛", value = evaluation.sourness)
         SensoryIntensityBar(label = "쓴맛", value = evaluation.bitterness)
@@ -83,7 +73,6 @@ fun SensoryEvaluationSection(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 3. 바디감 & 여운 (텍스트)
         val bodyLabel = when(evaluation.body) {
             BodyType.LIGHT -> "가벼움 (Light)"
             BodyType.MEDIUM -> "보통 (Medium)"
@@ -91,13 +80,11 @@ fun SensoryEvaluationSection(
         }
         DetailInfoRow(label = "바디감", value = bodyLabel)
 
-        // FinishLevel (0~5) -> 텍스트로 표현 (예: 3 -> 보통, 5 -> 길게 남음)
         val finishLabel = "${evaluation.finishLevel} / 5"
         DetailInfoRow(label = "여운", value = finishLabel)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 4. 테이스팅 노트 (메모)
         if (evaluation.memo.isNotBlank()) {
             Text(
                 text = "시음 노트 (Tasting Notes)",
@@ -122,9 +109,6 @@ fun SensoryEvaluationSection(
     }
 }
 
-// ----------------------------------------------------------------------
-// Preview
-// ----------------------------------------------------------------------
 @Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
 @Composable
 fun SensoryEvaluationSectionPreview() {

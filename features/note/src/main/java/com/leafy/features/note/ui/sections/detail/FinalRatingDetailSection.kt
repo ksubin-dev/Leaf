@@ -1,5 +1,6 @@
-package com.leafy.features.note.ui.detail.sections
+package com.leafy.features.note.ui.sections.detail
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +33,7 @@ import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.RatingInfo
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun FinalRatingSection(
     rating: RatingInfo,
@@ -61,25 +62,23 @@ fun FinalRatingSection(
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
-                        tint = if (isFilled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant
+                        tint = if (isFilled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-
-            // 2. 점수 (숫자, 크게)
+            
             Text(
-                text = String.format("%.1f", rating.stars.toFloat()), // 4.0, 5.0 형식
+                text = String.format("%.1f", rating.stars.toFloat()),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.error,
                 fontSize = 40.sp
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 3. 재구매 의사 (좌우 배치)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -91,11 +90,10 @@ fun FinalRatingSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                // 재구매 여부 뱃지
                 if (rating.purchaseAgain != null) {
                     val isYes = rating.purchaseAgain == true
-                    val bgColor = if (isYes) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.errorContainer
-                    val contentColor = if (isYes) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onErrorContainer
+                    val bgColor = if (isYes) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    val contentColor = if (isYes) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onError
                     val icon = if (isYes) Icons.Default.Check else Icons.Default.Close
                     val text = if (isYes) "Yes" else "No"
 

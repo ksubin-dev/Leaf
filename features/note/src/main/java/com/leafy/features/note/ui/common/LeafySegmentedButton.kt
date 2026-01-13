@@ -22,11 +22,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun <T> LeafySegmentedButton(
+    modifier: Modifier = Modifier,
     options: List<T>,
     selectedOption: T,
     onOptionSelected: (T) -> Unit,
-    labelMapper: (T) -> String,
-    modifier: Modifier = Modifier
+    labelMapper: (T) -> String
 ) {
     val shape = RoundedCornerShape(12.dp)
     val colors = MaterialTheme.colorScheme

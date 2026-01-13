@@ -58,6 +58,8 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material.icons.extended)
+
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.foundation)

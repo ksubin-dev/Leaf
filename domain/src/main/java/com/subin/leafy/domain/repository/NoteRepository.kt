@@ -11,7 +11,7 @@ interface NoteRepository {
     // 전체 목록
     fun getMyNotesFlow(): Flow<List<BrewingNote>>
 
-    // 캘린더용 (특정 월 데이터만 조회) - 효율성 UP!
+    // 캘린더용 (특정 월 데이터만 조회)
     fun getNotesByMonthFlow(year: Int, month: Int): Flow<List<BrewingNote>>
 
     // 내 노트 검색 (제목, 차 이름 등)

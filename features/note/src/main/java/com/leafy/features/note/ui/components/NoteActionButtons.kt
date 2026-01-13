@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.detail
+package com.leafy.features.note.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement

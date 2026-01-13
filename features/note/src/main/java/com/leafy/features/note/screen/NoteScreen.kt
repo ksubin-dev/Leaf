@@ -26,7 +26,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.ui.sections.*
 import com.leafy.shared.R
 import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -36,8 +35,14 @@ import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.WeatherType
 import android.net.Uri
 import androidx.compose.foundation.layout.size
-import com.leafy.features.note.ui.NoteUiState
-import com.leafy.features.note.ui.NoteViewModel
+import com.leafy.features.note.ui.sections.create.BasicInfoSection
+import com.leafy.features.note.ui.sections.create.BrewingRecipeSection
+import com.leafy.features.note.ui.sections.create.FinalRatingSection
+import com.leafy.features.note.ui.sections.create.PhotosSection
+import com.leafy.features.note.ui.sections.create.SensoryEvalSection
+import com.leafy.features.note.ui.sections.create.TastingContextSection
+import com.leafy.features.note.viewmodel.NoteUiState
+import com.leafy.features.note.viewmodel.NoteViewModel
 
 // ------------------------------------------------------------------------
 // 1. Stateful Screen (ViewModel 연결용)
@@ -321,7 +326,7 @@ fun NoteScreenPreview() {
             leafAmount = "5",
             waterAmount = "150",
             brewTime = "60",
-            selectedDateString = "2025-05-05",
+            selectedDateString = "2026-01-05",
             selectedWeather = WeatherType.SUNNY,
             flavorTags = listOf(FlavorTag.GREENISH, FlavorTag.NUTTY),
             sweetness = 3f,

@@ -1,5 +1,6 @@
 package com.leafy.shared.di
 
+import com.leafy.shared.util.ImageCompressor
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
@@ -18,4 +19,6 @@ interface ApplicationContainer {
 
     val imageUseCases: ImageUseCases
     val settingUseCases: SettingUseCases
+
+    val imageCompressor: ImageCompressor
 }

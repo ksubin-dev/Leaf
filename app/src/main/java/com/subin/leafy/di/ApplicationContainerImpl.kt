@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.leafy.shared.di.ApplicationContainer
+import com.leafy.shared.util.ImageCompressor
 import com.subin.leafy.data.datasource.local.datastore.dataStore
 import com.subin.leafy.data.datasource.local.datastore.timerDataStore
 import com.subin.leafy.data.datasource.local.impl.LocalAnalysisDataSourceImpl
@@ -143,6 +144,10 @@ class ApplicationContainerImpl(
     // =================================================================
     // 4. UseCases Initialization
     // =================================================================
+
+    override val imageCompressor: ImageCompressor by lazy {
+        ImageCompressor(context)
+    }
 
     // [A] Auth UseCases
     override val authUseCases = AuthUseCases(

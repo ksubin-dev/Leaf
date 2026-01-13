@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui.detail
+package com.leafy.features.note.viewmodel
 
 import com.subin.leafy.domain.model.BrewingNote
 

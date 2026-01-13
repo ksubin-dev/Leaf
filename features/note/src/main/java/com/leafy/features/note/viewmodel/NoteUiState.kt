@@ -1,4 +1,4 @@
-package com.leafy.features.note.ui
+package com.leafy.features.note.viewmodel
 
 import android.net.Uri
 import com.leafy.shared.ui.utils.LeafyTimeUtils

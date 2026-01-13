@@ -17,9 +17,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun NoteSectionHeader(
+    modifier: Modifier = Modifier,
     icon: Painter,
-    title: String,
-    modifier: Modifier = Modifier
+    title: String
 ) {
     Row(
         modifier = modifier.padding(vertical = 8.dp),

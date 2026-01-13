@@ -52,7 +52,9 @@ fun LeafySlider(
         // 2. 슬라이더 (손잡이 제거 & 점 제거)
         Slider(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { newValue ->
+                onValueChange(kotlin.math.round(newValue))
+            },
             valueRange = valueRange,
             steps = 0, // 점(Tick) 제거
             colors = SliderDefaults.colors(
@@ -73,7 +75,9 @@ fun LeafySlider(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.End,
-            modifier = Modifier.width(30.dp)
+            modifier = Modifier
+                .width(30.dp)
+                .padding(start = 4.dp)
         )
     }
 }
