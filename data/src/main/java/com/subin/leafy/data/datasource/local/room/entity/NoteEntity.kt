@@ -49,6 +49,6 @@ data class NoteEntity(
     val commentCount: Int,
     val viewCount: Int,
 
-    val createdAt: Long,
-    val updatedAt: Long?
+    val date: Long,
+    val createdAt: Long
 )

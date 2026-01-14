@@ -55,8 +55,9 @@ fun BrewingNoteDto.toBrewingDomain() = BrewingNote(
         viewCount = this.viewCount
     ),
     myState = PostSocialState(isLiked = false, isBookmarked = false),
-    createdAt = this.createdAt,
-    updatedAt = null
+
+    date = this.date,
+    createdAt = this.createdAt
 )
 
 // [2] Domain -> DTO
@@ -105,6 +106,7 @@ fun BrewingNote.toDto() = BrewingNoteDto(
     commentCount = this.stats.commentCount,
     viewCount = this.stats.viewCount,
 
+    date = this.date,
     createdAt = this.createdAt
 )
 
@@ -161,8 +163,9 @@ fun NoteEntity.toDomain() = BrewingNote(
         viewCount = this.viewCount
     ),
     myState = PostSocialState(isLiked = false, isBookmarked = false),
+
     createdAt = this.createdAt,
-    updatedAt = this.updatedAt
+    date = this.date,
 )
 
 // [4] Domain -> Entity
@@ -206,8 +209,8 @@ fun BrewingNote.toEntity() = NoteEntity(
     commentCount = this.stats.commentCount,
     viewCount = this.stats.viewCount,
 
-    createdAt = this.createdAt,
-    updatedAt = this.updatedAt
+    date = this.date,
+    createdAt = this.createdAt
 )
 
 
@@ -250,7 +253,7 @@ fun BrewingNoteDto.toCommunityPost(
     authorProfile: String?,
     isFollowingAuthor: Boolean = false
 ) = CommunityPost(
-    id = "POST_${this.id}", // 임시 ID
+    id = "POST_${this.id}",
     author = PostAuthor(
         id = this.ownerId,
         nickname = authorName,

@@ -9,6 +9,7 @@ data class UserUseCases(
     val updateProfile: UpdateProfileUseCase,
     val followUser: FollowUserUseCase,
     val getFollowList: GetFollowListUseCase,
+    val getFollowingIdsFlow: GetFollowingIdsFlowUseCase,
     val getUserBadges: GetUserBadgesUseCase,
     val searchUsers: SearchUsersUseCase,
     val checkNickname: CheckProfileNicknameUseCase

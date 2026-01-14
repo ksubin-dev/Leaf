@@ -8,7 +8,10 @@ import com.subin.leafy.data.mapper.toRankingItem
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.*
 import com.subin.leafy.domain.repository.PostRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -64,31 +67,31 @@ class PostRepositoryImpl(
     }
 
     // 팔로잉 피드
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>> {
         val myUid = authDataSource.getCurrentUserId() ?: return flowOf(
-            DataResourceResult.Failure(
-                Exception("로그인이 필요합니다.")
-            )
+            DataResourceResult.Failure(Exception("로그인이 필요합니다."))
         )
 
-        return flow {
-            // 1. 내 팔로잉 ID 목록만 가볍게 가져옵니다.
-            val idsResult = userDataSource.getFollowingIds(myUid)
+        return userDataSource.getFollowingIdsFlow(myUid).flatMapLatest { idsResult ->
+            when (idsResult) {
+                is DataResourceResult.Success -> {
+                    val followingIds = idsResult.data
 
-            if (idsResult is DataResourceResult.Success) {
-                val followingIds = idsResult.data
-
-                if (followingIds.isEmpty()) {
-                    emit(DataResourceResult.Success(emptyList())) // 팔로우한 사람이 없으면 빈 리스트
-                } else {
-                    // 2. ID 리스트로 PostDataSource에 피드 요청
-                    postDataSource.getFollowingFeed(followingIds).collect { postResult ->
-                        // 3. 결과에 내 좋아요 상태 주입해서 방출
-                        emit(mapPostsWithMyState(postResult))
+                    if (followingIds.isEmpty()) {
+                        flowOf(DataResourceResult.Success(emptyList()))
+                    } else {
+                        postDataSource.getFollowingFeed(followingIds).map { postResult ->
+                            mapPostsWithMyState(postResult)
+                        }
                     }
                 }
-            } else {
-                emit(DataResourceResult.Failure(Exception("팔로잉 목록을 불러올 수 없습니다.")))
+                is DataResourceResult.Failure -> {
+                    flowOf(DataResourceResult.Failure(idsResult.exception))
+                }
+                else -> {
+                    flowOf(DataResourceResult.Failure(Exception("Unknown Error fetching following list")))
+                }
             }
         }
     }
@@ -124,31 +127,31 @@ class PostRepositoryImpl(
     // =================================================================
 
     override fun getRecommendedMasters(): Flow<DataResourceResult<List<TeaMaster>>> {
-        return flow {
-            // 1. 티마스터 목록 가져오기
-            teaMasterDataSource.getRecommendedMasters().collect { masterResult ->
-                if (masterResult is DataResourceResult.Success) {
-                    val masters = masterResult.data
-                    val myUid = authDataSource.getCurrentUserId()
+        val myUid =
+            authDataSource.getCurrentUserId() ?: return teaMasterDataSource.getRecommendedMasters()
 
-                    if (myUid != null) {
-                        // 2. 내가 팔로우 중인지 확인
-                        val followingIdsResult = userDataSource.getFollowingIds(myUid)
-                        val followingIds = if (followingIdsResult is DataResourceResult.Success) followingIdsResult.data else emptyList()
+        return combine(
+            teaMasterDataSource.getRecommendedMasters(),
+            userDataSource.getFollowingIdsFlow(myUid)
+        ) { masterResult, followingResult ->
 
-                        // 3. 상태 주입 (UI에서 '팔로우' 버튼 색상 변경용)
-                        val mappedMasters = masters.map { master ->
-                            master.copy(isFollowing = followingIds.contains(master.id))
-                        }
-                        emit(DataResourceResult.Success(mappedMasters))
-                    } else {
-                        // 비로그인이면 기본값 방출
-                        emit(DataResourceResult.Success(masters))
-                    }
-                } else {
-                    emit(masterResult)
-                }
+            if (masterResult !is DataResourceResult.Success) {
+                return@combine masterResult
             }
+
+            val masters = masterResult.data
+
+            val followingIds = if (followingResult is DataResourceResult.Success) {
+                followingResult.data
+            } else {
+                emptyList()
+            }
+
+            val mappedMasters = masters.map { master ->
+                master.copy(isFollowing = followingIds.contains(master.id))
+            }
+
+            DataResourceResult.Success(mappedMasters)
         }
     }
 
@@ -158,13 +161,15 @@ class PostRepositoryImpl(
     // =================================================================
 
     override suspend fun createPost(
+        postId: String,
         title: String,
         content: String,
         imageUrls: List<String>,
         teaType: String?,
         rating: Int?,
         tags: List<String>,
-        brewingSummary: String?
+        brewingSummary: String?,
+        originNoteId: String?
     ): DataResourceResult<Unit> {
         val myUid = authDataSource.getCurrentUserId()
             ?: return DataResourceResult.Failure(Exception("로그인이 필요합니다."))
@@ -178,12 +183,12 @@ class PostRepositoryImpl(
 
         // 2. 객체 생성
         val newPost = CommunityPost(
-            id = "",
+            id = postId,
             author = PostAuthor(me.id, me.nickname, me.profileImageUrl, isFollowing = false),
             imageUrls = imageUrls,
             title = title,
             content = content,
-            originNoteId = null,
+            originNoteId = originNoteId,
             teaType = teaType?.let { runCatching { TeaType.valueOf(it) }.getOrNull() },
             rating = rating,
             tags = tags,
@@ -223,11 +228,29 @@ class PostRepositoryImpl(
         }
     }
 
-    override suspend fun addComment(postId: String, comment: Comment): DataResourceResult<Unit> {
-        if (authDataSource.getCurrentUserId() == null) {
-            return DataResourceResult.Failure(Exception("로그인이 필요합니다."))
+    override suspend fun addComment(postId: String, content: String): DataResourceResult<Unit> {
+        val myUid = authDataSource.getCurrentUserId()
+            ?: return DataResourceResult.Failure(Exception("로그인이 필요합니다."))
+
+        val userResult = userDataSource.getUser(myUid)
+        if (userResult !is DataResourceResult.Success) {
+            return DataResourceResult.Failure(Exception("유저 정보를 불러올 수 없습니다."))
         }
-        return postDataSource.addComment(postId, comment)
+        val me = userResult.data
+
+        val newComment = Comment(
+            id = "",
+            postId = postId,
+            author = CommentAuthor(
+                id = me.id,
+                nickname = me.nickname,
+                profileImageUrl = me.profileImageUrl
+            ),
+            content = content,
+            createdAt = System.currentTimeMillis(),
+            isMine = true
+        )
+        return postDataSource.addComment(postId, newComment)
     }
 
     override suspend fun deleteComment(postId: String, commentId: String): DataResourceResult<Unit> {

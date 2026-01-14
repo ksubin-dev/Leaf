@@ -2,8 +2,9 @@ package com.leafy.features.community.ui.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,22 +14,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.leafy.features.community.ui.model.CommunityPostUiModel
 import com.leafy.shared.ui.component.LeafyProfileImage
-import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.component.RatingStars
 import com.leafy.shared.R as SharedR
 
-
 @Composable
-fun ExploreSummaryNoteCard(
-    note: ExploreNoteUi,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    showHotBadge: Boolean = false,
-    hotLabel: String = "인기"
+fun CommunityLargeCard(
+    post: CommunityPostUiModel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -50,11 +48,11 @@ fun ExploreSummaryNoteCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(140.dp)
             ) {
                 AsyncImage(
-                    model = note.imageUrl,
-                    contentDescription = note.title,
+                    model = post.imageUrls.firstOrNull(),
+                    contentDescription = post.title,
                     placeholder = painterResource(id = SharedR.drawable.ic_sample_tea_1),
                     error = painterResource(id = SharedR.drawable.ic_sample_tea_1),
                     modifier = Modifier
@@ -62,23 +60,6 @@ fun ExploreSummaryNoteCard(
                         .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
                     contentScale = ContentScale.Crop
                 )
-
-                if (showHotBadge) {
-                    Surface(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(10.dp),
-                        shape = RoundedCornerShape(999.dp),
-                        color = colors.error
-                    ) {
-                        Text(
-                            text = hotLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.onPrimary,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
-                    }
-                }
             }
 
             Column(
@@ -87,21 +68,23 @@ fun ExploreSummaryNoteCard(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Text(
-                    text = note.title,
+                    text = post.title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = colors.onSurface,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = note.subtitle,
+                    text = post.content,
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -110,36 +93,36 @@ fun ExploreSummaryNoteCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    RatingStars(
-                        rating = note.rating.toInt(),
-                        size = 14.dp
-                    )
+                    if (post.rating != null && post.rating > 0) {
+                        RatingStars(
+                            rating = post.rating,
+                            size = 14.dp
+                        )
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Visibility,
+                                contentDescription = "Views",
+                                tint = colors.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = post.viewCount,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSurfaceVariant
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.weight(1f))
 
                     LeafyProfileImage(
-                        imageUrl = note.authorProfileUrl,
+                        imageUrl = post.authorProfileUrl,
                         size = 28.dp
                     )
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ExploreSummaryNoteCardPreview() {
-    LeafyTheme {
-        ExploreSummaryNoteCard(
-            note = ExploreNoteUi(
-                id = "sample_1",
-                title = "프리미엄 제주 녹차",
-                subtitle = "깔끔하고 상쾌한 맛의 일품",
-                imageUrl = null,
-                rating = 4.8f,
-                authorProfileUrl = null
-            )
-        )
     }
 }

@@ -176,11 +176,14 @@ class FirestorePostDataSourceImpl(
     // --- 2. 글 작성/수정/삭제 (CRUD) ---
     override suspend fun createPost(post: CommunityPost): DataResourceResult<Unit> {
         return try {
-            val newDocRef = postsCollection.document()
-            val generatedId = newDocRef.id
 
-            val dto = post.toDto().copy(id = generatedId)
-            newDocRef.set(dto).await()
+            val postId = post.id.ifEmpty { postsCollection.document().id }
+
+            val docRef = postsCollection.document(postId)
+
+            val dto = post.toDto().copy(id = postId)
+
+            docRef.set(dto).await()
 
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
@@ -237,6 +240,7 @@ class FirestorePostDataSourceImpl(
 
             val newCommentRef = commentsCollection.document()
             val generatedId = newCommentRef.id
+
             val commentDto = comment.toDto().copy(id = generatedId)
 
             firestore.runTransaction { transaction ->

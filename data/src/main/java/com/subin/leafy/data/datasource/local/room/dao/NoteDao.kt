@@ -16,7 +16,7 @@ interface NoteDao {
 
     // 2. 월별 조회 (범위 검색)
     // 캘린더에서 '2024년 1월'을 누르면 -> 1월 1일 0시 ~ 2월 1일 0시 사이의 데이터만 가져옴
-    @Query("SELECT * FROM notes WHERE createdAt >= :startTimestamp AND createdAt < :endTimestamp ORDER BY createdAt DESC")
+    @Query("SELECT * FROM notes WHERE date >= :startTimestamp AND date < :endTimestamp ORDER BY date DESC")
     fun getNotesByDateRange(startTimestamp: Long, endTimestamp: Long): Flow<List<NoteEntity>>
 
     // 3. 상세 조회

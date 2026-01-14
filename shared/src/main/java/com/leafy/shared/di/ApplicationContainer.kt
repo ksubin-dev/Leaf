@@ -15,7 +15,7 @@ interface ApplicationContainer {
     val userUseCases: UserUseCases
     val noteUseCases: NoteUseCases
     val timerUseCases: TimerUseCases
-    val communityUseCases: PostUseCases
+    val postUseCases: PostUseCases
 
     val imageUseCases: ImageUseCases
     val settingUseCases: SettingUseCases

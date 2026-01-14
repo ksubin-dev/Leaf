@@ -28,6 +28,8 @@ object FirestoreConstants {
     const val FIELD_IS_PUBLIC = "isPublic"
     const val FIELD_CREATED_AT = "createdAt"
 
+    const val FIELD_DATE = "date"
+
     // ==========================================
     // 3. 커뮤니티 (Post & Comment & Notification)
     // ==========================================

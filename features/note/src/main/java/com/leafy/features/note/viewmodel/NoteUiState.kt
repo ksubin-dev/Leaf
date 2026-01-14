@@ -8,6 +8,9 @@ import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.WeatherType
 
 data class NoteUiState(
+    val noteId: String? = null,
+    val originalCreatedAt: Long? = null,
+
     // --- 1. 차 정보 ---
     val teaName: String = "",
     val teaBrand: String = "",
@@ -45,17 +48,18 @@ data class NoteUiState(
     val purchaseAgain: Boolean? = null,
     val selectedImages: List<Uri> = emptyList(),
 
+    val isPublic: Boolean = false,
+
     // --- 6. 화면 상태 ---
     val isLoading: Boolean = false,
     val isSaveSuccess: Boolean = false,
     val errorMessage: String? = null
 ) {
-    // [유효성 검사]
     val isFormValid: Boolean
         get() = teaName.isNotBlank() &&
                 waterTemp.toIntOrNull() != null &&
                 brewTime.toIntOrNull() != null &&
                 leafAmount.toFloatOrNull() != null &&
                 waterAmount.toIntOrNull() != null &&
-                selectedImages.isNotEmpty() // 사진 필수
+                selectedImages.isNotEmpty()
 }

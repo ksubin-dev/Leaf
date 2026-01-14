@@ -7,13 +7,15 @@ class CreatePostUseCase(
     private val postRepository: PostRepository
 ) {
     suspend operator fun invoke(
+        postId: String,
         title: String,
         content: String,
         imageUrls: List<String>,
         teaType: String?,   // "GREEN", "BLACK" 등 (없으면 null)
         rating: Int?,       // 1~5 (없으면 null)
         tags: List<String>, // ["#힐링", "#홈카페"]
-        brewingSummary: String? // "95℃ · 3분"
+        brewingSummary: String?, // "95℃ · 3분"
+        originNoteId: String? = null
     ): DataResourceResult<Unit> {
 
         // 이미지 최소 1장
@@ -51,13 +53,15 @@ class CreatePostUseCase(
 
         // 5. 모든 검사 통과 시 레포지토리 호출
         return postRepository.createPost(
+            postId = postId,
             title = trimmedTitle,
             content = trimmedContent,
             imageUrls = imageUrls,
             teaType = teaType,
             rating = rating,
             tags = cleanedTags,
-            brewingSummary = brewingSummary
+            brewingSummary = brewingSummary,
+            originNoteId = originNoteId
         )
     }
 }

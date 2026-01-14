@@ -4,6 +4,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Date
 
 object LeafyTimeUtils {
 
@@ -51,21 +52,36 @@ object LeafyTimeUtils {
         return millisToDateString(timestamp)
     }
 
-    /**
-     * 초(Int) -> "1분 30초" 또는 "30초" 형식으로 변환
-     */
     fun formatSecondsToHangul(seconds: Int): String {
         val min = seconds / 60
         val sec = seconds % 60
         return if (min > 0) "${min}분 ${sec}초" else "${sec}초"
     }
 
-    /**
-     * 초(Int) -> "02:30" (디지털 타이머 형식) 변환
-     */
     fun formatSecondsToTimer(seconds: Int): String {
         val min = seconds / 60
         val sec = seconds % 60
         return "%02d:%02d".format(min, sec)
+    }
+
+    fun getRelativeTime(timestamp: Long): String {
+        val now = System.currentTimeMillis()
+        val diff = now - timestamp
+
+        val minute = 60 * 1000L
+        val hour = 60 * minute
+        val day = 24 * hour
+
+        return when {
+            diff < minute -> "방금 전"
+            diff < hour -> "${diff / minute}분 전"
+            diff < day -> "${diff / hour}시간 전"
+            diff < 7 * day -> "${diff / day}일 전"
+            else -> {
+                val date = Date(timestamp)
+                val format = java.text.SimpleDateFormat("yyyy.MM.dd", java.util.Locale.getDefault())
+                format.format(date)
+            }
+        }
     }
 }

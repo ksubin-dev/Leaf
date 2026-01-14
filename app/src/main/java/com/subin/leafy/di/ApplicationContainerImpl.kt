@@ -53,7 +53,7 @@ class ApplicationContainerImpl(
     private val remoteNoteDataSource = FirestoreNoteDataSourceImpl(firestore)
 
     // Post (Remote)
-    private val communityDataSource = FirestorePostDataSourceImpl(firestore)
+    private val postDataSource = FirestorePostDataSourceImpl(firestore)
 
     // User (Remote)
     private val userDataSource = FirestoreUserDataSourceImpl(firestore)
@@ -111,9 +111,9 @@ class ApplicationContainerImpl(
     )
 
     // Community (Post) Repository
-    private val communityRepository: PostRepository = PostRepositoryImpl(
+    private val postRepository: PostRepository = PostRepositoryImpl(
         authDataSource = authDataSource,
-        postDataSource = communityDataSource,
+        postDataSource = postDataSource,
         userDataSource = userDataSource,
         teaMasterDataSource = teaMasterDataSource
     )
@@ -169,7 +169,8 @@ class ApplicationContainerImpl(
         getFollowList = GetFollowListUseCase(userRepository),
         getUserBadges = GetUserBadgesUseCase(userRepository),
         searchUsers = SearchUsersUseCase(userRepository),
-        checkNickname = CheckProfileNicknameUseCase(userRepository)
+        checkNickname = CheckProfileNicknameUseCase(userRepository),
+        getFollowingIdsFlow = GetFollowingIdsFlowUseCase(userRepository)
     )
 
     // [C] Note UseCases
@@ -197,26 +198,26 @@ class ApplicationContainerImpl(
     )
 
     // [E] Community (Post) UseCases
-    override val communityUseCases = PostUseCases(
-        getWeeklyRanking = GetWeeklyRankingUseCase(communityRepository),
-        getPopularPosts = GetPopularPostsUseCase(communityRepository),
-        getMostBookmarkedPosts = GetMostBookmarkedPostsUseCase(communityRepository),
-        getFollowingFeed = GetFollowingFeedUseCase(communityRepository),
-        getPostDetail = GetPostDetailUseCase(communityRepository),
-        searchPosts = SearchPostsUseCase(communityRepository),
-        getRecommendedMasters = GetRecommendedMastersUseCase(communityRepository),
-        getUserPosts = GetUserPostsUseCase(communityRepository),
-        getLikedPosts = GetLikedPostsUseCase(communityRepository),
-        getBookmarkedPosts = GetBookmarkedPostsUseCase(communityRepository),
-        createPost = CreatePostUseCase(communityRepository),
-        updatePost = UpdatePostUseCase(communityRepository),
-        deletePost = DeletePostUseCase(communityRepository),
-        toggleLike = ToggleLikeUseCase(communityRepository),
-        toggleBookmark = ToggleBookmarkUseCase(communityRepository),
-        incrementViewCount = IncrementViewCountUseCase(communityRepository),
-        getComments = GetCommentsUseCase(communityRepository),
-        addComment = AddCommentUseCase(communityRepository),
-        deleteComment = DeleteCommentUseCase(communityRepository)
+    override val postUseCases = PostUseCases(
+        getWeeklyRanking = GetWeeklyRankingUseCase(postRepository),
+        getPopularPosts = GetPopularPostsUseCase(postRepository),
+        getMostBookmarkedPosts = GetMostBookmarkedPostsUseCase(postRepository),
+        getFollowingFeed = GetFollowingFeedUseCase(postRepository),
+        getPostDetail = GetPostDetailUseCase(postRepository),
+        searchPosts = SearchPostsUseCase(postRepository),
+        getRecommendedMasters = GetRecommendedMastersUseCase(postRepository),
+        getUserPosts = GetUserPostsUseCase(postRepository),
+        getLikedPosts = GetLikedPostsUseCase(postRepository),
+        getBookmarkedPosts = GetBookmarkedPostsUseCase(postRepository),
+        createPost = CreatePostUseCase(postRepository),
+        updatePost = UpdatePostUseCase(postRepository),
+        deletePost = DeletePostUseCase(postRepository),
+        toggleLike = ToggleLikeUseCase(postRepository),
+        toggleBookmark = ToggleBookmarkUseCase(postRepository),
+        incrementViewCount = IncrementViewCountUseCase(postRepository),
+        getComments = GetCommentsUseCase(postRepository),
+        addComment = AddCommentUseCase(postRepository),
+        deleteComment = DeleteCommentUseCase(postRepository)
     )
 
     // [F] Image UseCases

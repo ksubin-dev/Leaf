@@ -89,6 +89,8 @@ class NoteViewModel(
     fun updateStarRating(stars: Int) = _uiState.update { it.copy(starRating = stars) }
     fun updatePurchaseAgain(willBuy: Boolean) = _uiState.update { it.copy(purchaseAgain = willBuy) }
 
+    fun updateIsPublic(isPublic: Boolean) = _uiState.update { it.copy(isPublic = isPublic) }
+
     fun addImages(uris: List<Uri>) {
         _uiState.update {
             val newConstant = (it.selectedImages + uris).take(5)
@@ -109,7 +111,10 @@ class NoteViewModel(
 
     fun saveNote() {
         val state = uiState.value
-        if (!state.isFormValid) return
+        if (!state.isFormValid) {
+            _uiState.update { it.copy(errorMessage = "차 이름과 사진 등 필수 정보를 입력해주세요.") }
+            return
+        }
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
@@ -121,27 +126,47 @@ class NoteViewModel(
                 }
                 val userId = (userIdResult as DataResourceResult.Success).data
 
-                val uploadedImageUrls = state.selectedImages.map { uri ->
+                val targetId = state.noteId ?: UUID.randomUUID().toString()
+
+                val finalImageUrls = state.selectedImages.map { uri ->
                     async {
-                        val compressedPath = imageCompressor.compressImage(uri.toString())
-                        val uploadResult = imageUseCases.uploadImage(
-                            uri = compressedPath,
-                            folder = "notes/$userId/${System.currentTimeMillis()}"
-                        )
-                        if (uploadResult is DataResourceResult.Success) {
-                            uploadResult.data
+                        val uriString = uri.toString()
+                        if (uriString.startsWith("http")) {
+                            uriString
                         } else {
-                            throw Exception("이미지 업로드 실패")
+                            val compressedPath = imageCompressor.compressImage(uriString)
+                            val uploadResult = imageUseCases.uploadImage(
+                                uri = compressedPath,
+                                folder = "notes/$userId/$targetId"
+                            )
+                            if (uploadResult is DataResourceResult.Success) {
+                                uploadResult.data
+                            } else {
+                                throw Exception("이미지 업로드 실패")
+                            }
                         }
                     }
                 }.awaitAll()
 
-                val createdTime = LeafyTimeUtils.dateStringToTimestamp(state.selectedDateString)
+                val isEditMode = state.noteId != null
+                val currentSystemTime = System.currentTimeMillis()
+
+                val selectedBrewDate = LeafyTimeUtils.dateStringToTimestamp(state.selectedDateString)
+
+                val finalCreatedAt = if (isEditMode) {
+                    state.originalCreatedAt ?: currentSystemTime
+                } else {
+                    currentSystemTime
+                }
 
                 val newNote = BrewingNote(
-                    id = UUID.randomUUID().toString(),
+                    id = targetId,
                     ownerId = userId,
-                    isPublic = false,
+                    isPublic = state.isPublic,
+
+                    date = selectedBrewDate,
+                    createdAt = finalCreatedAt,
+
                     teaInfo = TeaInfo(
                         name = state.teaName,
                         brand = state.teaBrand,
@@ -176,18 +201,22 @@ class NoteViewModel(
                     metadata = NoteMetadata(
                         weather = state.selectedWeather,
                         mood = state.withPeople,
-                        imageUrls = uploadedImageUrls
+                        imageUrls = finalImageUrls
                     ),
                     stats = PostStatistics(0, 0, 0, 0),
                     myState = PostSocialState(false, false),
-                    createdAt = createdTime
                 )
 
-                val saveResult = noteUseCases.saveNote(newNote)
-                if (saveResult is DataResourceResult.Success) {
+                val result = if (isEditMode) {
+                    noteUseCases.updateNote(newNote)
+                } else {
+                    noteUseCases.saveNote(newNote)
+                }
+
+                if (result is DataResourceResult.Success) {
                     _uiState.update { it.copy(isLoading = false, isSaveSuccess = true) }
                 } else {
-                    throw (saveResult as DataResourceResult.Failure).exception
+                    throw (result as DataResourceResult.Failure).exception
                 }
 
             } catch (e: Exception) {
@@ -209,6 +238,13 @@ class NoteViewModel(
                 _uiState.update { state ->
                     state.copy(
                         isLoading = false,
+                        noteId = note.id,
+
+                        originalCreatedAt = note.createdAt,
+
+                        selectedDateString = LeafyTimeUtils.millisToDateString(note.date),
+
+                        isPublic = note.isPublic,
 
                         teaName = note.teaInfo.name,
                         teaBrand = note.teaInfo.brand,
@@ -234,7 +270,6 @@ class NoteViewModel(
                         finish = note.evaluation.finishLevel.toFloat(),
                         memo = note.evaluation.memo,
 
-                        selectedDateString = LeafyTimeUtils.millisToDateString(note.createdAt),
                         selectedWeather = note.metadata.weather,
                         withPeople = note.metadata.mood,
 

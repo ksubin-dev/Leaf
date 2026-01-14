@@ -15,8 +15,11 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
@@ -30,6 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.leafy.features.auth.navigation.AuthRouteGraph
 import com.leafy.features.auth.navigation.authNavGraph
+import com.leafy.features.community.navigation.communityNavGraph
 import com.leafy.features.home.navigation.homeNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
 import com.leafy.shared.di.ApplicationContainer
@@ -38,6 +42,7 @@ import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.ui.component.LeafyBottomAppBarItem
 import com.subin.leafy.ui.component.LeafyTimerButton
+import com.subin.leafy.ui.component.WriteSelectionBottomSheet
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +53,8 @@ fun EntryPointScreen(container: ApplicationContainer) {
         val navController = rememberNavController()
         val allItems = remember { LeafyBottomAppBarItem.fetchBottomAppBarItems() }
         val timerItem = allItems.first { it.destination == MainNavigationRoute.TimerTab }
+
+        var showWriteSheet by remember { mutableStateOf(false) }
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
@@ -73,6 +80,8 @@ fun EntryPointScreen(container: ApplicationContainer) {
                                 val isTimer = item.destination == MainNavigationRoute.TimerTab
                                 val selected = isDestinationSelected(currentDestination, item.destination)
 
+                                val isNoteTab = item.destination is MainNavigationRoute.NoteTab
+
                                 if (isTimer) {
                                     NavigationBarItem(
                                         selected = selected,
@@ -89,12 +98,16 @@ fun EntryPointScreen(container: ApplicationContainer) {
                                     NavigationBarItem(
                                         selected = selected,
                                         onClick = {
-                                            navController.navigate(item.destination) {
-                                                popUpTo(navController.graph.findStartDestination().id) {
-                                                    saveState = true
+                                            if (isNoteTab) {
+                                                showWriteSheet = true
+                                            } else {
+                                                navController.navigate(item.destination) {
+                                                    popUpTo(navController.graph.findStartDestination().id) {
+                                                        saveState = true
+                                                    }
+                                                    launchSingleTop = true
+                                                    restoreState = true
                                                 }
-                                                launchSingleTop = true
-                                                restoreState = true
                                             }
                                         },
                                         icon = {
@@ -135,6 +148,23 @@ fun EntryPointScreen(container: ApplicationContainer) {
                 }
             }
         ) { paddingValues ->
+            if (showWriteSheet) {
+                WriteSelectionBottomSheet(
+                    onDismissRequest = { showWriteSheet = false },
+                    onNoteClick = {
+                        showWriteSheet = false
+                        navController.navigate(MainNavigationRoute.NoteTab(noteId = null)) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onPostClick = {
+                        showWriteSheet = false
+                        navController.navigate(MainNavigationRoute.CommunityWrite)
+                    }
+                )
+            }
             NavHost(
                 navController = navController,
                 startDestination = AuthRouteGraph,
@@ -155,13 +185,13 @@ fun EntryPointScreen(container: ApplicationContainer) {
                 homeNavGraph(navController)
                 noteNavGraph(
                     navController = navController,
-                    container = container,
+                    container = container
 //                    onNavigateBack = { navController.popBackStack() },
 //                    onNavigateToEdit = { noteId ->
 //                        navController.navigate(MainNavigationRoute.NoteTab(initialRecords = null)) // 수정 모드 전환 로직 필요 시
 //                    }
                 )
-                //communityNavGraph(navController = navController, container = container)
+                communityNavGraph(navController = navController, container = container)
                 //timerNavGraph(navController = navController, container = container)
                 //mypageNavGraph(container = container, navController = navController)
             }

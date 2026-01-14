@@ -29,6 +29,12 @@ interface UserRepository {
     suspend fun getFollowers(userId: String): DataResourceResult<List<User>>
     suspend fun getFollowings(userId: String): DataResourceResult<List<User>>
 
+    // 실시간 ID 목록 (마이페이지 숫자 갱신용)
+    fun getFollowingIdsFlow(userId: String): Flow<DataResourceResult<List<String>>>
+
+    // (선택 사항: 팔로워 숫자도 실시간으로 보고 싶다면 추가, 당장은 Following이 더 급함)
+    // fun getFollowerIdsFlow(userId: String): Flow<DataResourceResult<List<String>>>
+
     // 6. 뱃지 목록 가져오기 (Library 데이터와 병합됨)
     suspend fun getUserBadges(userId: String): DataResourceResult<List<UserBadge>>
 

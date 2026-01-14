@@ -7,12 +7,14 @@ import com.leafy.features.note.viewmodel.NoteViewModel
 import com.leafy.shared.util.ImageCompressor
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
+import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 
 class NoteViewModelFactory(
     private val noteUseCases: NoteUseCases,
     private val userUseCases: UserUseCases,
     private val imageUseCases: ImageUseCases,
+    private val postUseCases: PostUseCases,
     private val imageCompressor: ImageCompressor
 ) : ViewModelProvider.Factory {
 
@@ -30,7 +32,8 @@ class NoteViewModelFactory(
             modelClass.isAssignableFrom(DetailViewModel::class.java) -> {
                 DetailViewModel(
                     noteUseCases = noteUseCases,
-                    userUseCases = userUseCases
+                    userUseCases = userUseCases,
+                    postUseCases = postUseCases
                 ) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

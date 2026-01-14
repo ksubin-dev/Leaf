@@ -218,6 +218,24 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
+    override fun getFollowingIdsFlow(userId: String): Flow<DataResourceResult<List<String>>> = callbackFlow {
+        val listener = usersCollection.document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(DataResourceResult.Failure(error))
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val ids = snapshot.get(FirestoreConstants.FIELD_FOLLOWING_IDS) as? List<String> ?: emptyList()
+                    trySend(DataResourceResult.Success(ids))
+                } else {
+                    trySend(DataResourceResult.Failure(Exception("User not found")))
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
     // --- 10. 뱃지 가져오기 ---
     override suspend fun getUserBadges(userId: String): DataResourceResult<List<UserBadge>> {
         return try {

@@ -3,15 +3,19 @@ package com.leafy.features.note.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,16 +25,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.viewmodel.DetailViewModel
-import com.leafy.features.note.viewmodel.DetailUiState
 import com.leafy.features.note.ui.components.NoteActionButtons
 import com.leafy.features.note.ui.components.NoteDetailHeader
+import com.leafy.features.note.viewmodel.DetailViewModel
+import com.leafy.features.note.viewmodel.DetailUiState
 import com.leafy.features.note.ui.sections.detail.BrewingRecipeSection
 import com.leafy.features.note.ui.sections.detail.FinalRatingSection
 import com.leafy.features.note.ui.sections.detail.PhotoDetailSection
 import com.leafy.features.note.ui.sections.detail.SensoryEvaluationSection
 import com.leafy.features.note.ui.sections.detail.TastingContextSection
 import com.leafy.features.note.ui.sections.detail.TeaInfoSection
+import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.*
 
@@ -69,6 +74,7 @@ fun NoteDetailScreen(
         onDeleteNote = viewModel::deleteNote,
         onToggleLike = viewModel::toggleLike,
         onToggleBookmark = viewModel::toggleBookmark,
+        onRetry = viewModel::retry,
         onShareClick = { /* TODO: 공유하기 구현 */ }
     )
 }
@@ -82,6 +88,7 @@ fun NoteDetailContent(
     onDeleteNote: () -> Unit,
     onToggleLike: () -> Unit,
     onToggleBookmark: () -> Unit,
+    onRetry: () -> Unit,
     onShareClick: () -> Unit
 ) {
     Scaffold(
@@ -93,9 +100,29 @@ fun NoteDetailContent(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (uiState.isLoading && uiState.note == null) {
+            if (uiState.note == null && uiState.errorMessage != null && !uiState.isLoading) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "노트를 불러오지 못했습니다.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(onClick = onRetry) {
+                        Text("다시 시도")
+                    }
+                    TextButton(onClick = onNavigateBack) {
+                        Text("뒤로 가기")
+                    }
+                }
+            }
+            else if (uiState.isLoading && uiState.note == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
+            }
+            else {
                 uiState.note?.let { note ->
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -134,7 +161,7 @@ fun NoteDetailContent(
 
                         item {
                             TastingContextSection(
-                                createdTimestamp = note.createdAt,
+                                createdTimestamp = note.date,
                                 metadata = note.metadata,
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
@@ -146,7 +173,7 @@ fun NoteDetailContent(
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
                         }
-                        
+
                         item {
                             PhotoDetailSection(
                                 imageUrls = note.metadata.imageUrls,
@@ -171,6 +198,10 @@ fun NoteDetailContent(
                         }
                     }
                 }
+            }
+
+            if (uiState.isLoading && uiState.note != null) {
+                LoadingOverlay(isLoading = true, message = "처리 중입니다...")
             }
         }
     }
@@ -221,7 +252,9 @@ fun NoteDetailScreenPreview() {
             ),
             stats = PostStatistics(10, 5, 0, 0),
             myState = PostSocialState(isLiked = true, isBookmarked = false),
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            isPublic = true,
+            date = System.currentTimeMillis()
         )
 
         NoteDetailContent(
@@ -238,7 +271,8 @@ fun NoteDetailScreenPreview() {
             onDeleteNote = {},
             onToggleLike = {},
             onToggleBookmark = {},
-            onShareClick = {}
+            onShareClick = {},
+            onRetry = {}
         )
     }
 }

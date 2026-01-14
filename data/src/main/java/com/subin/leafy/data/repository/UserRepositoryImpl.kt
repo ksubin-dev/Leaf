@@ -118,6 +118,10 @@ class UserRepositoryImpl(
         }
     }
 
+    override fun getFollowingIdsFlow(userId: String): Flow<DataResourceResult<List<String>>> {
+        return userDataSource.getFollowingIdsFlow(userId)
+    }
+
     // 5. 뱃지 가져오기 (Library 병합 로직)
     override suspend fun getUserBadges(userId: String): DataResourceResult<List<UserBadge>> {
         val remoteBadgesResult = userDataSource.getUserBadges(userId)
