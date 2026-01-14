@@ -1,90 +1,122 @@
 package com.subin.leafy.data.mapper
 
-import com.subin.leafy.data.model.dto.CommentDTO
-import com.subin.leafy.data.model.dto.CommunityPostDTO
-import com.subin.leafy.data.model.dto.TeaMasterDTO
-import com.subin.leafy.domain.model.Comment
-import com.subin.leafy.domain.model.CommunityPost
-import com.subin.leafy.domain.model.TeaMaster
-import java.util.Date
+import com.subin.leafy.data.model.dto.*
+import com.subin.leafy.domain.model.*
 
-/**
- * DTO -> Domain 모델 변환
- */
+// =================================================================
+// 1. DTO -> Domain (서버에서 가져올 때)
+// =================================================================
 
-fun CommunityPostDTO.toDomain() = CommunityPost(
-    id = this._id,
-    authorId = this.authorId,
-    authorName = this.authorName,
-    authorProfileUrl = this.authorProfileUrl,
-    title = this.title,
-    subtitle = this.subtitle,
-    content = this.content,
-    teaTag = this.teaTag,
-    imageUrl = this.imageUrl ?: this.liquorUri ?: this.dryLeafUri ?: this.teawareUri,
-    rating = this.rating,
-    metaInfo = this.metaInfo,
-    brewingSteps = this.brewingSteps,
-    likeCount = this.likeCount,
-    bookmarkCount = this.savedCount,
-    commentCount = this.commentCount,
-    viewCount = this.viewCount,
-    isLiked = this.isLiked,
-    isBookmarked = this.isSaved,
-    createdAt = this.createdAt
-)
+fun CommunityPostDto.toDomain(): CommunityPost {
+    return CommunityPost(
+        id = this.id,
+        author = this.author.toDomain(),
+        imageUrls = this.imageUrls,
+        title = this.title,
+        content = this.content,
+        originNoteId = this.originNoteId,
+        teaType = this.teaType?.let { runCatching { TeaType.valueOf(it) }.getOrNull() },
+        rating = this.rating,
+        tags = this.tags,
+        brewingSummary = this.brewingSummary,
 
-fun TeaMasterDTO.toDomain() = TeaMaster(
-    id = this.id,
-    name = this.name,
-    title = this.title,
-    profileImageUrl = this.profileImageUrl,
-    isFollowing = this.isFollowing
-)
+        stats = this.stats.toDomain(),
 
+        // 내 상태는 Repository에서 별도 로직으로 채워넣으므로 초기값은 false
+        myState = PostSocialState(isLiked = false, isBookmarked = false),
 
-
-fun CommentDTO.toDomain(): Comment {
-    return Comment(
-        id = id,
-        postId = postId,
-        authorId = authorId,
-        authorName = authorName,
-        authorProfileUrl = authorProfileUrl,
-        content = content,
-        createdAt = createdAt ?: Date(),
-        isMine = false
+        topComment = this.topComment?.toDomain(),
+        createdAt = this.createdAt
     )
 }
 
-/**
- * Domain 모델 -> Firestore용 Map 변환 (CUD 작업용)
- * Firestore 서버에 데이터를 저장할 때 사용할 키-값 쌍 정의
- */
-fun CommunityPost.toFirestoreMap(): Map<String, Any?> = mapOf(
-    "_id" to this.id,
-    "authorId" to this.authorId,
-    "authorName" to this.authorName,
-    "authorProfileUrl" to this.authorProfileUrl,
-    "title" to this.title,
-    "subtitle" to this.subtitle,
-    "content" to this.content,
-    "teaTag" to this.teaTag,
-    "imageUrl" to this.imageUrl,
-    "rating" to this.rating,
-    "metaInfo" to this.metaInfo,
-    "brewingSteps" to this.brewingSteps,
-    "likeCount" to this.likeCount,
-    "bookmarkCount" to this.bookmarkCount,
-    "viewCount" to this.viewCount,
-    "isLiked" to this.isLiked,
-    "isBookmarked" to this.isBookmarked,
-    "createdAt" to this.createdAt
+fun PostAuthorDto.toDomain() = PostAuthor(
+    id = this.id,
+    nickname = this.nickname,
+    profileImageUrl = this.profileImageUrl,
+    isFollowing = false
 )
 
-/**
- * 리스트 변환 유틸리티
- */
-fun List<CommunityPostDTO>.toDomainList() = this.map { it.toDomain() }
-fun List<TeaMasterDTO>.toDomainMasterList() = this.map { it.toDomain() }
-fun List<CommentDTO>.toDomainCommentList() = this.map { it.toDomain() }
+fun PostStatisticsDto.toDomain() = PostStatistics(
+    likeCount = this.likeCount,
+    bookmarkCount = this.bookmarkCount,
+    commentCount = this.commentCount,
+    viewCount = this.viewCount
+)
+
+fun CommentDto.toDomain() = Comment(
+    id = this.id,
+    postId = this.postId,
+    author = CommentAuthor(
+        id = this.author.id,
+        nickname = this.author.nickname,
+        profileImageUrl = this.author.profileImageUrl
+    ),
+    content = this.content,
+    createdAt = this.createdAt,
+    isMine = false
+)
+
+fun CommunityPost.toRankingItem(rank: Int): RankingItem {
+    return RankingItem(
+        rank = rank,
+        postId = this.id,
+        teaName = this.title,
+        teaType = this.teaType ?: TeaType.ETC,
+        rating = this.rating,
+        viewCount = this.stats.viewCount,
+        imageUrl = this.imageUrls.firstOrNull()
+    )
+}
+
+// =================================================================
+// 2. Domain -> DTO (서버에 업로드할 때)
+// =================================================================
+
+fun CommunityPost.toDto() = CommunityPostDto(
+    id = this.id,
+    author = this.author.toDto(),
+    title = this.title,
+    content = this.content,
+    imageUrls = this.imageUrls,
+    originNoteId = this.originNoteId,
+    teaType = this.teaType?.name,
+    rating = this.rating,
+    tags = this.tags,
+    brewingSummary = this.brewingSummary,
+    stats = this.stats.toDto(),
+    topComment = this.topComment?.toDto(),
+    createdAt = this.createdAt
+)
+
+fun PostAuthor.toDto() = PostAuthorDto(
+    id = this.id,
+    nickname = this.nickname,
+    profileImageUrl = this.profileImageUrl
+)
+
+fun PostStatistics.toDto() = PostStatisticsDto(
+    likeCount = this.likeCount,
+    bookmarkCount = this.bookmarkCount,
+    commentCount = this.commentCount,
+    viewCount = this.viewCount
+)
+
+fun Comment.toDto() = CommentDto(
+    id = this.id,
+    postId = this.postId,
+    author = PostAuthorDto(
+        id = this.author.id,
+        nickname = this.author.nickname,
+        profileImageUrl = this.author.profileImageUrl
+    ),
+    content = this.content,
+    createdAt = this.createdAt
+)
+
+// =================================================================
+// 3. List 변환 헬퍼 (Extension Functions)
+// =================================================================
+
+fun List<CommunityPostDto>.toPostDomainList() = this.map { it.toDomain() }
+fun List<CommentDto>.toCommentDomainList() = this.map { it.toDomain() }

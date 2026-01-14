@@ -3,34 +3,47 @@ package com.subin.leafy.domain.usecase.note
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.repository.NoteRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
-class UpdateNoteUseCase(private val repository: NoteRepository) {
+class UpdateNoteUseCase(
+    private val noteRepository: NoteRepository
+) {
+    suspend operator fun invoke(note: BrewingNote): DataResourceResult<Unit> {
 
-    operator fun invoke(
-        currentUserId: String,
-        note: BrewingNote,
-        localImageUris: Map<String, String?>
-    ): Flow<DataResourceResult<Unit>> {
-
-        // 1. 본인 확인 권한 검사
-        if (note.ownerId != currentUserId) {
-            return flowOf(DataResourceResult.Failure(Exception("본인의 게시물만 수정할 수 있습니다.")))
+        // 1. 이미지 검사 (최소 1장)
+        if (note.metadata.imageUrls.isEmpty()) {
+            return DataResourceResult.Failure(Exception("노트 이미지를 최소 1장 등록해주세요."))
         }
 
-        // 2. 차 이름 입력 검사
-        if (note.teaInfo.name.isBlank()) {
-            return flowOf(DataResourceResult.Failure(Exception("차 이름은 필수 항목입니다.")))
+        // 2. 차 이름 검사
+        val rawTeaName = note.teaInfo.name.trim()
+        if (rawTeaName.isBlank()) {
+            return DataResourceResult.Failure(Exception("차 이름을 입력해주세요."))
         }
 
-        // 3. 사진 유무 검사
-        val hasPhoto = localImageUris.values.any { !it.isNullOrBlank() }
-        if (!hasPhoto) {
-            return flowOf(DataResourceResult.Failure(Exception("최소 한 장의 사진이 필요합니다.")))
+        if (rawTeaName.length > 20) {
+            return DataResourceResult.Failure(Exception("차 이름은 20자 이내로 입력해주세요."))
         }
 
-        // 4. 레포지토리 호출
-        return repository.update(note, localImageUris)
+        // 3. 레시피 기본 검사 (물 온도, 시간)
+        if (note.recipe.waterTemp !in 0..100) {
+            return DataResourceResult.Failure(Exception("물 온도는 0~100℃ 사이여야 합니다."))
+        }
+        if (note.recipe.brewTimeSeconds <= 0) {
+            return DataResourceResult.Failure(Exception("우림 시간은 0초보다 커야 합니다."))
+        }
+
+        // 4. 레시피 핵심 데이터 검사 (물 양, 찻잎 양)
+        if (note.recipe.waterAmount <= 0) {
+            return DataResourceResult.Failure(Exception("물 양은 0ml보다 커야 합니다."))
+        }
+        if (note.recipe.leafAmount <= 0f) {
+            return DataResourceResult.Failure(Exception("찻잎 양은 0g보다 커야 합니다."))
+        }
+
+        // 5. 정제된 데이터 생성
+        val validTeaInfo = note.teaInfo.copy(name = rawTeaName)
+        val validNote = note.copy(teaInfo = validTeaInfo)
+
+        return noteRepository.updateNote(validNote)
     }
 }

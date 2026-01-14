@@ -14,14 +14,12 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavDestination
@@ -32,16 +30,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.leafy.features.auth.navigation.AuthRouteGraph
 import com.leafy.features.auth.navigation.authNavGraph
-import com.leafy.features.community.navigation.communityNavGraph
 import com.leafy.features.home.navigation.homeNavGraph
-import com.leafy.features.mypage.navigation.mypageNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
-import com.leafy.features.timer.navigation.timerNavGraph
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.LeafyNavigation
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.subin.leafy.di.ApplicationContainerImpl
 import com.subin.leafy.ui.component.LeafyBottomAppBarItem
 import com.subin.leafy.ui.component.LeafyTimerButton
 
@@ -162,14 +156,14 @@ fun EntryPointScreen(container: ApplicationContainer) {
                 noteNavGraph(
                     navController = navController,
                     container = container,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToEdit = { noteId ->
-                        navController.navigate(MainNavigationRoute.NoteTab(initialRecords = null)) // 수정 모드 전환 로직 필요 시
-                    }
+//                    onNavigateBack = { navController.popBackStack() },
+//                    onNavigateToEdit = { noteId ->
+//                        navController.navigate(MainNavigationRoute.NoteTab(initialRecords = null)) // 수정 모드 전환 로직 필요 시
+//                    }
                 )
-                communityNavGraph(navController = navController, container = container)
-                timerNavGraph(navController = navController, container = container)
-                mypageNavGraph(container = container, navController = navController)
+                //communityNavGraph(navController = navController, container = container)
+                //timerNavGraph(navController = navController, container = container)
+                //mypageNavGraph(container = container, navController = navController)
             }
         }
     }
@@ -188,11 +182,13 @@ private fun isDestinationSelected(
         ?.any { it.route == targetRoute } == true
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun EntryPointScreenPreview() {
-    LeafyTheme {
-        val dummyContainer = ApplicationContainerImpl()
-        EntryPointScreen(container = dummyContainer)
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun EntryPointScreenPreview() {
+//    LeafyTheme {
+//        val dummyContainer = ApplicationContainerImpl(
+//            context = TODO()
+//        )
+//        EntryPointScreen(container = dummyContainer)
+//    }
+//}

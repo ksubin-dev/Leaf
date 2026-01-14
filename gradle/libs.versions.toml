@@ -1,7 +1,10 @@
 [versions]
 agp = "8.13.0"
-kotlin = "2.2.21"
+kotlin = "2.2.0"
 coreKtx = "1.17.0"
+
+# ksp
+ksp = "2.2.0-2.0.2"
 
 #test tools
 junit = "4.13.2"
@@ -21,9 +24,18 @@ coil = "2.7.0"
 kotlinxSerializationJson = "1.9.0"
 
 firebaseBom = "34.7.0"
-firebaseFirestoreKtx = "25.1.4"
 googleGmsServices = "4.4.4"
 coreSplashscreen = "1.2.0"
+
+#Room
+room = "2.7.2"
+gson = "2.10.1"
+
+#Datastore
+datastore = "1.0.0"
+
+#MPAndroidChart
+mpAndroidChart = "v3.1.0"
 
 foundationLayout = "1.9.4"
 ui = "1.9.5"
@@ -33,6 +45,7 @@ lifecycleViewmodelKtx = "2.10.0"
 firebaseFirestoreKtxVersion = "26.0.2"
 material3 = "1.4.0"
 foundationVersion = "1.10.0"
+volley = "1.2.1"
 
 
 
@@ -64,6 +77,7 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
+
 #Firebase
 # Firebase BoM
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
@@ -71,9 +85,24 @@ firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtxVersion" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
+
+#Room-DB
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+
+#Gson
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+
+#Datastore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+#MPAndroidChart
+mpAndroidChart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpAndroidChart" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+
 
 
 [plugins]
@@ -83,6 +112,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 android-library = { id = "com.android.library", version.ref = "agp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
+google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin"}
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsServices" }
 
@@ -101,4 +131,8 @@ firebase-libraries = [
     "firebase-firestore",
     "firebase-auth",
     "firebase-storage"
+]
+room-libraries = [
+    "androidx-room-ktx",
+    "androidx-room-runtime"
 ]

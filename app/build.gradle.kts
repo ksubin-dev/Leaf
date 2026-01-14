@@ -43,6 +43,9 @@ android {
 kotlin{
     jvmToolchain(21)
 }
+configurations.all {
+    exclude(group = "com.intellij", module = "annotations")
+}
 
 dependencies {
     implementation(project(":shared"))
@@ -70,6 +73,9 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.androidx.core.splashscreen)
 
+    implementation(libs.bundles.room.libraries)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

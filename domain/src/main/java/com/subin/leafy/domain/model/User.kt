@@ -1,19 +1,34 @@
 package com.subin.leafy.domain.model
 
+// 유저 도메인 모델
 data class User(
     val id: String,
     val nickname: String,
     val profileImageUrl: String?,
     val bio: String?,
-    val followerCount: Int,
-    val followingCount: Int,
+    val masterTitle: String? = null,
+
+    val socialStats: UserSocialStatistics,
+    val relationState: UserRelationState,
+
     val followingIds: List<String>,
     val likedPostIds: List<String>,
-    val savedPostIds: List<String>,
+    val bookmarkedPostIds: List<String>,
     val createdAt: Long
 )
 
-data class UserStats(
+// 유저용 소셜 수치
+data class UserSocialStatistics(
+    val followerCount: Int = 0,
+    val followingCount: Int = 0
+)
+
+// 관계 상태
+data class UserRelationState(
+    val isFollowing: Boolean = false
+)
+
+data class UserAnalysis(
     // 1. 기본 활동 데이터
     val totalBrewingCount: Int,       // 총 시음 횟수
     val currentStreakDays: Int,       // 연속 기록 일수
@@ -35,7 +50,4 @@ data class UserStats(
     val favoriteTeaType: String?,     // 가장 많이 마신 차 종류 (예: "우롱차")
     val teaTypeDistribution: Map<String, Double>, // 차 종류별 비율 (차트용)
 
-    // 5. 보관함 상태
-    val myTeaChestCount: Int,         // 내 차 보관함 개수
-    val wishlistCount: Int            // 위시리스트 개수
 )

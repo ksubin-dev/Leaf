@@ -12,7 +12,7 @@ import com.subin.leafy.ui.screen.EntryPointScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val container = ApplicationContainerImpl()
+        val container = (application as LeafyApplication).provideAppContainer()
 
         enableEdgeToEdge()
         setContent {
