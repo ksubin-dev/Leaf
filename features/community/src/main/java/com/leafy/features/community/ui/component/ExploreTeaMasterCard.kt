@@ -1,26 +1,19 @@
 package com.leafy.features.community.ui.component
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.R as SharedR
+import com.leafy.shared.ui.component.LeafyProfileImage
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
@@ -42,30 +35,19 @@ fun ExploreTeaMasterCard(
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 프로필 이미지
-        Image(
-            painter = painterResource(id = master.profileImageRes),
-            contentDescription = master.name,
-            modifier = Modifier
-                .size(52.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
+        LeafyProfileImage(
+            imageUrl = master.profileImageUrl,
+            size = 52.dp
         )
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // 이름 + 타이틀
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = master.name,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.onSurface
             )
-            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = master.title,
                 style = MaterialTheme.typography.bodySmall,
@@ -76,29 +58,25 @@ fun ExploreTeaMasterCard(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // 팔로우 / 팔로잉 버튼 디자인 계산
         val buttonText = if (isFollowing) "팔로잉" else "+ 팔로우"
-        val containerColor = if (isFollowing) colors.primary.copy(alpha = 0.08f) else colors.background
-        val contentColor = colors.primary
-        val borderColor = if (isFollowing) colors.primary.copy(alpha = 0.4f) else colors.outlineVariant
+        val containerColor = if (isFollowing) colors.primary.copy(alpha = 0.08f) else colors.primary
+        val contentColor = if (isFollowing) colors.primary else colors.onPrimary
+        val border = if (isFollowing) BorderStroke(1.dp, colors.primary.copy(alpha = 0.4f)) else null
 
-        OutlinedButton(
-            onClick = {
-                onFollowToggle(!isFollowing)
-            },
+        Button(
+            onClick = { onFollowToggle(!isFollowing) },
             shape = RoundedCornerShape(999.dp),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
+            colors = ButtonDefaults.buttonColors(
                 containerColor = containerColor,
                 contentColor = contentColor
             ),
-            border = BorderStroke(1.dp, borderColor)
+            border = border,
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
             Text(
                 text = buttonText,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Medium
-                )
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
             )
         }
     }
@@ -111,9 +89,10 @@ private fun ExploreTeaMasterCardPreview() {
         Box(modifier = Modifier.padding(16.dp)) {
             ExploreTeaMasterCard(
                 master = ExploreTeaMasterUi(
+                    id = "1",
                     name = "그린티 마니아",
                     title = "녹차 & 블렌딩 전문가",
-                    profileImageRes = SharedR.drawable.ic_profile_1,
+                    profileImageUrl = null,
                     isFollowing = false
                 )
             )

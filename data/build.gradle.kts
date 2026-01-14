@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.google.ksp)
 }
 
 android {
@@ -10,8 +11,8 @@ android {
     }
 
     defaultConfig {
-        minSdk = 24
 
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -29,7 +30,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
 
-        isCoreLibraryDesugaringEnabled = true
     }
 
 }
@@ -43,7 +43,15 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
 
-    coreLibraryDesugaring(libs.android.desugarJdkLibs)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.bundles.firebase.libraries)
+
+    implementation(libs.bundles.room.libraries)
+    implementation(libs.gson)
+    implementation(libs.androidx.datastore.preferences)
+
+    ksp(libs.androidx.room.compiler)
+
     implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

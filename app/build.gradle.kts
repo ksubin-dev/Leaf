@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -12,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.subin.leafy"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -32,8 +33,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-
-        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
@@ -44,11 +43,15 @@ android {
 kotlin{
     jvmToolchain(21)
 }
+configurations.all {
+    exclude(group = "com.intellij", module = "annotations")
+}
 
 dependencies {
     implementation(project(":shared"))
     implementation(project(":domain"))
     implementation(project(":data"))
+    implementation(project(":features:auth"))
     implementation(project(":features:note"))
     implementation(project(":features:home"))
     implementation(project(":features:community"))
@@ -63,11 +66,18 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.bundles.firebase.libraries)
+
+    implementation(libs.firebase.auth)
     implementation(libs.androidx.core.splashscreen)
 
+    implementation(libs.bundles.room.libraries)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
-    coreLibraryDesugaring(libs.android.desugarJdkLibs)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

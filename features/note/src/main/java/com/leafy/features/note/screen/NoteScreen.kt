@@ -1,98 +1,172 @@
 package com.leafy.features.note.screen
 
-import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.leafy.features.note.ui.NoteUiEffect
-import com.leafy.features.note.ui.NoteUiState
-import com.leafy.features.note.ui.NoteViewModel
-import com.leafy.features.note.ui.factory.NoteViewModelFactory
-import com.leafy.features.note.ui.sections.*
-import com.leafy.shared.di.ApplicationContainerProvider
-import com.subin.leafy.domain.model.BodyType
-import com.subin.leafy.domain.model.WeatherType
-import com.leafy.shared.R as SharedR
+import com.leafy.shared.R
+import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.BodyType
+import com.subin.leafy.domain.model.FlavorTag
+import com.subin.leafy.domain.model.TeaType
+import com.subin.leafy.domain.model.WeatherType
+import android.net.Uri
+import androidx.compose.foundation.layout.size
+import com.leafy.features.note.ui.sections.create.BasicInfoSection
+import com.leafy.features.note.ui.sections.create.BrewingRecipeSection
+import com.leafy.features.note.ui.sections.create.FinalRatingSection
+import com.leafy.features.note.ui.sections.create.PhotosSection
+import com.leafy.features.note.ui.sections.create.SensoryEvalSection
+import com.leafy.features.note.ui.sections.create.TastingContextSection
+import com.leafy.features.note.viewmodel.NoteUiState
+import com.leafy.features.note.viewmodel.NoteViewModel
 
+// ------------------------------------------------------------------------
+// 1. Stateful Screen (ViewModel 연결용)
+// ------------------------------------------------------------------------
 @Composable
 fun NoteScreen(
     viewModel: NoteViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onSaveSuccess: () -> Unit,
+    onNavigateToTimer: () -> Unit
 ) {
-    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val isProcessing by viewModel.isProcessing.collectAsStateWithLifecycle()
+    // Side Effects
+    LaunchedEffect(uiState.isSaveSuccess) {
+        if (uiState.isSaveSuccess) onSaveSuccess()
+    }
 
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is NoteUiEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
-                }
-                is NoteUiEffect.NavigateBack -> {
-                    onNavigateBack()
-                }
-            }
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.userMessageShown()
         }
     }
 
+    // UI 그리기
     NoteContent(
         uiState = uiState,
-        isProcessing = isProcessing,
+        snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
-        onSave = { viewModel.saveNote() },
-        onUpdateTeaInfo = { name, brand, type, style, processing, grade ->
-            viewModel.updateTeaInfo(name, brand, type, style, processing, grade)
-        },
-        onUpdateContext = { dateTime, weather, withPeople ->
-            viewModel.updateContext(dateTime, weather, withPeople)
-        },
-        onUpdateCondition = { temp, amount, time, count, teaware ->
-            viewModel.updateCondition(temp, amount, time, count, teaware)
-        },
-        onUpdateSensory = { tags, sweet, sour, bitter, salt, umami, body, finish, memo ->
-            viewModel.updateSensory(tags, sweet, sour, bitter, salt, umami, body, finish, memo)
-        },
-        onUpdateRating = { rating, purchase ->
-            viewModel.updateRating(rating, purchase)
-        }
+        onSave = viewModel::saveNote,
+        onNavigateToTimer = onNavigateToTimer,
+
+        // 이미지
+        onAddImages = viewModel::addImages,
+        onRemoveImage = viewModel::removeImage,
+
+        // 기본 정보
+        onTeaNameChange = viewModel::updateTeaName,
+        onTeaBrandChange = viewModel::updateTeaBrand,
+        onTeaTypeChange = viewModel::updateTeaType,
+        onTeaOriginChange = viewModel::updateTeaOrigin,
+        onTeaLeafStyleChange = viewModel::updateTeaLeafStyle,
+        onTeaGradeChange = viewModel::updateTeaGrade,
+
+        // 환경
+        onDateTimeChange = viewModel::updateDateTime,
+        onWeatherSelected = viewModel::updateWeather,
+        onWithPeopleChange = viewModel::updateWithPeople,
+
+        // 레시피
+        onWaterTempChange = viewModel::updateWaterTemp,
+        onLeafAmountChange = viewModel::updateLeafAmount,
+        onWaterAmountChange = viewModel::updateWaterAmount,
+        onBrewTimeChange = viewModel::updateBrewTime,
+        onInfusionCountChange = viewModel::updateInfusionCount,
+        onTeawareChange = viewModel::updateTeaware,
+
+        // 감각 평가
+        onFlavorTagToggle = viewModel::updateFlavorTag,
+        onSweetnessChange = viewModel::updateSweetness,
+        onSournessChange = viewModel::updateSourness,
+        onBitternessChange = viewModel::updateBitterness,
+        onAstringencyChange = viewModel::updateAstringency,
+        onUmamiChange = viewModel::updateUmami,
+        onBodyChange = viewModel::updateBodyType,
+        onFinishChange = viewModel::updateFinish,
+        onMemoChange = viewModel::updateMemo,
+
+        // 최종 평가
+        onRatingChange = viewModel::updateStarRating,
+        onPurchaseAgainChange = viewModel::updatePurchaseAgain
     )
 }
 
+// ------------------------------------------------------------------------
+// 2. Stateless Content
+// ------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NoteContent(
+fun NoteContent(
     uiState: NoteUiState,
-    isProcessing: Boolean,
+    snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onSave: () -> Unit,
-    onUpdateTeaInfo: (String?, String?, String?, String?, String?, String?) -> Unit,
-    onUpdateContext: (String?, WeatherType?, String?) -> Unit,
-    onUpdateCondition: (String?, String?, String?, String?, String?) -> Unit,
-    onUpdateSensory: (Set<String>?, Int?, Int?, Int?, Int?, Int?, BodyType?, Float?, String?) -> Unit,
-    onUpdateRating: (Int?, Boolean?) -> Unit
-) {
-    val colors = MaterialTheme.colorScheme
+    onNavigateToTimer: () -> Unit,
 
+    // Callbacks
+    onAddImages: (List<Uri>) -> Unit,
+    onRemoveImage: (Uri) -> Unit,
+    onTeaNameChange: (String) -> Unit,
+    onTeaBrandChange: (String) -> Unit,
+    onTeaTypeChange: (TeaType) -> Unit,
+    onTeaOriginChange: (String) -> Unit,
+    onTeaLeafStyleChange: (String) -> Unit,
+    onTeaGradeChange: (String) -> Unit,
+    onDateTimeChange: (String) -> Unit,
+    onWeatherSelected: (WeatherType) -> Unit,
+    onWithPeopleChange: (String) -> Unit,
+    onWaterTempChange: (String) -> Unit,
+    onLeafAmountChange: (String) -> Unit,
+    onWaterAmountChange: (String) -> Unit,
+    onBrewTimeChange: (String) -> Unit,
+    onInfusionCountChange: (String) -> Unit,
+    onTeawareChange: (String) -> Unit,
+    onFlavorTagToggle: (FlavorTag) -> Unit,
+    onSweetnessChange: (Float) -> Unit,
+    onSournessChange: (Float) -> Unit,
+    onBitternessChange: (Float) -> Unit,
+    onAstringencyChange: (Float) -> Unit,
+    onUmamiChange: (Float) -> Unit,
+    onBodyChange: (BodyType) -> Unit,
+    onFinishChange: (Float) -> Unit,
+    onMemoChange: (String) -> Unit,
+    onRatingChange: (Int) -> Unit,
+    onPurchaseAgainChange: (Boolean) -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "New Brewing Note",
+                        text = "새로운 차 기록",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -100,145 +174,184 @@ private fun NoteContent(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = SharedR.drawable.ic_back),
-                            contentDescription = "Back",
-                            modifier = Modifier.height(20.dp)
+                            painter = painterResource(id = R.drawable.ic_back),
+                            contentDescription = "뒤로가기"
                         )
                     }
                 },
                 actions = {
                     TextButton(
                         onClick = onSave,
-                        enabled = uiState.canSave && !isProcessing
+                        enabled = uiState.isFormValid && !uiState.isLoading
                     ) {
-                        if (isProcessing) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(end = 8.dp).size(18.dp),
+                                strokeWidth = 2.dp
+                            )
                         } else {
                             Text(
-                                text = "Save",
+                                text = "저장",
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.Bold,
+                                color = if (uiState.isFormValid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                             )
                         }
                     }
                 }
             )
-        }
-    ) { innerPadding ->
-        Column(
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.background)
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 20.dp)
+                .padding(paddingValues)
         ) {
-            PhotosSection(
-                onClickDryLeaf = {}, onClickTeaLiquor = {},
-                onClickTeaware = {}, onClickAdditional = {}
-            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(32.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 24.dp)
+            ) {
+                // [1] 사진
+                item {
+                    PhotosSection(
+                        selectedImages = uiState.selectedImages,
+                        onAddImages = onAddImages,
+                        onRemoveImage = onRemoveImage
+                    )
+                }
+                // [2] 기본 정보
+                item {
+                    BasicInfoSection(
+                        teaName = uiState.teaName,
+                        onTeaNameChange = onTeaNameChange,
+                        teaBrand = uiState.teaBrand,
+                        onTeaBrandChange = onTeaBrandChange,
+                        teaType = uiState.teaType,
+                        onTeaTypeChange = onTeaTypeChange,
+                        teaOrigin = uiState.teaOrigin,
+                        onTeaOriginChange = onTeaOriginChange,
+                        teaLeafStyle = uiState.teaLeafStyle,
+                        onTeaLeafStyleChange = onTeaLeafStyleChange,
+                        teaGrade = uiState.teaGrade,
+                        onTeaGradeChange = onTeaGradeChange
+                    )
+                }
+                // [3] 환경
+                item {
+                    TastingContextSection(
+                        dateTime = uiState.selectedDateString,
+                        onDateTimeChange = onDateTimeChange,
+                        selectedWeather = uiState.selectedWeather,
+                        onWeatherSelected = onWeatherSelected,
+                        withPeople = uiState.withPeople,
+                        onWithPeopleChange = onWithPeopleChange
+                    )
+                }
+                // [4] 레시피
+                item {
+                    BrewingRecipeSection(
+                        waterTemp = uiState.waterTemp,
+                        onWaterTempChange = onWaterTempChange,
+                        leafAmount = uiState.leafAmount,
+                        onLeafAmountChange = onLeafAmountChange,
+                        waterAmount = uiState.waterAmount,
+                        onWaterAmountChange = onWaterAmountChange,
+                        brewTime = uiState.brewTime,
+                        onBrewTimeChange = onBrewTimeChange,
+                        infusionCount = uiState.infusionCount,
+                        onInfusionCountChange = onInfusionCountChange,
+                        teaware = uiState.teaware,
+                        onTeawareChange = onTeawareChange,
+                        onTimerClick = onNavigateToTimer
+                    )
+                }
+                // [5] 감각 평가
+                item {
+                    SensoryEvalSection(
+                        flavorTags = uiState.flavorTags,
+                        onFlavorTagToggle = onFlavorTagToggle,
+                        sweetness = uiState.sweetness,
+                        onSweetnessChange = onSweetnessChange,
+                        sourness = uiState.sourness,
+                        onSournessChange = onSournessChange,
+                        bitterness = uiState.bitterness,
+                        onBitternessChange = onBitternessChange,
+                        astringency = uiState.astringency,
+                        onAstringencyChange = onAstringencyChange,
+                        umami = uiState.umami,
+                        onUmamiChange = onUmamiChange,
+                        body = uiState.body,
+                        onBodyChange = onBodyChange,
+                        finish = uiState.finish,
+                        onFinishChange = onFinishChange,
+                        memo = uiState.memo,
+                        onMemoChange = onMemoChange
+                    )
+                }
+                // [6] 최종 평가
+                item {
+                    FinalRatingSection(
+                        rating = uiState.starRating,
+                        purchaseAgain = uiState.purchaseAgain,
+                        onRatingChange = onRatingChange,
+                        onPurchaseAgainChange = onPurchaseAgainChange
+                    )
+                }
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            BasicTeaInformationSection(
-                teaName = uiState.teaName,
-                onTeaNameChange = { onUpdateTeaInfo(it, null, null, null, null, null) },
-                brandName = uiState.brandName,
-                onBrandNameChange = { onUpdateTeaInfo(null, it, null, null, null, null) },
-                teaType = uiState.teaType,
-                onTeaTypeChange = { onUpdateTeaInfo(null, null, it, null, null, null) },
-                leafStyle = uiState.leafStyle,
-                onLeafStyleChange = { onUpdateTeaInfo(null, null, null, it, null, null) },
-                leafProcessing = uiState.leafProcessing,
-                onLeafProcessingChange = { onUpdateTeaInfo(null, null, null, null, it, null) },
-                teaGrade = uiState.teaGrade,
-                onTeaGradeChange = { onUpdateTeaInfo(null, null, null, null, null, it) }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            TastingContextSection(
-                dateTime = uiState.dateTime,
-                selectedWeather = uiState.weather,
-                withPeople = uiState.withPeople,
-                onDateTimeChange = { onUpdateContext(it, null, null) },
-                onWeatherSelected = { onUpdateContext(null, it, null) },
-                onWithPeopleChange = { onUpdateContext(null, null, it) }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            BrewingConditionSection(
-                waterTemp = uiState.waterTemp,
-                leafAmount = uiState.leafAmount,
-                brewTime = uiState.brewTime,
-                brewCount = uiState.brewCount,
-                teawareType = uiState.teaware,
-                onWaterTempChange = { onUpdateCondition(it, null, null, null, null) },
-                onLeafAmountChange = { onUpdateCondition(null, it, null, null, null) },
-                onBrewTimeChange = { onUpdateCondition(null, null, it, null, null) },
-                onBrewCountChange = { onUpdateCondition(null, null, null, it, null) },
-                onTeawareTypeChange = { onUpdateCondition(null, null, null, null, it) }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            SensoryEvaluationSection(
-                selectedTags = uiState.selectedTags,
-                sweetIntensity = uiState.sweetness.toFloat(),
-                sourIntensity = uiState.sourness.toFloat(),
-                bitterIntensity = uiState.bitterness.toFloat(),
-                saltyIntensity = uiState.saltiness.toFloat(),
-                umamiIntensity = uiState.umami.toFloat(),
-                bodyType = uiState.bodyType,
-                finishValue = uiState.finishLevel,
-                notes = uiState.memo,
-                onTagsChange = { onUpdateSensory(it, null, null, null, null, null, null, null, null) },
-                onSweetnessChange = { onUpdateSensory(null, it.toInt(), null, null, null, null, null, null, null) },
-                onSournessChange = { onUpdateSensory(null, null, it.toInt(), null, null, null, null, null, null) },
-                onBitternessChange = { onUpdateSensory(null, null, null, it.toInt(), null, null, null, null, null) },
-                onSaltyChange = { onUpdateSensory(null, null, null, null, it.toInt(), null, null, null, null) },
-                onUmamiChange = { onUpdateSensory(null, null, null, null, null, it.toInt(), null, null, null) },
-                onBodyTypeChange = { onUpdateSensory(null, null, null, null, null, null, it, null, null) },
-                onFinishValueChange = { onUpdateSensory(null, null, null, null, null, null, null, it, null) },
-                onNotesChange = { onUpdateSensory(null, null, null, null, null, null, null, null, it) }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            FinalRatingSection(
-                rating = uiState.rating,
-                purchaseAgain = uiState.purchaseAgain,
-                onRatingChange = { onUpdateRating(it, null) },
-                onPurchaseAgainChange = { onUpdateRating(null, it) }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
+            if (uiState.isLoading) {
+                LoadingOverlay(isLoading = true, message = "기록을 저장하고 있습니다...")
+            }
         }
     }
 }
 
-@Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
+// ------------------------------------------------------------------------
+// 3. Preview (ViewModel 없이 UI만 확인!)
+// ------------------------------------------------------------------------
+@Preview(showBackground = true, heightDp = 1500)
 @Composable
-private fun NoteScreenPreview() {
+fun NoteScreenPreview() {
     LeafyTheme {
-        val mockUiState = NoteUiState(
-            teaName = "Dragon Well",
-            dateTime = "12/17/2025",
-            weather = WeatherType.CLEAR,
-            bodyType = BodyType.MEDIUM
+        val dummyState = NoteUiState(
+            teaName = "우전 녹차",
+            teaBrand = "오설록",
+            teaType = TeaType.GREEN,
+            teaOrigin = "제주",
+            waterTemp = "70",
+            leafAmount = "5",
+            waterAmount = "150",
+            brewTime = "60",
+            selectedDateString = "2026-01-05",
+            selectedWeather = WeatherType.SUNNY,
+            flavorTags = listOf(FlavorTag.GREENISH, FlavorTag.NUTTY),
+            sweetness = 3f,
+            umami = 4f,
+            starRating = 5,
+            purchaseAgain = true
         )
 
         NoteContent(
-            uiState = mockUiState,
-            isProcessing = false,
+            uiState = dummyState,
+            snackbarHostState = remember { SnackbarHostState() },
             onNavigateBack = {},
             onSave = {},
-            onUpdateTeaInfo = { _, _, _, _, _, _ -> },
-            onUpdateContext = { _, _, _ -> },
-            onUpdateCondition = { _, _, _, _, _ -> },
-            onUpdateSensory = { _, _, _, _, _, _, _, _, _ -> },
-            onUpdateRating = { _, _ -> }
+            onNavigateToTimer = {},
+            // 모든 콜백에 빈 람다 {} 전달
+            onAddImages = {}, onRemoveImage = {}, onTeaNameChange = {},
+            onTeaBrandChange = {}, onTeaTypeChange = {}, onTeaOriginChange = {},
+            onTeaLeafStyleChange = {}, onTeaGradeChange = {}, onDateTimeChange = {},
+            onWeatherSelected = {}, onWithPeopleChange = {}, onWaterTempChange = {},
+            onLeafAmountChange = {}, onWaterAmountChange = {}, onBrewTimeChange = {},
+            onInfusionCountChange = {}, onTeawareChange = {}, onFlavorTagToggle = {},
+            onSweetnessChange = {}, onSournessChange = {}, onBitternessChange = {},
+            onAstringencyChange = {}, onUmamiChange = {}, onBodyChange = {},
+            onFinishChange = {}, onMemoChange = {}, onRatingChange = {},
+            onPurchaseAgainChange = {}
         )
     }
 }

@@ -13,8 +13,8 @@ android {
     }
 
     defaultConfig {
-        minSdk = 24
 
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -32,7 +32,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
 
-        isCoreLibraryDesugaringEnabled = true
+       
     }
     buildFeatures{
         compose = true
@@ -55,7 +55,10 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
-    coreLibraryDesugaring(libs.android.desugarJdkLibs)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.material3)
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

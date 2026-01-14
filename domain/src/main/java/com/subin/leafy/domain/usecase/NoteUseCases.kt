@@ -1,19 +1,20 @@
 package com.subin.leafy.domain.usecase
 
-import com.subin.leafy.domain.usecase.note.DeleteNoteUseCase
-import com.subin.leafy.domain.usecase.note.GetMonthlyRecordsUseCase
-import com.subin.leafy.domain.usecase.note.GetNotesUseCase
-import com.subin.leafy.domain.usecase.note.GetRecordByDateUseCase
-import com.subin.leafy.domain.usecase.note.InsertNoteUseCase
-import com.subin.leafy.domain.usecase.note.UpdateNoteUseCase
-import com.subin.leafy.domain.usecase.user.GetCurrentUserIdUseCase
+import com.subin.leafy.domain.usecase.note.*
 
 data class NoteUseCases(
-    val getNotes: GetNotesUseCase,
-    val insertNote: InsertNoteUseCase,
+    // 조회
+    val getMyNotes: GetMyNotesUseCase,
+    val getNotesByMonth: GetNotesByMonthUseCase,
+    val searchMyNotes: SearchMyNotesUseCase,
+    val getNoteDetail: GetNoteDetailUseCase,
+    val getUserNotes: GetUserNotesUseCase,
+
+    // CRUD
+    val saveNote: SaveNoteUseCase,
     val updateNote: UpdateNoteUseCase,
     val deleteNote: DeleteNoteUseCase,
-    val getCurrentUserId: GetCurrentUserIdUseCase,
-    val getMonthlyRecords: GetMonthlyRecordsUseCase,
-    val getRecordByDate: GetRecordByDateUseCase
+
+    // 동기화
+    val syncNotes: SyncNotesUseCase
 )
