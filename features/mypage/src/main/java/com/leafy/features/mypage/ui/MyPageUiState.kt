@@ -1,45 +1,23 @@
 package com.leafy.features.mypage.ui
-//
-//import com.leafy.shared.ui.utils.LeafyTimeUtils
-//import com.subin.leafy.domain.model.BrewingInsight
-//import com.subin.leafy.domain.model.BrewingRecord
-//import com.subin.leafy.domain.model.User
-//import com.subin.leafy.domain.model.UserStats
-//import java.time.LocalDate
-//import java.time.YearMonth
-//
-//data class MyPageUiState(
-//    val user: User? = null,
-//    val userStats: UserStats? = null,
-//    val selectedDate: LocalDate = LeafyTimeUtils.now(),
-//    val recordedDays: List<Int> = emptyList(),
-//    val monthlyRecords: List<BrewingRecord> = emptyList(),
-//    val brewingInsights: List<BrewingInsight> = emptyList(),
-//    val selectedRecord: BrewingRecord? = null,
-//    val isLoading: Boolean = false,
-//    val errorMessage: String? = null
-//) {
-//    val currentMonth: YearMonth
-//        get() = YearMonth.from(selectedDate)
-//
-//    val selectedDay: Int
-//        get() = selectedDate.dayOfMonth
-//
-//    val displayMonth: String
-//        get() = "${selectedDate.year}년 ${selectedDate.monthValue}월"
-//
-//    val selectedDateString: String
-//        get() = LeafyTimeUtils.formatToString(selectedDate)
-//
-//    fun hasRecordOnSelectedDay(): Boolean =
-//        recordedDays.contains(selectedDate.dayOfMonth)
-//
-//    val dailyRecords: List<BrewingRecord>
-//        get() = monthlyRecords.filter { it.dateString == selectedDateString }
-//
-//    val selectedDayRecordCount: Int
-//        get() = dailyRecords.size
-//
-//    val isDailyRecordsEmpty: Boolean
-//        get() = dailyRecords.isEmpty()
-//}
+
+import com.subin.leafy.domain.model.BrewingRecord
+import com.subin.leafy.domain.model.User
+import com.subin.leafy.domain.model.UserStats
+import java.time.LocalDateTime
+import java.time.YearMonth
+
+data class MyPageUiState(
+    val user: User? = null,
+    val userStats: UserStats? = null,
+    val selectedDateTime: LocalDateTime = LocalDateTime.now(),
+    val recordedDays: List<Int> = emptyList(), // 기록이 있는 날짜들 (점 표시용)
+    val monthlyRecords: List<BrewingRecord> = emptyList(), // 추가: 이번 달 전체 데이터
+    val selectedRecord: BrewingRecord? = null,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+) {
+    val currentMonth: YearMonth get() = YearMonth.from(selectedDateTime)
+    val selectedDay: Int get() = selectedDateTime.dayOfMonth
+    val selectedMonth: Int get() = selectedDateTime.monthValue
+    val selectedYear: Int get() = selectedDateTime.year
+}
