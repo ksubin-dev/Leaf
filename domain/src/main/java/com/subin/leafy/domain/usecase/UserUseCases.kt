@@ -1,15 +1,11 @@
 package com.subin.leafy.domain.usecase
 
-import com.subin.leafy.domain.usecase.user.*
+import com.subin.leafy.domain.usecase.user.GetCurrentUserIdUseCase
+import com.subin.leafy.domain.usecase.user.GetUserStatsUseCase
+import com.subin.leafy.domain.usecase.user.GetUserUseCase
 
 data class UserUseCases(
     val getCurrentUserId: GetCurrentUserIdUseCase,
-    val getMyProfile: GetMyProfileUseCase,
-    val getUserProfile: GetUserProfileUseCase,
-    val updateProfile: UpdateProfileUseCase,
-    val followUser: FollowUserUseCase,
-    val getFollowList: GetFollowListUseCase,
-    val getUserBadges: GetUserBadgesUseCase,
-    val searchUsers: SearchUsersUseCase,
-    val checkNickname: CheckProfileNicknameUseCase
+    val getUser: GetUserUseCase,
+    val getUserStats: GetUserStatsUseCase
 )

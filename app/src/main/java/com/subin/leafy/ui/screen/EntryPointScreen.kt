@@ -14,12 +14,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavDestination
@@ -28,14 +30,16 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.leafy.features.auth.navigation.AuthRouteGraph
-import com.leafy.features.auth.navigation.authNavGraph
+import com.leafy.features.community.navigation.communityNavGraph
 import com.leafy.features.home.navigation.homeNavGraph
+import com.leafy.features.mypage.navigation.mypageNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
+import com.leafy.features.timer.navigation.timerNavGraph
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.LeafyNavigation
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.di.ApplicationContainerImpl
 import com.subin.leafy.ui.component.LeafyBottomAppBarItem
 import com.subin.leafy.ui.component.LeafyTimerButton
 
@@ -44,126 +48,141 @@ import com.subin.leafy.ui.component.LeafyTimerButton
 @Composable
 fun EntryPointScreen(container: ApplicationContainer) {
     LeafyTheme {
+
         val colors = MaterialTheme.colorScheme
+
         val navController = rememberNavController()
-        val allItems = remember { LeafyBottomAppBarItem.fetchBottomAppBarItems() }
+
+        // 전체 탭 리스트 (Home / Community / Timer / Note / My)
+        val allItems = remember {
+            LeafyBottomAppBarItem.fetchBottomAppBarItems()
+        }
+
         val timerItem = allItems.first { it.destination == MainNavigationRoute.TimerTab }
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
-        val shouldHideBottomBar = currentDestination?.hierarchy?.any { destination ->
-            destination.route?.let { route ->
-                route.contains("AuthRoute") ||
-                        route.contains("NoteDetail") ||
-                        route.contains("TimerTab")
-            } ?: false
-        } == true
+        // 현재 탭 이름 (TopAppBar 타이틀)
+        val currentTabName = allItems
+            .firstOrNull { isDestinationSelected(currentDestination, it.destination) }
+            ?.tabName ?: "Leafy"
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
-                if (!shouldHideBottomBar) {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        NavigationBar(
-                            modifier = Modifier.align(Alignment.BottomCenter),
-                            containerColor = colors.background
-                        ) {
-                            allItems.forEach { item ->
-                                val isTimer = item.destination == MainNavigationRoute.TimerTab
-                                val selected = isDestinationSelected(currentDestination, item.destination)
+                // 바텀바 + 가운데 타이머 버튼을 함께 배치하는 영역
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // 5개 칸을 모두 NavigationBar에 넣고, 가운데(Timer)는 투명 더미로 사용
+                    NavigationBar(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        containerColor = colors.background
+                    ) {
+                        allItems.forEach { item ->
+                            val isTimer = item.destination == MainNavigationRoute.TimerTab
+                            val selected =
+                                isDestinationSelected(currentDestination, item.destination)
 
-                                if (isTimer) {
-                                    NavigationBarItem(
-                                        selected = selected,
-                                        onClick = { /* no-op */ },
-                                        icon = { Box(modifier = Modifier.size(24.dp)) },
-                                        label = {},
-                                        enabled = false,
-                                        colors = NavigationBarItemDefaults.colors(
-                                            selectedIconColor = Color.Transparent,
-                                            indicatorColor = Color.Transparent
+                            if (isTimer) {
+                                // 가운데 더미 칸: 눈에 보이지 않고 클릭도 안 됨, 간격 확보용
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = { /* no-op */ },
+                                    icon = {
+                                        Box(
+                                            modifier = Modifier.size(24.dp)
                                         )
+                                    },
+                                    label = {},
+                                    enabled = false,
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = Color.Transparent,
+                                        selectedTextColor = Color.Transparent,
+                                        unselectedIconColor = Color.Transparent,
+                                        unselectedTextColor = Color.Transparent,
+                                        indicatorColor = Color.Transparent
                                     )
-                                } else {
-                                    NavigationBarItem(
-                                        selected = selected,
-                                        onClick = {
-                                            navController.navigate(item.destination) {
-                                                popUpTo(navController.graph.findStartDestination().id) {
-                                                    saveState = true
-                                                }
-                                                launchSingleTop = true
-                                                restoreState = true
+                                )
+                            } else {
+                                // 실제로 보이는 4개 탭 (Home / Community / Note / My)
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = {
+                                        navController.navigate(item.destination) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
                                             }
-                                        },
-                                        icon = {
-                                            Icon(
-                                                painter = painterResource(id = item.iconRes),
-                                                contentDescription = item.tabName
-                                            )
-                                        },
-                                        label = { Text(text = item.tabName) },
-                                        colors = NavigationBarItemDefaults.colors(
-                                            selectedIconColor = colors.primary,
-                                            selectedTextColor = colors.primary,
-                                            unselectedIconColor = colors.tertiaryContainer,
-                                            unselectedTextColor = colors.tertiaryContainer,
-                                            indicatorColor = colors.background
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(id = item.iconRes),
+                                            contentDescription = item.tabName
                                         )
+                                    },
+                                    label = { Text(text = item.tabName) },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = colors.primary,
+                                        selectedTextColor = colors.primary,
+                                        unselectedIconColor = colors.tertiaryContainer,
+                                        unselectedTextColor = colors.tertiaryContainer,
+                                        indicatorColor = colors.background
                                     )
-                                }
+                                )
                             }
                         }
-
-                        val timerSelected = isDestinationSelected(currentDestination, MainNavigationRoute.TimerTab)
-                        LeafyTimerButton(
-                            iconRes = timerItem.iconRes,
-                            selected = timerSelected,
-                            onClick = {
-                                navController.navigate(MainNavigationRoute.TimerTab) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .offset(y = (-24).dp)
-                        )
                     }
+
+                    // NavigationBar 중앙 위에 겹치는 64x64 타이머 버튼
+                    val timerSelected =
+                        isDestinationSelected(currentDestination, MainNavigationRoute.TimerTab)
+
+                    LeafyTimerButton(
+                        iconRes = timerItem.iconRes,
+                        selected = timerSelected,
+                        onClick = {
+                            navController.navigate(MainNavigationRoute.TimerTab) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .offset(y = (-24).dp)   // 바텀바 윗선보다 위로 살짝 띄우기
+                    )
                 }
             }
         ) { paddingValues ->
             NavHost(
                 navController = navController,
-                startDestination = AuthRouteGraph,
-                modifier = Modifier.padding(
-                    bottom = if (shouldHideBottomBar) 0.dp else paddingValues.calculateBottomPadding()
-                )
+                startDestination = MainNavigationRoute.HomeTab,
+                modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
             ) {
-                authNavGraph(
-                    navController = navController,
-                    container = container,
-                    onAuthSuccess = {
-                        navController.navigate(MainNavigationRoute.HomeTab) {
-                            popUpTo(AuthRouteGraph) { inclusive = true }
-                        }
-                    }
-                )
-
                 homeNavGraph(navController)
                 noteNavGraph(
-                    navController = navController,
                     container = container,
-//                    onNavigateBack = { navController.popBackStack() },
-//                    onNavigateToEdit = { noteId ->
-//                        navController.navigate(MainNavigationRoute.NoteTab(initialRecords = null)) // 수정 모드 전환 로직 필요 시
-//                    }
+                    onNavigateBack = { navController.popBackStack() }
                 )
-                //communityNavGraph(navController = navController, container = container)
-                //timerNavGraph(navController = navController, container = container)
-                //mypageNavGraph(container = container, navController = navController)
+                // 🎯 container를 추가로 전달하도록 수정
+                communityNavGraph(
+                    navController = navController,
+                    container = container
+                )
+                timerNavGraph(
+                    navController = navController,
+                    container = container
+                )
+                mypageNavGraph(
+                    container = container,
+                    navController = navController
+                )
             }
         }
     }
@@ -182,13 +201,13 @@ private fun isDestinationSelected(
         ?.any { it.route == targetRoute } == true
 }
 
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun EntryPointScreenPreview() {
-//    LeafyTheme {
-//        val dummyContainer = ApplicationContainerImpl(
-//            context = TODO()
-//        )
-//        EntryPointScreen(container = dummyContainer)
-//    }
-//}
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun EntryPointScreenPreview() {
+    LeafyTheme {
+        // 프리뷰를 위해 빈 구현체를 임시로 생성하거나,
+        // 테스트용 MockContainer를 넣어줍니다.
+        val dummyContainer = ApplicationContainerImpl()
+        EntryPointScreen(container = dummyContainer)
+    }
+}
