@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 class GetFollowingFeedUseCase(
     private val postRepository: PostRepository
 ) {
-    operator fun invoke(): Flow<DataResourceResult<List<CommunityPost>>> {
-        return postRepository.getFollowingFeed()
+    operator fun invoke(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>> {
+        return postRepository.getFollowingFeed(followingIds)
     }
 }

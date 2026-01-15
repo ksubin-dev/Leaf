@@ -12,9 +12,12 @@ fun UserDto.toUserDomain() = User(
     profileImageUrl = profileImageUrl,
     bio = bio ?: "",
     masterTitle = this.masterTitle,
+    expertTypes = this.expertTypes.mapNotNull { typeName ->
+        runCatching { TeaType.valueOf(typeName) }.getOrNull()
+    },
     socialStats = UserSocialStatistics(
-        followerCount = followerCount,
-        followingCount = followingCount
+        followerCount = this.socialStats.followerCount,
+        followingCount = this.socialStats.followingCount
     ),
     // 팔로우 여부는 Repository에서 계산해서 넣어주므로 초기값은 false
     relationState = UserRelationState(isFollowing = false),
@@ -98,6 +101,21 @@ fun UserBadge.toDto() = UserBadgeDto(
     imageUrl = this.imageUrl,
     obtainedAt = this.obtainedAt
 )
+
+fun UserDto.toTeaMasterDomain(isFollowing: Boolean = false): TeaMaster {
+    return TeaMaster(
+        id = this.uid,
+        nickname = this.nickname,
+        title = this.masterTitle ?: "티 마스터",
+        profileImageUrl = this.profileImageUrl,
+        isFollowing = isFollowing,
+        followerCount = this.socialStats.followerCount,
+
+        expertTypes = this.expertTypes.mapNotNull { typeName ->
+            runCatching { TeaType.valueOf(typeName) }.getOrNull()
+        }
+    )
+}
 
 // --- 보조 함수 ---
 private fun formatBrewTime(seconds: Int): String {

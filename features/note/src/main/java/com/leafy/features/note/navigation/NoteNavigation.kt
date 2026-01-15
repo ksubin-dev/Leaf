@@ -37,13 +37,23 @@ fun NavGraphBuilder.noteNavGraph(
             }
         }
 
+        // 수정 모드 진입 시 데이터 로드
+        LaunchedEffect(route.noteId) {
+            route.noteId?.let { id ->
+                viewModel.loadNoteForEdit(id)
+            }
+        }
+
         NoteScreen(
             viewModel = viewModel,
-            onNavigateBack = {
-                navController.popBackStack() },
+            onNavigateBack = { navController.popBackStack() },
             onSaveSuccess = {
-                navController.popBackStack() },
-            onNavigateToTimer = { /* TODO: 타이머 화면으로 이동 */ }
+                navController.popBackStack()
+            },
+            onNavigateToTimer = {
+                // ✅ 타이머 탭으로 이동 (MainNavigationRoute에 정의된 대로)
+                //navController.navigate(MainNavigationRoute.TimerTab)
+            }
         )
     }
 

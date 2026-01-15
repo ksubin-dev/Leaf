@@ -67,32 +67,14 @@ class PostRepositoryImpl(
     }
 
     // 팔로잉 피드
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>> {
-        val myUid = authDataSource.getCurrentUserId() ?: return flowOf(
-            DataResourceResult.Failure(Exception("로그인이 필요합니다."))
-        )
+    override fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>> {
 
-        return userDataSource.getFollowingIdsFlow(myUid).flatMapLatest { idsResult ->
-            when (idsResult) {
-                is DataResourceResult.Success -> {
-                    val followingIds = idsResult.data
+        if (followingIds.isEmpty()) {
+            return flowOf(DataResourceResult.Success(emptyList()))
+        }
 
-                    if (followingIds.isEmpty()) {
-                        flowOf(DataResourceResult.Success(emptyList()))
-                    } else {
-                        postDataSource.getFollowingFeed(followingIds).map { postResult ->
-                            mapPostsWithMyState(postResult)
-                        }
-                    }
-                }
-                is DataResourceResult.Failure -> {
-                    flowOf(DataResourceResult.Failure(idsResult.exception))
-                }
-                else -> {
-                    flowOf(DataResourceResult.Failure(Exception("Unknown Error fetching following list")))
-                }
-            }
+        return postDataSource.getFollowingFeed(followingIds).map { result ->
+            mapPostsWithMyState(result)
         }
     }
 

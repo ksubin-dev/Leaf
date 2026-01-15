@@ -28,7 +28,7 @@ interface PostRepository {
 
     // 팔로잉 피드 (내가 팔로우한 유저들의 글)
     // * 파라미터 없음: 내부에서 UserDataSource를 통해 내 팔로잉 목록을 가져와서 조회함
-    fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>>
 
     // 특정 유저의 글 모아보기 (프로필 화면용)
     fun getUserPosts(userId: String): Flow<DataResourceResult<List<CommunityPost>>>

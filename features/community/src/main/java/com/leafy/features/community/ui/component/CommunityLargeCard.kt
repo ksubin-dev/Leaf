@@ -33,6 +33,7 @@ fun CommunityLargeCard(
     Card(
         modifier = modifier
             .width(220.dp)
+            .height(265.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
@@ -65,7 +66,9 @@ fun CommunityLargeCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .weight(1f)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = post.title,
@@ -87,11 +90,11 @@ fun CommunityLargeCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().height(32.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (post.rating != null && post.rating > 0) {
                         RatingStars(

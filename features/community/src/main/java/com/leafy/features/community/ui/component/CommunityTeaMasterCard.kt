@@ -51,14 +51,37 @@ fun CommunityTeaMasterCard(
                 ),
                 color = colors.onBackground
             )
+
             Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = master.title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (master.expertTags.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    master.expertTags.forEach { tag ->
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = colors.primaryContainer.copy(alpha = 0.5f),
+                            border = BorderStroke(0.5.dp, colors.outlineVariant)
+                        ) {
+                            Text(
+                                text = tag,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
+            } else {
+                Text(
+                    text = master.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -91,11 +114,17 @@ fun CommunityTeaMasterCard(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "티 마스터 카드 비교")
 @Composable
 private fun CommunityTeaMasterCardPreview() {
     LeafyTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text("Case 1: 전문가 태그 있음", style = MaterialTheme.typography.labelMedium)
             CommunityTeaMasterCard(
                 master = UserUiModel(
                     userId = "1",
@@ -104,7 +133,22 @@ private fun CommunityTeaMasterCardPreview() {
                     profileImageUrl = null,
                     isFollowing = false,
                     followerCount = "500",
-                    expertTags = listOf("녹차", "블렌딩")
+                    expertTags = listOf("녹차", "말차", "블렌딩")
+                )
+            )
+
+            HorizontalDivider()
+
+            Text("Case 2: 전문가 태그 없음 (기존 타이틀)", style = MaterialTheme.typography.labelMedium)
+            CommunityTeaMasterCard(
+                master = UserUiModel(
+                    userId = "2",
+                    nickname = "홍차 왕자",
+                    title = "영국식 홍차 전문 큐레이터",
+                    profileImageUrl = null,
+                    isFollowing = true,
+                    followerCount = "1.2k",
+                    expertTags = emptyList()
                 )
             )
         }

@@ -59,8 +59,8 @@ fun CommunityScreen(
     }
 
     LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { msg ->
-            snackbarHostState.showSnackbar(msg)
+        if (uiState.errorMessage != null && !uiState.popularPosts.isEmpty()) {
+            snackbarHostState.showSnackbar(uiState.errorMessage!!)
             viewModel.onMessageShown()
         }
     }
@@ -85,10 +85,22 @@ fun CommunityScreen(
 
             // 메인 콘텐츠
             Box(modifier = Modifier.fillMaxSize()) {
-                if (uiState.isLoading && uiState.popularPosts.isEmpty() && uiState.followingPosts.isEmpty()) {
-                    // 처음 로딩 중 (데이터 없음)
+                val isDataEmpty = when(uiState.selectedTab) {
+                    CommunityTab.TRENDING -> uiState.popularPosts.isEmpty() && uiState.mostBookmarkedPosts.isEmpty()
+                    CommunityTab.FOLLOWING -> uiState.followingPosts.isEmpty()
+                }
+
+                if (uiState.isLoading && isDataEmpty) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                } else {
+                }
+                else if (uiState.errorMessage != null && isDataEmpty) {
+                    ErrorRetryView(
+                        message = "데이터를 불러오지 못했습니다.",
+                        onRetry = viewModel::refresh, // ViewModel에 refresh 함수 구현 필요
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                else {
                     when (uiState.selectedTab) {
                         CommunityTab.TRENDING -> TrendingContent(
                             uiState = uiState,
@@ -174,6 +186,38 @@ private fun TrendingContent(
         )
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+fun ErrorRetryView(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // 아이콘 (선택 사항)
+        // Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = Color.Gray)
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("다시 시도")
+        }
     }
 }
 

@@ -10,6 +10,7 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.Comment
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +18,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -29,11 +34,11 @@ sealed interface CommunityFeedSideEffect {
     //object ScrollToBottom : CommunityFeedSideEffect 같은 것도
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CommunityFeedViewModel(
     private val postUseCases: PostUseCases,
-    private val userUseCases: UserUseCases //teaMaster 팔로우 로직
+    private val userUseCases: UserUseCases
 ) : ViewModel() {
-
     private val _sideEffects = Channel<CommunityFeedSideEffect>()
     val sideEffects = _sideEffects.receiveAsFlow()
 
@@ -50,6 +55,37 @@ class CommunityFeedViewModel(
         val errorMessage: String? = null
     )
 
+    private val followingFeedFlow: Flow<DataResourceResult<List<CommunityPostUiModel>>> = run {
+        val idResult = userUseCases.getCurrentUserId()
+        val myId = if (idResult is DataResourceResult.Success) idResult.data else ""
+
+        if (myId.isEmpty()) {
+            flowOf(DataResourceResult.Success(emptyList()))
+        } else {
+            userUseCases.getFollowingIdsFlow(myId)
+                .map { result ->
+                    if (result is DataResourceResult.Success) result.data else emptyList()
+                }
+                .distinctUntilChanged()
+                .flatMapLatest { ids ->
+                    postUseCases.getFollowingFeed(ids)
+                }
+                .map { result ->
+                    when (result) {
+                        is DataResourceResult.Success -> {
+                            DataResourceResult.Success(result.data.map { it.toUiModel() })
+                        }
+                        is DataResourceResult.Failure -> {
+                            DataResourceResult.Failure(result.exception)
+                        }
+                        is DataResourceResult.Loading -> {
+                            DataResourceResult.Loading
+                        }
+                    }
+                }
+        }
+    }
+
     private var cachedPopularPosts: List<CommunityPostUiModel> = emptyList()
     private var cachedMostBookmarked: List<CommunityPostUiModel> = emptyList()
     private var cachedTeaMasters: List<UserUiModel> = emptyList()
@@ -61,15 +97,8 @@ class CommunityFeedViewModel(
         postUseCases.getPopularPosts(),
         postUseCases.getMostBookmarkedPosts(),
         postUseCases.getRecommendedMasters(),
-        postUseCases.getFollowingFeed()
+        followingFeedFlow
     ) { tab, uiControl, popularResult, bookmarkResult, masterResult, followingResult ->
-
-        val isLoading = when (tab) {
-            CommunityTab.TRENDING -> popularResult is DataResourceResult.Loading
-                    || bookmarkResult is DataResourceResult.Loading
-                    || masterResult is DataResourceResult.Loading
-            CommunityTab.FOLLOWING -> followingResult is DataResourceResult.Loading
-        }
 
         if (popularResult is DataResourceResult.Success) {
             cachedPopularPosts = popularResult.data.map { it.toUiModel() }
@@ -80,18 +109,42 @@ class CommunityFeedViewModel(
         if (masterResult is DataResourceResult.Success) {
             cachedTeaMasters = masterResult.data.map { it.toUiModel() }
         }
+
         if (followingResult is DataResourceResult.Success) {
-            cachedFollowingPosts = followingResult.data.map { it.toUiModel() }
+            cachedFollowingPosts = followingResult.data
+        }
+
+        val hasTrendingData = cachedPopularPosts.isNotEmpty() || cachedMostBookmarked.isNotEmpty()
+        val hasFollowingData = cachedFollowingPosts.isNotEmpty()
+
+        val hasDataToShow = when(tab) {
+            CommunityTab.TRENDING -> hasTrendingData
+            CommunityTab.FOLLOWING -> hasFollowingData
+        }
+
+        val isLoading = when (tab) {
+            CommunityTab.TRENDING -> popularResult is DataResourceResult.Loading
+                    || bookmarkResult is DataResourceResult.Loading
+                    || masterResult is DataResourceResult.Loading
+            CommunityTab.FOLLOWING -> followingResult is DataResourceResult.Loading
         }
 
         var currentError = uiControl.errorMessage
+
         if (currentError == null && !isLoading) {
-            if (popularResult is DataResourceResult.Failure ||
-                bookmarkResult is DataResourceResult.Failure ||
-                masterResult is DataResourceResult.Failure ||
-                followingResult is DataResourceResult.Failure
-            ) {
-                currentError = "데이터를 불러오지 못했습니다."
+            val isFailure = when (tab) {
+                CommunityTab.TRENDING -> popularResult is DataResourceResult.Failure
+                        || bookmarkResult is DataResourceResult.Failure
+                        || masterResult is DataResourceResult.Failure
+                CommunityTab.FOLLOWING -> followingResult is DataResourceResult.Failure
+            }
+
+            if (isFailure) {
+                if (hasDataToShow) {
+                    currentError = null
+                } else {
+                    currentError = "데이터를 불러오지 못했습니다."
+                }
             }
         }
 
@@ -127,11 +180,10 @@ class CommunityFeedViewModel(
     }
 
     fun refresh() {
-        // 지금은 Firestore Flow가 자동 갱신해주지만,
-        // 만약 Pull-to-Refresh 시 강제로 서버 쿼리를 다시 날려야 한다면
-        // UseCase에 'refreshSignal' 같은 Trigger를 하나 만들어서 여기서 호출해주면 됩니다.
-
-        // 예: viewModelScope.launch { postUseCases.refreshFeed() }
+        val currentTab = _selectedTab.value
+        _selectedTab.value = if (currentTab == CommunityTab.TRENDING) CommunityTab.FOLLOWING else CommunityTab.TRENDING
+        _selectedTab.value = currentTab
+        _uiControlState.update { it.copy(errorMessage = null) }
     }
 
     fun updateCommentInput(input: String) {

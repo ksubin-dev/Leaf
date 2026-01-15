@@ -14,6 +14,7 @@ import com.leafy.features.auth.ui.signup.SignUpScreen
 import com.leafy.features.auth.ui.signup.SignUpViewModel
 import com.leafy.features.auth.ui.signup.SignUpViewModelFactory
 import com.leafy.shared.di.ApplicationContainer
+import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.util.ImageCompressor
 
 fun NavGraphBuilder.authNavGraph(
@@ -47,19 +48,21 @@ fun NavGraphBuilder.authNavGraph(
             val signUpViewModel: SignUpViewModel = viewModel(
                 factory = SignUpViewModelFactory(
                     authUseCases = container.authUseCases,
-                    userUseCases = container.userUseCases,
-                    imageUseCases = container.imageUseCases,
                     imageCompressor = imageCompressor
                 )
             )
 
             SignUpScreen(
                 viewModel = signUpViewModel,
-                onBackClick = {
+                onBackClick = { navController.popBackStack() },
+                onSignUpSuccess = {
                     navController.popBackStack()
-                },
-                onSignUpSuccess = onAuthSuccess
+//                    navController.navigate(AuthRoute.Login) {
+//                        popUpTo(AuthRoute.SignUp) { inclusive = true }
+//                    }
+                }
             )
         }
+
     }
 }

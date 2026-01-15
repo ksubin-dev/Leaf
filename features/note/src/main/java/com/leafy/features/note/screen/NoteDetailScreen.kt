@@ -20,11 +20,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.leafy.features.note.ui.components.NoteActionButtons
 import com.leafy.features.note.ui.components.NoteDetailHeader
 import com.leafy.features.note.viewmodel.DetailViewModel
@@ -35,6 +39,7 @@ import com.leafy.features.note.ui.sections.detail.PhotoDetailSection
 import com.leafy.features.note.ui.sections.detail.SensoryEvaluationSection
 import com.leafy.features.note.ui.sections.detail.TastingContextSection
 import com.leafy.features.note.ui.sections.detail.TeaInfoSection
+import com.leafy.shared.ui.component.LeafyDialog
 import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.*
@@ -49,7 +54,9 @@ fun NoteDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(noteId) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.loadNote(noteId)
     }
 
@@ -66,12 +73,26 @@ fun NoteDetailScreen(
         }
     }
 
+    if (showDeleteDialog) {
+        LeafyDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = "노트 삭제",
+            text = "정말 이 시음 노트를 삭제하시겠습니까?\n삭제된 노트는 복구할 수 없습니다.",
+            confirmText = "삭제",
+            dismissText = "취소",
+            onConfirmClick = {
+                viewModel.deleteNote()
+                showDeleteDialog = false
+            }
+        )
+    }
+
     NoteDetailContent(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
         onNavigateToEdit = onNavigateToEdit,
-        onDeleteNote = viewModel::deleteNote,
+        onDeleteNote = { showDeleteDialog = true },
         onToggleLike = viewModel::toggleLike,
         onToggleBookmark = viewModel::toggleBookmark,
         onRetry = viewModel::retry,

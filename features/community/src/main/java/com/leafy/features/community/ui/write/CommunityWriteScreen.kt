@@ -150,7 +150,7 @@ fun CommunityWriteContent(
             Box(modifier = Modifier.padding(16.dp)) {
                 if (uiState.linkedNoteId == null) {
                     OutlinedButton(
-                        onClick = { showBottomSheet = true },
+                        onClick = singleClick { showBottomSheet = true },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(

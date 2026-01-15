@@ -186,10 +186,6 @@ fun EntryPointScreen(container: ApplicationContainer) {
                 noteNavGraph(
                     navController = navController,
                     container = container
-//                    onNavigateBack = { navController.popBackStack() },
-//                    onNavigateToEdit = { noteId ->
-//                        navController.navigate(MainNavigationRoute.NoteTab(initialRecords = null)) // 수정 모드 전환 로직 필요 시
-//                    }
                 )
                 communityNavGraph(navController = navController, container = container)
                 //timerNavGraph(navController = navController, container = container)

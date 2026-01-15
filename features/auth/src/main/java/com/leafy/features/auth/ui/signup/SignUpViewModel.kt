@@ -16,8 +16,6 @@ import kotlinx.coroutines.launch
 
 class SignUpViewModel(
     private val authUseCases: AuthUseCases,
-    private val userUseCases: UserUseCases,
-    private val imageUseCases: ImageUseCases,
     private val imageCompressor: ImageCompressor
 ) : ViewModel() {
 
@@ -51,73 +49,40 @@ class SignUpViewModel(
     fun signUp() {
         val state = uiState.value
 
-        // 비밀번호 확인
+        if (state.isLoading || state.isSignUpSuccess) return
+
         if (!state.isPasswordMatching) {
             _uiState.update { it.copy(errorMessage = "비밀번호가 일치하지 않습니다.") }
             return
         }
 
-        // 로딩 시작
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
         viewModelScope.launch {
-            // 1. 계정 생성
-            val authResult = authUseCases.signUp(
-                email = state.email,
-                password = state.password,
-                nickname = state.username
-            )
+            try {
+                val compressedUri = state.profileImageUri?.let {
+                    imageCompressor.compressImage(it.toString())
+                }
 
-            if (authResult is DataResourceResult.Failure) {
-                onError(authResult.exception.message ?: "계정 생성 실패")
-                return@launch
-            }
+                val result = authUseCases.signUp(
+                    email = state.email,
+                    password = state.password,
+                    nickname = state.username,
+                    profileImageUri = compressedUri
+                )
 
-            val createdUser = (authResult as DataResourceResult.Success).data
-
-            // 2. 이미지 압축 및 업로드
-            var uploadedImageUrl: String? = null
-
-            if (state.profileImageUri != null) {
-                try {
-                    val compressedUriString = imageCompressor.compressImage(state.profileImageUri.toString())
-
-                    val imageResult = imageUseCases.uploadImage(
-                        uri = compressedUriString,
-                        folder = "profile_images/${createdUser.id}"
-                    )
-
-                    when (imageResult) {
-                        is DataResourceResult.Success -> {
-                            uploadedImageUrl = imageResult.data
-                        }
-                        is DataResourceResult.Failure -> {
-                            onError("이미지 업로드 실패: ${imageResult.exception.message}")
-                            return@launch
-                        }
-                        else -> {}
+                when (result) {
+                    is DataResourceResult.Success -> {
+                        _uiState.update { it.copy(isLoading = false, isSignUpSuccess = true) }
                     }
-                } catch (e: Exception) {
-                    onError("이미지 처리 중 오류 발생: ${e.message}")
-                    return@launch
-                }
-            }
+                    is DataResourceResult.Failure -> {
+                        onError(result.exception.message ?: "회원가입 실패")
+                    }
 
-            // 3. 프로필 정보 업데이트
-            val updateResult = userUseCases.updateProfile(
-                nickname = state.username,
-                profileUrl = uploadedImageUrl,
-                bio = null
-            )
-
-            when (updateResult) {
-                is DataResourceResult.Success -> {
-                    _uiState.update { it.copy(isLoading = false, isSignUpSuccess = true) }
+                    else -> {}
                 }
-                is DataResourceResult.Failure -> {
-                    onError(updateResult.exception.message ?: "프로필 설정 실패")
-                }
-                else -> {}
+            } catch (e: Exception) {
+                onError("알 수 없는 오류가 발생했습니다: ${e.message}")
             }
         }
     }

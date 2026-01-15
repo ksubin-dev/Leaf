@@ -11,14 +11,24 @@ object FirestoreConstants {
     const val FIELD_NICKNAME = "nickname"
     const val FIELD_PROFILE_IMAGE = "profileImageUrl"
     const val FIELD_BIO = "bio"
+    const val FIELD_EXPERT_TYPES = "expertTypes"
+
     const val FIELD_FOLLOWING_IDS = "followingIds"
 
     const val FIELD_LIKED_POST_IDS = "likedPostIds"
     const val FIELD_BOOKMARKED_POST_IDS = "bookmarkedPostIds"
 
+    //  1. Social Stats 구조 분리
+    const val KEY_SOCIAL_STATS = "socialStats"
+    const val KEY_FOLLOWER_COUNT = "followerCount"
+    const val KEY_FOLLOWING_COUNT = "followingCount"
     // 통계 필드
-    const val FIELD_FOLLOWING_COUNT = "socialStats.followingCount"
-    const val FIELD_FOLLOWER_COUNT = "socialStats.followerCount"
+    const val FIELD_FOLLOWER_COUNT = "$KEY_SOCIAL_STATS.$KEY_FOLLOWER_COUNT"
+    const val FIELD_FOLLOWING_COUNT = "$KEY_SOCIAL_STATS.$KEY_FOLLOWING_COUNT"
+
+    const val FIELD_FCM_TOKEN = "fcmToken"
+
+
 
     // ==========================================
     // 2. 노트 (Note)
@@ -43,10 +53,16 @@ object FirestoreConstants {
     //차 종류 필터링용
     const val FIELD_TEA_TYPE = "teaType"
 
-    const val FIELD_VIEW_COUNT = "stats.viewCount"
-    const val FIELD_LIKE_COUNT = "stats.likeCount"
-    const val FIELD_BOOKMARK_COUNT = "stats.bookmarkCount"
-    const val FIELD_COMMENT_COUNT = "stats.commentCount"
+    const val KEY_STATS = "stats"
+    const val KEY_VIEW_COUNT = "viewCount"
+    const val KEY_LIKE_COUNT = "likeCount"
+    const val KEY_BOOKMARK_COUNT = "bookmarkCount"
+    const val KEY_COMMENT_COUNT = "commentCount"
+
+    const val FIELD_VIEW_COUNT = "$KEY_STATS.$KEY_VIEW_COUNT"
+    const val FIELD_LIKE_COUNT = "$KEY_STATS.$KEY_LIKE_COUNT"
+    const val FIELD_BOOKMARK_COUNT = "$KEY_STATS.$KEY_BOOKMARK_COUNT"
+    const val FIELD_COMMENT_COUNT = "$KEY_STATS.$KEY_COMMENT_COUNT"
 
     const val COLLECTION_NOTIFICATIONS = "notifications"
     const val FIELD_IS_READ = "isRead"

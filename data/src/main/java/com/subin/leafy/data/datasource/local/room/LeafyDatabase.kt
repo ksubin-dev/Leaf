@@ -18,7 +18,7 @@ import com.subin.leafy.data.datasource.local.room.entity.TimerPresetEntity
         TimerPresetEntity::class,
         TeaEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -39,7 +39,7 @@ abstract class LeafyDatabase : RoomDatabase() {
                     LeafyDatabase::class.java,
                     "leafy_database"
                 )
-                    .fallbackToDestructiveMigration(false)
+                    .fallbackToDestructiveMigration(true)
                     .build()
                 INSTANCE = instance
                 instance

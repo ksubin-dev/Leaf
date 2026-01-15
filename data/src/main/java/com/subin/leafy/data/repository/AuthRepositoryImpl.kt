@@ -2,6 +2,7 @@ package com.subin.leafy.data.repository
 
 import com.subin.leafy.data.datasource.local.LocalSettingDataSource
 import com.subin.leafy.data.datasource.remote.AuthDataSource
+import com.subin.leafy.data.datasource.remote.StorageDataSource
 import com.subin.leafy.data.datasource.remote.UserDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.map
 class AuthRepositoryImpl(
     private val authDataSource: AuthDataSource,
     private val userDataSource: UserDataSource,
+    private val storageDataSource: StorageDataSource,
     private val settingDataSource: LocalSettingDataSource
 ) : AuthRepository {
 
@@ -41,7 +43,7 @@ class AuthRepositoryImpl(
     // =================================================================
     // 2. 회원가입 (Sign Up)
     // =================================================================
-    override suspend fun signUp(email: String, password: String, nickname: String): DataResourceResult<User> {
+    override suspend fun signUp(email: String, password: String, nickname: String, profileImageUri: String?): DataResourceResult<User> {
 
         // 1. 닉네임 중복 검사 (DB 먼저 확인)
         val isDuplicate = userDataSource.isNicknameDuplicate(nickname)
@@ -59,8 +61,23 @@ class AuthRepositoryImpl(
         val uid = authDataSource.getCurrentUserId()
             ?: return DataResourceResult.Failure(Exception("UID Fetch Error"))
 
+        // 4. 이미지 업로드 처리 (이미지가 있는 경우에만)
+        var uploadedImageUrl: String? = null
+        if (profileImageUri != null) {
+            val imageResult = storageDataSource.uploadImage(
+                uriString = profileImageUri,
+                folderPath = "profile_images/$uid"
+            )
+            if (imageResult is DataResourceResult.Success) {
+                uploadedImageUrl = imageResult.data
+            }
+            // 업로드 실패 시 로직을 중단할지, 그냥 null로 진행할지는 선택 사항입니다.
+        }
+
         // 4. 초기 User 객체 생성
-        val newUser = createNewUser(uid, email, nickname)
+        val newUser = createNewUser(uid, email, nickname).copy(
+            profileImageUrl = uploadedImageUrl
+        )
 
         // 5. Firestore에 저장
         val saveResult = userDataSource.updateUser(newUser)

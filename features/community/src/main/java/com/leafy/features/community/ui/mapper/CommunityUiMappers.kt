@@ -49,7 +49,7 @@ fun TeaMaster.toUiModel(): UserUiModel {
         isFollowing = this.isFollowing,
 
         followerCount = this.followerCount.toKiloFormat(),
-        expertTags = this.expertTypes.map { it.name }
+        expertTags = this.expertTypes.map { it.label }
     )
 }
 

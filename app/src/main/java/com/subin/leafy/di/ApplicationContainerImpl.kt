@@ -93,7 +93,8 @@ class ApplicationContainerImpl(
     private val authRepository: AuthRepository = AuthRepositoryImpl(
         authDataSource = authDataSource,
         userDataSource = userDataSource,
-        settingDataSource = settingDataSource
+        settingDataSource = settingDataSource,
+        storageDataSource = storageDataSource
     )
 
     // User Repository
