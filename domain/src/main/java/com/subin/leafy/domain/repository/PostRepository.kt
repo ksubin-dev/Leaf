@@ -28,7 +28,7 @@ interface PostRepository {
 
     // 팔로잉 피드 (내가 팔로우한 유저들의 글)
     // * 파라미터 없음: 내부에서 UserDataSource를 통해 내 팔로잉 목록을 가져와서 조회함
-    fun getFollowingFeed(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>>
 
     // 특정 유저의 글 모아보기 (프로필 화면용)
     fun getUserPosts(userId: String): Flow<DataResourceResult<List<CommunityPost>>>
@@ -55,13 +55,15 @@ interface PostRepository {
     // 글 작성
     // ViewModel은 유저가 입력한 내용만 넘기면 됨. (작성자 정보, 날짜 등은 Repo가 처리)
     suspend fun createPost(
+        postId: String,
         title: String,
         content: String,
         imageUrls: List<String>,
         teaType: String?,   // 선택 안 할 수도 있음
         rating: Int?,       // 선택 안 할 수도 있음
         tags: List<String>,
-        brewingSummary: String? // 예: "95℃ · 3분"
+        brewingSummary: String?, // 예: "95℃ · 3분"
+        originNoteId: String? = null
     ): DataResourceResult<Unit>
 
     // 글 수정
@@ -79,7 +81,7 @@ interface PostRepository {
     fun getComments(postId: String): Flow<DataResourceResult<List<Comment>>>
 
     // 댓글 작성
-    suspend fun addComment(postId: String, comment: Comment): DataResourceResult<Unit>
+    suspend fun addComment(postId: String, content: String): DataResourceResult<Unit>
 
     // 댓글 삭제
     suspend fun deleteComment(postId: String, commentId: String): DataResourceResult<Unit>

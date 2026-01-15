@@ -1,5 +1,6 @@
 package com.subin.leafy.domain.model
 
+
 enum class WeatherType {
     SUNNY, CLOUDY, RAINY, SNOWY, INDOOR
 }

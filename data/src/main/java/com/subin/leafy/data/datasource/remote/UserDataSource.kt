@@ -23,6 +23,7 @@ interface UserDataSource {
     // 2. 내 팔로워 목록 보기: 나를 팔로우하는 사람 검색
     suspend fun getFollowers(myUserId: String): DataResourceResult<List<User>>
     suspend fun getFollowingIds(userId: String): DataResourceResult<List<String>>
+    fun getFollowingIdsFlow(userId: String): Flow<DataResourceResult<List<String>>>
     // --- 3. [추가] 뱃지 시스템 (Badge) ---
     // 뱃지는 유저 프로필의 일부이므로 여기서 가져옵니다.
     // 보통 Firestore의 `users/{userId}/badges` 서브컬렉션에서 긁어옵니다.

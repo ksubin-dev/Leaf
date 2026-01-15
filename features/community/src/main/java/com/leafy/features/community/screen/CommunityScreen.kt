@@ -1,185 +1,257 @@
 package com.leafy.features.community.screen
-//
-//import androidx.compose.foundation.layout.*
-//import androidx.compose.foundation.rememberScrollState
-//import androidx.compose.foundation.verticalScroll
-//import androidx.compose.material3.*
-//import androidx.compose.runtime.*
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.tooling.preview.Preview
-//import androidx.compose.ui.unit.dp
-//import androidx.lifecycle.compose.collectAsStateWithLifecycle
-//import com.leafy.features.community.ui.*
-//import com.leafy.features.community.ui.component.*
-//import com.leafy.features.community.ui.section.*
-//import com.subin.leafy.domain.model.ExploreContent
-//
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun CommunityScreen(
-//    viewModel: CommunityViewModel,
-//    onNoteClick: (String) -> Unit,
-//    onMasterClick: (String) -> Unit
-//) {
-//    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-//    val snackbarHostState = remember { SnackbarHostState() }
-//
-//    // 댓글 바텀시트 상태 관리
-//    var showCommentSheet by remember { mutableStateOf(false) }
-//    var selectedPostId by remember { mutableStateOf("") }
-//
-//    LaunchedEffect(Unit) {
-//        viewModel.effect.collect { effect ->
-//            when (effect) {
-//                is CommunityUiEffect.ShowSnackbar -> {
-//                    snackbarHostState.showSnackbar(message = effect.message)
-//                }
-//                is CommunityUiEffect.NavigateToComments -> {
-//                    selectedPostId = effect.postId
-//                    viewModel.loadComments(effect.postId)
-//                    showCommentSheet = true
-//                }
-//            }
-//        }
-//    }
-//
-//    Scaffold(
-//        modifier = Modifier.fillMaxSize(),
-//        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-//    ) { padding ->
-//        Column(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .padding(padding)
-//        ) {
-//            CustomExploreTabRow(
-//                selectedTab = uiState.selectedTab,
-//                onTabSelected = { viewModel.onTabSelected(it) }
-//            )
-//
-//            Box(modifier = Modifier.fillMaxSize()) {
-//                if (uiState.isLoading && uiState.popularNotes.isEmpty()) {
-//                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-//                } else {
-//                    when (uiState.selectedTab) {
-//                        ExploreContent.TRENDING -> TrendingTabContent(
-//                            uiState = uiState,
-//                            onNoteClick = { onNoteClick(it.id) },
-//                            onMasterClick = { onMasterClick(it.id) },
-//                            onFollowToggle = { master, isFollowing ->
-//                                viewModel.toggleFollow(master.id, isFollowing)
-//                            }
-//                        )
-//                        ExploreContent.FOLLOWING -> FollowingTabContent(
-//                            uiState = uiState,
-//                            onNoteClick = { onNoteClick(it.id) },
-//                            onLikeClick = { note -> viewModel.toggleLike(note.id, note.isLiked) },
-//                            onCommentClick = { note ->
-//                                selectedPostId = note.id
-//                                viewModel.loadComments(note.id)
-//                                showCommentSheet = true
-//                            }
-//                        )
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    if (showCommentSheet) {
-//        NoteCommentBottomSheet(
-//            onDismissRequest = { showCommentSheet = false },
-//            comments = uiState.comments,
-//            onSendComment = { content -> viewModel.sendComment(selectedPostId, content) },
-//            onReplyClick = { /* 필요 시 구현 */ }
-//        )
-//    }
-//}
-//
-//@Composable
-//private fun TrendingTabContent(
-//    uiState: CommunityUiState,
-//    onNoteClick: (ExploreNoteUi) -> Unit,
-//    onMasterClick: (ExploreTeaMasterUi) -> Unit,
-//    onFollowToggle: (ExploreTeaMasterUi, Boolean) -> Unit
-//) {
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .verticalScroll(rememberScrollState())
-//            .padding(vertical = 20.dp),
-//        verticalArrangement = Arrangement.spacedBy(36.dp)
-//    ) {
-//        ExploreTrendingTopSection(
-//            notes = uiState.popularNotes,
-//            onNoteClick = onNoteClick
-//        )
-//
-//        ExploreTrendingSavedSection(
-//            notes = uiState.mostSavedNotes,
-//            onNoteClick = onNoteClick,
-//            modifier = Modifier.padding(horizontal = 16.dp)
-//        )
-//
-//        ExploreTrendingTeaMasterSection(
-//            masters = uiState.teaMasters,
-//            onMasterClick = onMasterClick,
-//            onFollowToggle = onFollowToggle,
-//            modifier = Modifier.padding(horizontal = 16.dp)
-//        )
-//
-//        Spacer(modifier = Modifier.height(20.dp))
-//    }
-//}
-//
-//@Composable
-//private fun FollowingTabContent(
-//    uiState: CommunityUiState,
-//    onNoteClick: (ExploreNoteUi) -> Unit,
-//    onLikeClick: (ExploreNoteUi) -> Unit,
-//    onCommentClick: (ExploreNoteUi) -> Unit
-//) {
-//    if (uiState.followingFeed.isEmpty()) {
-//        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-//            Text(
-//                text = "팔로우한 마스터의 소식이 없습니다.",
-//                style = MaterialTheme.typography.bodyMedium,
-//                color = MaterialTheme.colorScheme.onSurfaceVariant
-//            )
-//        }
-//    } else {
-//        ExploreFollowingFeedSection(
-//            notes = uiState.followingFeed,
-//            onNoteClick = onNoteClick,
-//            onLikeClick = onLikeClick,
-//            onCommentClick = onCommentClick,
-//            modifier = Modifier.fillMaxSize()
-//        )
-//    }
-//}
-//
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewCommunityScreen() {
-//    MaterialTheme {
-//        val mockState = CommunityUiState(
-//            isLoading = false,
-//            selectedTab = ExploreContent.TRENDING,
-//            popularNotes = listOf(
-//                ExploreNoteUi(id = "1", title = "우전 녹차", subtitle = "2024년 첫 수확", rating = 4.8f)
-//            ),
-//            teaMasters = listOf(
-//                ExploreTeaMasterUi(id = "1", name = "차 마스터", title = "보이차 전문가", isFollowing = false)
-//            )
-//        )
-//
-//        TrendingTabContent(
-//            uiState = mockState,
-//            onNoteClick = {},
-//            onMasterClick = {},
-//            onFollowToggle = { _, _ -> }
-//        )
-//    }
-//}
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.leafy.features.community.ui.component.CustomExploreTabRow
+import com.leafy.features.community.ui.component.NoteCommentBottomSheet
+import com.leafy.features.community.ui.feed.CommunityFeedSideEffect
+import com.leafy.features.community.ui.feed.CommunityFeedViewModel
+import com.leafy.features.community.ui.feed.CommunityFeedViewModelFactory
+import com.leafy.features.community.ui.feed.CommunityTab
+import com.leafy.features.community.ui.feed.CommunityUiState
+import com.leafy.features.community.ui.feed.section.CommunityFollowingFeedSection
+import com.leafy.features.community.ui.feed.section.CommunityMostBookmarkedSection
+import com.leafy.features.community.ui.feed.section.CommunityPopularSection
+import com.leafy.features.community.ui.feed.section.CommunityTeaMasterSection
+import com.leafy.features.community.ui.model.CommunityPostUiModel
+import com.leafy.features.community.ui.model.UserUiModel
+import com.subin.leafy.domain.usecase.PostUseCases
+import com.subin.leafy.domain.usecase.UserUseCases
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CommunityScreen(
+    postUseCases: PostUseCases,
+    userUseCases: UserUseCases,
+    onPostClick: (String) -> Unit, // 상세 화면 이동
+    onMasterClick: (String) -> Unit, // 프로필 화면 이동
+    onMorePopularClick: () -> Unit = {}, // 인기글 더보기
+    onMoreBookmarkClick: () -> Unit = {}, // 북마크 더보기
+    onMoreMasterClick: () -> Unit = {} // 마스터 더보기
+) {
+    // 1. ViewModel 생성 (Factory 사용)
+    val viewModel: CommunityFeedViewModel = viewModel(
+        factory = CommunityFeedViewModelFactory.provide(postUseCases, userUseCases)
+    )
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // 2. Side Effect 처리 (에러 스낵바, 키보드 내리기)
+    LaunchedEffect(Unit) {
+        viewModel.sideEffects.collect { effect ->
+            when (effect) {
+                is CommunityFeedSideEffect.HideKeyboard -> {
+                    keyboardController?.hide()
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        if (uiState.errorMessage != null && !uiState.popularPosts.isEmpty()) {
+            snackbarHostState.showSnackbar(uiState.errorMessage!!)
+            viewModel.onMessageShown()
+        }
+    }
+
+    // 3. UI 구조 (Scaffold)
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // 상단 탭 (추천 / 팔로잉)
+            // CommunityTabRow는 기존에 있던 CustomExploreTabRow를 재활용하거나 새로 만드세요.
+            // 여기선 이름만 CommunityTabRow로 가정합니다.
+            CustomExploreTabRow(
+                selectedTab = uiState.selectedTab,
+                onTabSelected = viewModel::onTabSelected
+            )
+
+            // 메인 콘텐츠
+            Box(modifier = Modifier.fillMaxSize()) {
+                val isDataEmpty = when(uiState.selectedTab) {
+                    CommunityTab.TRENDING -> uiState.popularPosts.isEmpty() && uiState.mostBookmarkedPosts.isEmpty()
+                    CommunityTab.FOLLOWING -> uiState.followingPosts.isEmpty()
+                }
+
+                if (uiState.isLoading && isDataEmpty) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                else if (uiState.errorMessage != null && isDataEmpty) {
+                    ErrorRetryView(
+                        message = "데이터를 불러오지 못했습니다.",
+                        onRetry = viewModel::refresh, // ViewModel에 refresh 함수 구현 필요
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                else {
+                    when (uiState.selectedTab) {
+                        CommunityTab.TRENDING -> TrendingContent(
+                            uiState = uiState,
+                            onPostClick = { onPostClick(it.postId) },
+                            onMasterClick = { onMasterClick(it.userId) },
+                            onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
+                            onFollowToggle = { viewModel.toggleFollow(it.userId) },
+                            onMorePopularClick = onMorePopularClick,
+                            onMoreBookmarkClick = onMoreBookmarkClick,
+                            onMoreMasterClick = onMoreMasterClick
+                        )
+                        CommunityTab.FOLLOWING -> FollowingContent(
+                            uiState = uiState,
+                            onPostClick = { onPostClick(it.postId) },
+                            onLikeClick = { viewModel.toggleLike(it.postId) },
+                            onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
+                            onCommentClick = { viewModel.showComments(it.postId) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. 댓글 바텀 시트
+    if (uiState.showCommentSheet) {
+        NoteCommentBottomSheet(
+            onDismissRequest = viewModel::hideComments,
+            comments = uiState.comments,
+            isLoading = uiState.isCommentLoading,
+            commentInput = uiState.commentInput,
+            onInputChange = viewModel::updateCommentInput,
+            onSendComment = viewModel::addComment,
+            onDeleteComment = viewModel::deleteComment
+        )
+    }
+}
+
+// -----------------------------------------------------------------------------
+// 내부 컴포넌트: 추천 탭 (Trending)
+// -----------------------------------------------------------------------------
+@Composable
+private fun TrendingContent(
+    uiState: CommunityUiState,
+    onPostClick: (CommunityPostUiModel) -> Unit,
+    onMasterClick: (UserUiModel) -> Unit,
+    onBookmarkClick: (CommunityPostUiModel) -> Unit,
+    onFollowToggle: (UserUiModel) -> Unit,
+    onMorePopularClick: () -> Unit,
+    onMoreBookmarkClick: () -> Unit,
+    onMoreMasterClick: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(32.dp)
+    ) {
+        // 1. 이번 주 인기 노트 (가로 스크롤)
+        CommunityPopularSection(
+            posts = uiState.popularPosts,
+            onPostClick = onPostClick,
+            onMoreClick = onMorePopularClick
+        )
+
+        // 2. 가장 많이 저장된 노트 (세로 리스트 3개)
+        CommunityMostBookmarkedSection(
+            posts = uiState.mostBookmarkedPosts,
+            onPostClick = onPostClick,
+            onBookmarkClick = onBookmarkClick,
+            onMoreClick = onMoreBookmarkClick
+        )
+
+        // 3. 이번 달 티 마스터 (세로 리스트 3명)
+        CommunityTeaMasterSection(
+            masters = uiState.teaMasters,
+            onMasterClick = onMasterClick,
+            onFollowToggle = onFollowToggle,
+            onMoreClick = onMoreMasterClick
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+fun ErrorRetryView(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // 아이콘 (선택 사항)
+        // Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = Color.Gray)
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("다시 시도")
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// 내부 컴포넌트: 팔로잉 탭 (Following)
+// -----------------------------------------------------------------------------
+@Composable
+private fun FollowingContent(
+    uiState: CommunityUiState,
+    onPostClick: (CommunityPostUiModel) -> Unit,
+    onLikeClick: (CommunityPostUiModel) -> Unit,
+    onBookmarkClick: (CommunityPostUiModel) -> Unit,
+    onCommentClick: (CommunityPostUiModel) -> Unit
+) {
+    if (uiState.isFollowingEmpty) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "팔로우한 이웃의 소식이 아직 없습니다.\n티 마스터를 팔로우해보세요!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+    } else {
+        CommunityFollowingFeedSection(
+            posts = uiState.followingPosts,
+            onPostClick = onPostClick,
+            onLikeClick = onLikeClick,
+            onCommentClick = onCommentClick,
+            onBookmarkClick = onBookmarkClick,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}

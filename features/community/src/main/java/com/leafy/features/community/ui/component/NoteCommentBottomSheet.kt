@@ -1,110 +1,100 @@
 package com.leafy.features.community.ui.component
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.ui.CommunityCommentUi
+import com.leafy.features.community.ui.model.CommentUiModel
 import com.leafy.shared.ui.component.LeafyProfileImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteCommentBottomSheet(
     onDismissRequest: () -> Unit,
-    comments: List<CommunityCommentUi>,
-    onSendComment: (String) -> Unit,
-    onReplyClick: (String) -> Unit,
+    comments: List<CommentUiModel>,
+    isLoading: Boolean,
+    commentInput: String,
+    onInputChange: (String) -> Unit,
+    onSendComment: () -> Unit,
+    onDeleteComment: (String) -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
     val colors = MaterialTheme.colorScheme
-    var commentText by remember { mutableStateOf("") }
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = colors.surface,
-        modifier = Modifier.fillMaxHeight(0.85f)
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        modifier = Modifier.fillMaxHeight(0.85f) // 화면의 85% 높이
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = "댓글",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            // 헤더
+            Box(
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth()
                     .padding(bottom = 16.dp)
-            )
+            ) {
+                Text(
+                    text = "댓글 ${comments.size}",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            HorizontalDivider(color = colors.outlineVariant.copy(alpha = 0.5f))
 
             // 1. 댓글 리스트 영역
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 items(
                     items = comments,
-                    key = { it.id }
+                    key = { it.commentId }
                 ) { comment ->
                     CommentItem(
                         comment = comment,
-                        onReplyClick = { onReplyClick(it) }
+                        onDeleteClick = { onDeleteComment(comment.commentId) }
                     )
                 }
             }
 
+            // 2. 입력창 영역
             Surface(
                 tonalElevation = 4.dp,
+                shadowElevation = 8.dp,
                 modifier = Modifier.imePadding(),
                 color = colors.surface
             ) {
                 Column {
-                    HorizontalDivider(color = colors.outlineVariant, thickness = 0.5.dp)
+                    HorizontalDivider(color = colors.outlineVariant.copy(alpha = 0.5f))
                     Row(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         LeafyProfileImage(imageUrl = null, size = 36.dp)
 
+                        Spacer(modifier = Modifier.width(8.dp))
+
                         TextField(
-                            value = commentText,
-                            onValueChange = { commentText = it },
+                            value = commentInput,
+                            onValueChange = onInputChange,
                             placeholder = {
-                                Text("차에 대한 이야기를 나눠보세요...", style = MaterialTheme.typography.bodyMedium)
+                                Text("따뜻한 댓글을 남겨주세요...", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant.copy(alpha = 0.6f))
                             },
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 8.dp),
+                            modifier = Modifier.weight(1f),
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
@@ -112,23 +102,27 @@ fun NoteCommentBottomSheet(
                                 unfocusedIndicatorColor = Color.Transparent,
                                 cursorColor = colors.primary
                             ),
-                            maxLines = 4
+                            maxLines = 3,
+                            textStyle = MaterialTheme.typography.bodyMedium
                         )
 
                         TextButton(
-                            onClick = {
-                                if (commentText.isNotBlank()) {
-                                    onSendComment(commentText)
-                                    commentText = ""
-                                }
-                            },
-                            enabled = commentText.isNotBlank()
+                            onClick = onSendComment,
+                            enabled = commentInput.isNotBlank() && !isLoading
                         ) {
-                            Text(
-                                text = "게시",
-                                color = if (commentText.isNotBlank()) colors.primary else colors.outline,
-                                fontWeight = FontWeight.Bold
-                            )
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = colors.primary
+                                )
+                            } else {
+                                Text(
+                                    text = "게시",
+                                    color = if (commentInput.isNotBlank()) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.4f),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

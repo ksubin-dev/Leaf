@@ -45,8 +45,9 @@ fun SignUpScreen(
     onSignUpSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
     val snackbarHostState = remember { SnackbarHostState() }
+
+
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -181,6 +182,7 @@ fun SignUpContent(
             text = "회원가입 완료",
             onClick = singleClick { onSignUpClick() },
             enabled = !uiState.isLoading &&
+                    !uiState.isSignUpSuccess &&
                     uiState.username.isNotBlank() &&
                     uiState.email.isNotBlank() &&
                     uiState.password.isNotBlank() &&

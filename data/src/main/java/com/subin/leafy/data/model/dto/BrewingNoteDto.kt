@@ -48,6 +48,6 @@ data class BrewingNoteDto(
     val commentCount: Int = 0,
     val viewCount: Int = 0,
 
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long? = null
+    val date: Long = System.currentTimeMillis(),
+    val createdAt: Long = System.currentTimeMillis()
 )

@@ -27,7 +27,7 @@ class FirestoreNoteDataSourceImpl(
         return try {
             val snapshot = notesCollection
                 .whereEqualTo(FIELD_OWNER_ID, userId)
-                .orderBy(FIELD_CREATED_AT, Query.Direction.DESCENDING)
+                .orderBy(FirestoreConstants.FIELD_DATE, Query.Direction.DESCENDING)
                 .get()
                 .await()
 
@@ -46,7 +46,7 @@ class FirestoreNoteDataSourceImpl(
             val snapshot = notesCollection
                 .whereEqualTo(FIELD_OWNER_ID, userId)
                 .whereEqualTo(FIELD_IS_PUBLIC, true)
-                .orderBy(FIELD_CREATED_AT, Query.Direction.DESCENDING)
+                .orderBy(FirestoreConstants.FIELD_DATE, Query.Direction.DESCENDING)
                 .get()
                 .await()
 

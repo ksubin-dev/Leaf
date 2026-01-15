@@ -10,7 +10,8 @@ class SignUpUseCase(
     suspend operator fun invoke(
         email: String,
         password: String,
-        nickname: String
+        nickname: String,
+        profileImageUri: String? = null
     ): DataResourceResult<User> {
 
         // 1. 비즈니스 로직 (유효성 검사)
@@ -24,6 +25,11 @@ class SignUpUseCase(
             return DataResourceResult.Failure(Exception("닉네임을 입력해주세요."))
         }
         // 2. 검사 통과 시 레포지토리 호출
-        return authRepository.signUp(email, password, nickname)
+        return authRepository.signUp(
+            email = email,
+            password = password,
+            nickname = nickname,
+            profileImageUri = profileImageUri
+        )
     }
 }

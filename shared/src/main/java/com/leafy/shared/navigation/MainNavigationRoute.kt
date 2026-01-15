@@ -15,6 +15,9 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable
     data class NoteDetail(val noteId: String) : MainNavigationRoute
     @Serializable data object CommunityTab : MainNavigationRoute
+    @Serializable data class CommunityDetail(val postId: String) : MainNavigationRoute
+    @Serializable data object CommunityWrite : MainNavigationRoute
+    @Serializable data class MasterProfile(val userId: String) : MainNavigationRoute
     @Serializable data object TimerTab : MainNavigationRoute
     @Serializable data object MyPageTab : MainNavigationRoute
     @Serializable data class DailyRecords(val date: String) : MainNavigationRoute

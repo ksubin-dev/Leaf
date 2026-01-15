@@ -17,14 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.leafy.features.community.ui.feed.CommunityTab
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.subin.leafy.domain.model.ExploreContent
-
 
 @Composable
 fun CustomExploreTabRow(
-    selectedTab: ExploreContent,
-    onTabSelected: (ExploreContent) -> Unit,
+    selectedTab: CommunityTab,
+    onTabSelected: (CommunityTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -38,8 +37,14 @@ fun CustomExploreTabRow(
                 .height(44.dp)
                 .background(colors.background)
         ) {
-            ExploreContent.entries.forEach { tab ->
+            CommunityTab.entries.forEach { tab ->
                 val selected = tab == selectedTab
+
+                val tabTitle = when(tab) {
+                    CommunityTab.TRENDING -> "추천"
+                    CommunityTab.FOLLOWING -> "팔로잉"
+                }
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -49,7 +54,7 @@ fun CustomExploreTabRow(
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = tab.label,
+                        text = tabTitle,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                         ),
@@ -78,12 +83,11 @@ fun CustomExploreTabRow(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 private fun CustomExploreTabRowPreview() {
     LeafyTheme {
-        var currentTab by remember { mutableStateOf(ExploreContent.TRENDING) }
+        var currentTab by remember { mutableStateOf(CommunityTab.TRENDING) }
 
         CustomExploreTabRow(
             selectedTab = currentTab,
@@ -99,7 +103,7 @@ private fun CustomExploreTabRowPreview() {
 private fun CustomExploreTabRowFollowingSelectedPreview() {
     LeafyTheme {
         CustomExploreTabRow(
-            selectedTab = ExploreContent.FOLLOWING,
+            selectedTab = CommunityTab.FOLLOWING,
             onTabSelected = { }
         )
     }

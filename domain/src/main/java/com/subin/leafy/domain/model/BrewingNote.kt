@@ -11,8 +11,8 @@ data class BrewingNote(
     val metadata: NoteMetadata,
     val stats: PostStatistics,    // 좋아요, 댓글 수 등 (기존 socialStats)
     val myState: PostSocialState,   // 내가 좋아요 했는지 등 (기존 isLiked 등)
+    val date: Long,
     val createdAt: Long,
-    val updatedAt: Long? = null
 )
 
 // 1. 차 정보

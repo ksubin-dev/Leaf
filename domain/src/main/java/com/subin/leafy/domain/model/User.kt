@@ -7,9 +7,11 @@ data class User(
     val profileImageUrl: String?,
     val bio: String?,
     val masterTitle: String? = null,
+    val expertTypes: List<TeaType> = emptyList(),
 
     val socialStats: UserSocialStatistics,
     val relationState: UserRelationState,
+
 
     val followingIds: List<String>,
     val likedPostIds: List<String>,

@@ -11,7 +11,7 @@ interface AuthRepository {
 
     // 2. 이메일/비번 인증
     suspend fun login(email: String, password: String): DataResourceResult<User>
-    suspend fun signUp(email: String, password: String, nickname: String): DataResourceResult<User>
+    suspend fun signUp(email: String, password: String, nickname: String, profileImageUri: String? = null): DataResourceResult<User>
 
     suspend fun checkNicknameAvailability(nickname: String): DataResourceResult<Boolean>
 

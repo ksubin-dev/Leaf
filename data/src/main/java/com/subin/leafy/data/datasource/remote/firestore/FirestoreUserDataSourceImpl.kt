@@ -30,8 +30,8 @@ class FirestoreUserDataSourceImpl(
     // --- 1. 유저 정보 조회 (단건) ---
     override suspend fun getUser(userId: String): DataResourceResult<User> {
         return try {
-            val snapshot = usersCollection.document(userId).get().await()
-            val userDto = snapshot.toObject<UserDto>()
+            val snapshot = firestore.collection("users").document(userId).get().await()
+            val userDto = snapshot.toObject<UserDto>()?.copy(uid = snapshot.id)
 
             if (userDto != null) {
                 DataResourceResult.Success(userDto.toUserDomain())
@@ -66,13 +66,27 @@ class FirestoreUserDataSourceImpl(
     override suspend fun updateUser(user: User): DataResourceResult<Unit> {
         return try {
             val updates = mapOf(
+
                 FirestoreConstants.FIELD_NICKNAME to user.nickname,
                 FirestoreConstants.FIELD_PROFILE_IMAGE to user.profileImageUrl,
-                FirestoreConstants.FIELD_BIO to user.bio
+                FirestoreConstants.FIELD_BIO to user.bio,
+                FirestoreConstants.FIELD_EXPERT_TYPES to user.expertTypes.map { it.name },
+
+
+                FirestoreConstants.KEY_SOCIAL_STATS to mapOf(
+                    FirestoreConstants.KEY_FOLLOWER_COUNT to user.socialStats.followerCount,
+                    FirestoreConstants.KEY_FOLLOWING_COUNT to user.socialStats.followingCount
+                ),
+
+                FirestoreConstants.FIELD_FOLLOWING_IDS to user.followingIds,
+                FIELD_LIKED_POST_IDS to user.likedPostIds,
+                FIELD_BOOKMARKED_POST_IDS to user.bookmarkedPostIds,
+
+                FirestoreConstants.FIELD_CREATED_AT to user.createdAt
             )
 
             usersCollection.document(user.id)
-                .set(updates, SetOptions.merge())
+                .set(updates, SetOptions.merge()) // 없으면 생성, 있으면 병합(업데이트)
                 .await()
 
             DataResourceResult.Success(Unit)
@@ -121,7 +135,6 @@ class FirestoreUserDataSourceImpl(
                 val myRef = usersCollection.document(myId)
                 val targetRef = usersCollection.document(targetUserId)
 
-                // [상수 사용] followingIds, socialStats...
                 transaction.update(myRef, FirestoreConstants.FIELD_FOLLOWING_IDS, FieldValue.arrayUnion(targetUserId))
                 transaction.update(myRef, FirestoreConstants.FIELD_FOLLOWING_COUNT, FieldValue.increment(1))
 
@@ -216,6 +229,24 @@ class FirestoreUserDataSourceImpl(
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
         }
+    }
+
+    override fun getFollowingIdsFlow(userId: String): Flow<DataResourceResult<List<String>>> = callbackFlow {
+        val listener = usersCollection.document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(DataResourceResult.Failure(error))
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val ids = snapshot.get(FirestoreConstants.FIELD_FOLLOWING_IDS) as? List<String> ?: emptyList()
+                    trySend(DataResourceResult.Success(ids))
+                } else {
+                    trySend(DataResourceResult.Failure(Exception("User not found")))
+                }
+            }
+        awaitClose { listener.remove() }
     }
 
     // --- 10. 뱃지 가져오기 ---

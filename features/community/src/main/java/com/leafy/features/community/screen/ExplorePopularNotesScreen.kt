@@ -1,15 +1,15 @@
 package com.leafy.features.community.screen
 
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import com.leafy.features.community.ui.component.ExploreNoteUi
-
-@Composable
-fun ExplorePopularNotesScreen(
-    notes: List<ExploreNoteUi>,
-    onBackClick: () -> Unit,
-    onNoteClick: (String) -> Unit
-) {
+//import androidx.compose.material3.Scaffold
+//import androidx.compose.runtime.Composable
+//import com.leafy.features.community.ui.component.ExploreNoteUi
+//
+//@Composable
+//fun ExplorePopularNotesScreen(
+//    notes: List<ExploreNoteUi>,
+//    onBackClick: () -> Unit,
+//    onNoteClick: (String) -> Unit
+//) {
 //    Scaffold(
 //        topBar = {
 //            LeafyTopBar( // shared 공통 탑바 가정
@@ -47,4 +47,4 @@ fun ExplorePopularNotesScreen(
 //            }
 //        }
 //    }
-}
+//}
