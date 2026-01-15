@@ -30,8 +30,8 @@ class FirestoreUserDataSourceImpl(
     // --- 1. 유저 정보 조회 (단건) ---
     override suspend fun getUser(userId: String): DataResourceResult<User> {
         return try {
-            val snapshot = usersCollection.document(userId).get().await()
-            val userDto = snapshot.toObject<UserDto>()
+            val snapshot = firestore.collection("users").document(userId).get().await()
+            val userDto = snapshot.toObject<UserDto>()?.copy(uid = snapshot.id)
 
             if (userDto != null) {
                 DataResourceResult.Success(userDto.toUserDomain())
