@@ -5,6 +5,9 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.leafy.features.community.screen.CommunityScreen
+import com.leafy.features.community.ui.detail.CommunityPostDetailRoute
+import com.leafy.features.community.ui.detail.CommunityPostDetailViewModel
+import com.leafy.features.community.ui.detail.CommunityPostDetailViewModelFactory
 import com.leafy.features.community.ui.write.CommunityWriteRoute
 import com.leafy.features.community.ui.write.CommunityWriteViewModel
 import com.leafy.features.community.ui.write.CommunityWriteViewModelFactory
@@ -15,7 +18,6 @@ fun NavGraphBuilder.communityNavGraph(
     navController: NavController,
     container: ApplicationContainer
 ) {
-    // 1. 커뮤니티 메인 탭
     composable<MainNavigationRoute.CommunityTab> {
         CommunityScreen(
             postUseCases = container.postUseCases,
@@ -33,7 +35,6 @@ fun NavGraphBuilder.communityNavGraph(
         )
     }
 
-    // 2. 글쓰기 화면
     composable<MainNavigationRoute.CommunityWrite> {
         val viewModel: CommunityWriteViewModel = viewModel(
             factory = CommunityWriteViewModelFactory(
@@ -54,8 +55,22 @@ fun NavGraphBuilder.communityNavGraph(
         )
     }
 
-    // 3. 상세 화면
-    composable<MainNavigationRoute.CommunityDetail> { backStackEntry ->
-        // ... (나중에 구현)
+    composable<MainNavigationRoute.CommunityDetail> {
+        val factory = CommunityPostDetailViewModelFactory(
+            postUseCases = container.postUseCases,
+            userUseCases = container.userUseCases
+        )
+
+        // ViewModel 생성
+        val viewModel: CommunityPostDetailViewModel = viewModel(factory = factory)
+
+        // Route 연결
+        CommunityPostDetailRoute(
+            viewModel = viewModel,
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToNoteDetail = { originNoteId ->
+                navController.navigate(MainNavigationRoute.NoteDetail(originNoteId))
+            }
+        )
     }
 }

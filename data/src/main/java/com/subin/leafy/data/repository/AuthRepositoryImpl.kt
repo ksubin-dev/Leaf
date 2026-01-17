@@ -1,5 +1,9 @@
 package com.subin.leafy.data.repository
 
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.subin.leafy.data.datasource.local.LocalSettingDataSource
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.StorageDataSource
@@ -23,45 +27,50 @@ class AuthRepositoryImpl(
 
     override fun getCurrentUserId(): String? = authDataSource.getCurrentUserId()
 
-    // =================================================================
-    // 1. 로그인 (Login)
-    // =================================================================
     override suspend fun login(email: String, password: String): DataResourceResult<User> {
+
         val authResult = authDataSource.login(email, password)
+
         if (authResult is DataResourceResult.Failure) {
-            return DataResourceResult.Failure(authResult.exception)
+            val originalException = authResult.exception
+
+            val friendlyMessage = when (originalException) {
+                is FirebaseAuthInvalidUserException -> "존재하지 않는 계정입니다. 회원가입을 먼저 진행해주세요."
+                is FirebaseAuthInvalidCredentialsException -> "이메일 또는 비밀번호가 올바르지 않습니다."
+                is FirebaseNetworkException -> "네트워크 연결 상태를 확인해주세요."
+                else -> "로그인에 실패했습니다. 다시 시도해주세요."
+            }
+            return DataResourceResult.Failure(Exception(friendlyMessage))
         }
 
-        // 2. 성공 시 UID 획득
         val uid = authDataSource.getCurrentUserId()
             ?: return DataResourceResult.Failure(Exception("UID Fetch Error"))
 
-        // 3. Firestore에서 유저 정보(User 도메인 객체) 가져오기
         return userDataSource.getUser(uid)
     }
 
-    // =================================================================
-    // 2. 회원가입 (Sign Up)
-    // =================================================================
     override suspend fun signUp(email: String, password: String, nickname: String, profileImageUri: String?): DataResourceResult<User> {
 
-        // 1. 닉네임 중복 검사 (DB 먼저 확인)
         val isDuplicate = userDataSource.isNicknameDuplicate(nickname)
         if (isDuplicate) {
             return DataResourceResult.Failure(Exception("이미 사용 중인 닉네임입니다."))
         }
 
-        // 2. 중복 아니면 Firebase Auth 계정 생성 진행
         val authResult = authDataSource.signUp(email, password)
+
         if (authResult is DataResourceResult.Failure) {
-            return DataResourceResult.Failure(authResult.exception)
+            val friendlyMessage = when (val originalException = authResult.exception) {
+                is FirebaseAuthUserCollisionException -> "이미 가입된 이메일 주소입니다."
+                is FirebaseAuthInvalidCredentialsException -> "이메일 형식이 올바르지 않습니다."
+                is FirebaseNetworkException -> "네트워크 연결 상태를 확인해주세요."
+                else -> "회원가입에 실패했습니다. (${originalException.message})"
+            }
+            return DataResourceResult.Failure(Exception(friendlyMessage))
         }
 
-        // 3. 성공 시 UID 획득
         val uid = authDataSource.getCurrentUserId()
             ?: return DataResourceResult.Failure(Exception("UID Fetch Error"))
 
-        // 4. 이미지 업로드 처리 (이미지가 있는 경우에만)
         var uploadedImageUrl: String? = null
         if (profileImageUri != null) {
             val imageResult = storageDataSource.uploadImage(
@@ -71,23 +80,23 @@ class AuthRepositoryImpl(
             if (imageResult is DataResourceResult.Success) {
                 uploadedImageUrl = imageResult.data
             }
-            // 업로드 실패 시 로직을 중단할지, 그냥 null로 진행할지는 선택 사항입니다.
         }
 
-        // 4. 초기 User 객체 생성
         val newUser = createNewUser(uid, email, nickname).copy(
             profileImageUrl = uploadedImageUrl
         )
 
-        // 5. Firestore에 저장
         val saveResult = userDataSource.updateUser(newUser)
 
         return if (saveResult is DataResourceResult.Success) {
             DataResourceResult.Success(newUser)
         } else {
-            // DB 저장이 실패했다면... (계정은 만들어졌는데 DB가 없는 꼬인 상태)
-            // 실제 앱에선 여기서 '계정 삭제'를 하거나, 재시도 로직이 필요할 수 있음
-            DataResourceResult.Failure(Exception("Failed to save user profile"))
+            try {
+                authDataSource.deleteAuthAccount()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            DataResourceResult.Failure(Exception("회원 정보 저장에 실패했습니다. 잠시 후 다시 시도해주세요."))
         }
     }
 
@@ -100,13 +109,10 @@ class AuthRepositoryImpl(
         }
     }
 
-    // =================================================================
-    // 3. 로그아웃 & 탈퇴
-    // =================================================================
     override suspend fun signOut(): DataResourceResult<Unit> {
         return try {
             authDataSource.logout()
-            settingDataSource.clearSettings() // 로컬 설정 초기화
+            settingDataSource.clearSettings()
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
@@ -118,15 +124,14 @@ class AuthRepositoryImpl(
             val uid = getCurrentUserId()
                 ?: return DataResourceResult.Failure(Exception("Not logged in"))
 
-            // 1. Firestore 데이터 삭제 (UserDataSource에 deleteUser가 필요하거나, 여기서 로직 처리)
-            // (만약 UserDataSource에 deleteUser를 아직 안 만드셨다면, 일단 주석 처리하거나 추가 필요)
-            // userDataSource.deleteUser(uid)
+            val dbResult = userDataSource.deleteUser(uid)
 
-            // 2. Auth 계정 삭제
+            if (dbResult is DataResourceResult.Failure) {
+                return DataResourceResult.Failure(dbResult.exception)
+            }
             val authResult = authDataSource.deleteAuthAccount()
             if (authResult is DataResourceResult.Failure) return authResult
 
-            // 3. 설정 초기화
             settingDataSource.clearSettings()
 
             DataResourceResult.Success(Unit)
@@ -135,9 +140,6 @@ class AuthRepositoryImpl(
         }
     }
 
-    // =================================================================
-    // 4. 설정 (Settings)
-    // =================================================================
     override fun getAutoLoginState(): Flow<Boolean> {
         return settingDataSource.getAppSettingsFlow().map { it.autoLogin }
     }
@@ -146,7 +148,6 @@ class AuthRepositoryImpl(
         settingDataSource.updateAutoLogin(enabled)
     }
 
-    // --- Helper: 신규 유저 초기값 생성 ---
     private fun createNewUser(uid: String, email: String, nickname: String): User {
         return User(
             id = uid,

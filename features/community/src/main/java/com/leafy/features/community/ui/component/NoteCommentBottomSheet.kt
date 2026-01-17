@@ -5,19 +5,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.leafy.features.community.ui.model.CommentUiModel
+import com.leafy.shared.ui.component.LeafyDialog
 import com.leafy.shared.ui.component.LeafyProfileImage
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteCommentBottomSheet(
     onDismissRequest: () -> Unit,
     comments: List<CommentUiModel>,
+    currentUserProfileUrl: String?,
     isLoading: Boolean,
     commentInput: String,
     onInputChange: (String) -> Unit,
@@ -27,12 +34,28 @@ fun NoteCommentBottomSheet(
 ) {
     val colors = MaterialTheme.colorScheme
 
+    var commentIdToDelete by remember { mutableStateOf<String?>(null) }
+
+    if (commentIdToDelete != null) {
+        LeafyDialog(
+            onDismissRequest = { commentIdToDelete = null },
+            title = "댓글 삭제",
+            text = "정말 이 댓글을 삭제하시겠습니까?",
+            confirmText = "삭제",
+            dismissText = "취소",
+            onConfirmClick = {
+                onDeleteComment(commentIdToDelete!!)
+                commentIdToDelete = null
+            }
+        )
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         containerColor = colors.surface,
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        modifier = Modifier.fillMaxHeight(0.85f) // 화면의 85% 높이
+        modifier = Modifier.fillMaxHeight(0.85f),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // 헤더
@@ -73,18 +96,20 @@ fun NoteCommentBottomSheet(
             Surface(
                 tonalElevation = 4.dp,
                 shadowElevation = 8.dp,
-                modifier = Modifier.imePadding(),
+                modifier = Modifier,
                 color = colors.surface
             ) {
                 Column {
                     HorizontalDivider(color = colors.outlineVariant.copy(alpha = 0.5f))
                     Row(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        LeafyProfileImage(imageUrl = null, size = 36.dp)
+                        LeafyProfileImage(
+                            imageUrl = currentUserProfileUrl,
+                            size = 36.dp
+                        )
 
                         Spacer(modifier = Modifier.width(8.dp))
 

@@ -40,4 +40,6 @@ interface UserDataSource {
 
     suspend fun updateNotificationSetting(userId: String, isAgreed: Boolean): DataResourceResult<Unit>
 
+    suspend fun deleteUser(userId: String): DataResourceResult<Unit>
+
 }

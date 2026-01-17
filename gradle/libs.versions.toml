@@ -46,6 +46,9 @@ firebaseFirestoreKtxVersion = "26.0.2"
 material3 = "1.4.0"
 foundationVersion = "1.10.0"
 volley = "1.2.1"
+foundationLayoutVersion = "1.10.1"
+material3Version = "1.4.0"
+playServicesAuth = "21.5.0"
 
 
 
@@ -102,6 +105,9 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 #MPAndroidChart
 mpAndroidChart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpAndroidChart" }
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
+material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3Version" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 
 

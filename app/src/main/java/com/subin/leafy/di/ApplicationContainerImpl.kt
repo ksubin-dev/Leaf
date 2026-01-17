@@ -218,7 +218,8 @@ class ApplicationContainerImpl(
         incrementViewCount = IncrementViewCountUseCase(postRepository),
         getComments = GetCommentsUseCase(postRepository),
         addComment = AddCommentUseCase(postRepository),
-        deleteComment = DeleteCommentUseCase(postRepository)
+        deleteComment = DeleteCommentUseCase(postRepository),
+        shareNoteAsPost = ShareNoteAsPostUseCase(noteRepository = noteRepository, postRepository = postRepository)
     )
 
     // [F] Image UseCases

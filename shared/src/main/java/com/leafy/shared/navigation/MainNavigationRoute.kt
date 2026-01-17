@@ -4,6 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface MainNavigationRoute : LeafyNavigation {
+
+    @Serializable data object Auth : MainNavigationRoute
     @Serializable data object HomeTab : MainNavigationRoute
     @Serializable
     data class NoteTab(

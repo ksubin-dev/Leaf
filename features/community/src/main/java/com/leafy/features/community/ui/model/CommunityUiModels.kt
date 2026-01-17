@@ -1,6 +1,5 @@
 package com.leafy.features.community.ui.model
 
-// 1. 게시글 (피드, 추천 목록용)
 data class CommunityPostUiModel(
     val postId: String,
     val authorId: String,
@@ -12,11 +11,16 @@ data class CommunityPostUiModel(
     val content: String,
     val imageUrls: List<String>,
 
+    val tags: List<String> = emptyList(),
+    val originNoteId: String? = null,
+
     val timeAgo: String,
 
     val teaType: String?,
     val brewingSummary: String?,
     val rating: Int?,
+
+    val brewingChips: List<String> = emptyList(),
 
     val likeCount: String,
     val commentCount: String,
@@ -27,7 +31,6 @@ data class CommunityPostUiModel(
     val isBookmarked: Boolean
 ) {
     val isBrewingNote: Boolean get() = teaType != null
-    val brewingChips: List<String> get() = brewingSummary?.split("·")?.map { it.trim() } ?: emptyList()
 }
 
 // 2. 티 마스터 (추천 사용자용)

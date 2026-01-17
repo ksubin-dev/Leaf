@@ -22,10 +22,15 @@ fun CommunityPost.toUiModel(): CommunityPostUiModel {
         content = this.content,
         imageUrls = this.imageUrls,
 
+        tags = this.tags,
+        originNoteId = this.originNoteId,
+
         timeAgo = LeafyTimeUtils.getRelativeTime(this.createdAt),
 
         brewingSummary = this.brewingSummary?.takeIf { it.isNotBlank() },
-        teaType = this.teaType?.label,
+
+        teaType = this.teaType?.name,
+        brewingChips = this.brewingSummary?.split("·")?.map { it.trim() } ?: emptyList(),
 
         likeCount = this.stats.likeCount.toKiloFormat(),
         commentCount = this.stats.commentCount.toKiloFormat(),

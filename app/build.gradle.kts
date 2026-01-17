@@ -76,6 +76,9 @@ dependencies {
     implementation(libs.bundles.room.libraries)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.foundation.layout)
+    implementation(libs.play.services.auth)
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

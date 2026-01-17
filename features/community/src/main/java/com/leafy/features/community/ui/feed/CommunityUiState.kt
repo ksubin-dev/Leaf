@@ -37,6 +37,8 @@ data class CommunityUiState(
     // =================================================================
     // 4. [인터랙션] 댓글 및 상세 보기
     // =================================================================
+
+    val currentUserProfileUrl: String? = null,
     // 댓글 바텀 시트 표시 여부
     val showCommentSheet: Boolean = false,
 

@@ -55,6 +55,7 @@ fun CommunityWriteRoute(
                 is CommunityWriteEvent.RemoveTag -> viewModel.removeTag(event.tag)
                 is CommunityWriteEvent.SelectNote -> viewModel.onNoteSelected(event.noteId)
                 is CommunityWriteEvent.ClearNote -> viewModel.clearLinkedNote()
+                is CommunityWriteEvent.ErrorMessageShown -> viewModel.userMessageShown()
             }
         }
     )
@@ -73,6 +74,8 @@ fun CommunityWriteContent(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(5),
         onResult = { uris -> onEvent(CommunityWriteEvent.AddImages(uris)) }
@@ -80,6 +83,13 @@ fun CommunityWriteContent(
 
     LaunchedEffect(uiState.isPostSuccess) {
         if (uiState.isPostSuccess) onPostSuccess()
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onEvent(CommunityWriteEvent.ErrorMessageShown)
+        }
     }
 
     if (showBottomSheet) {
@@ -100,6 +110,8 @@ fun CommunityWriteContent(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.statusBars,
+
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("새 게시물", fontWeight = FontWeight.Bold) },
@@ -130,11 +142,10 @@ fun CommunityWriteContent(
             )
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .verticalScroll(scrollState)
         ) {
             PostImageSection(
@@ -246,6 +257,7 @@ sealed interface CommunityWriteEvent {
     data class RemoveTag(val tag: String) : CommunityWriteEvent
     data class SelectNote(val noteId: String) : CommunityWriteEvent
     object ClearNote : CommunityWriteEvent
+    object ErrorMessageShown : CommunityWriteEvent
 }
 
 @Preview(showBackground = true)

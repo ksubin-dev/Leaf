@@ -14,6 +14,7 @@ import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -86,6 +87,10 @@ class CommunityWriteViewModel(
         _uiState.update { it.copy(tags = it.tags - tag) }
     }
 
+    fun userMessageShown() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun onNoteSelected(noteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -114,7 +119,7 @@ class CommunityWriteViewModel(
 
                         brewingSummary = summaryText,
 
-                        title = note.teaInfo.name,
+                        title = "${note.teaInfo.brand} ${note.teaInfo.name}",
                         selectedImageUris = note.metadata.imageUrls.map { it.toUri() },
                         tags = note.evaluation.flavorTags.map { "#${it.name}" }
                     )
@@ -134,7 +139,7 @@ class CommunityWriteViewModel(
                 linkedDate = null,
                 linkedRating = null,
                 linkedThumbnailUri = null,
-                brewingSummary = null
+                brewingSummary = null,
             )
         }
     }
@@ -146,62 +151,91 @@ class CommunityWriteViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val userIdResult = userUseCases.getCurrentUserId()
-                if (userIdResult is DataResourceResult.Failure) throw Exception("User not found")
-                val userId = (userIdResult as DataResourceResult.Success).data
 
-                val postImageFolderId = UUID.randomUUID().toString()
+                val finalImageUrls = processImages(state.selectedImageUris)
 
-                val finalImageUrls = state.selectedImageUris.map { uri ->
-                    async {
-                        val uriString = uri.toString()
-                        if (uriString.startsWith("http")) {
-                            uriString
-                        } else {
-                            val compressedPath = imageCompressor.compressImage(uriString)
-                            val uploadResult = imageUseCases.uploadImage(
-                                uri = compressedPath,
-                                folder = "posts/$userId/$postImageFolderId"
-                            )
-                            if (uploadResult is DataResourceResult.Success) uploadResult.data
-                            else throw Exception("Image upload failed")
-                        }
-                    }
-                }.awaitAll()
-
-                val result = postUseCases.createPost(
-                    postId = postImageFolderId,
-                    title = state.title,
-                    content = state.content,
-                    imageUrls = finalImageUrls,
-                    teaType = state.linkedTeaType,
-                    rating = state.linkedRating,
-                    tags = state.tags,
-                    brewingSummary = state.brewingSummary,
-                    originNoteId = state.linkedNoteId
-                )
+                val result = if (state.linkedNoteId != null) {
+                    postUseCases.shareNoteAsPost(
+                        noteId = state.linkedNoteId,
+                        content = state.content,
+                        tags = state.tags,
+                        imageUrls = finalImageUrls
+                    )
+                } else {
+                    createNormalPost(state, finalImageUrls)
+                }
 
                 if (result is DataResourceResult.Success) {
                     _uiState.update { it.copy(isLoading = false, isPostSuccess = true) }
                 } else {
-                    throw Exception("Post creation failed")
+                    throw Exception("게시글 업로드에 실패했습니다.")
                 }
 
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "알 수 없는 오류") }
             }
         }
+    }
+
+    private suspend fun processImages(uris: List<Uri>): List<String> = coroutineScope {
+        val userIdResult = userUseCases.getCurrentUserId()
+        if (userIdResult is DataResourceResult.Failure) throw Exception("로그인이 필요합니다.")
+        val userId = (userIdResult as DataResourceResult.Success).data
+
+        val imageFolderId = UUID.randomUUID().toString()
+
+        uris.map { uri ->
+            async {
+                val scheme = uri.scheme
+                val uriString = uri.toString()
+                if (scheme == "http" || scheme == "https") {
+                    uriString
+                }
+                else {
+                    try {
+                        val compressedPath = imageCompressor.compressImage(uriString)
+
+                        val uploadResult = imageUseCases.uploadImage(
+                            uri = compressedPath,
+                            folder = "posts/$userId/$imageFolderId"
+                        )
+
+                        if (uploadResult is DataResourceResult.Success) {
+                            uploadResult.data
+                        } else {
+                            throw Exception("이미지 업로드 실패")
+                        }
+                    } catch (e: Exception) {
+                        throw Exception("이미지 처리 중 오류 발생: ${e.message}")
+                    }
+                }
+            }
+        }.awaitAll()
+    }
+
+    private suspend fun createNormalPost(
+        state: CommunityWriteUiState,
+        imageUrls: List<String>
+    ): DataResourceResult<Unit> {
+        val newPostId = UUID.randomUUID().toString()
+
+        return postUseCases.createPost(
+            postId = newPostId,
+            title = state.title,
+            content = state.content,
+            imageUrls = imageUrls,
+            teaType = state.linkedTeaType,
+            rating = state.linkedRating,
+            tags = state.tags,
+            brewingSummary = null,
+            originNoteId = null
+        )
     }
 }
 
 fun BrewingNote.toUiModel(): NoteSelectionUiModel {
     val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.KOREA)
-
-    val formattedDate = try {
-        dateFormat.format(Date(this.date))
-    } catch (e: Exception) {
-        ""
-    }
+    val formattedDate = try { dateFormat.format(Date(this.date)) } catch (e: Exception) { "" }
 
     return NoteSelectionUiModel(
         id = this.id,

@@ -23,19 +23,19 @@ fun LeafyTimerButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = 64.dp          // 🔹 기본 크기 64x64
+    size: Dp = 64.dp
 ) {
     val colors = MaterialTheme.colorScheme
 
     Surface(
         modifier = modifier
-            .size(size)       // 🔹 전체 버튼 사이즈 고정
+            .size(size)
             .shadow(
                 elevation = 8.dp,
                 shape = CircleShape,
                 clip = false
             ),
-        color = colors.primary,    // 항상 초록 배경
+        color = colors.primary,
         shape = CircleShape,
         onClick = onClick
     ) {
@@ -46,9 +46,8 @@ fun LeafyTimerButton(
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = "Timer",
-                // 아이콘은 버튼보다 조금 작게 (대략 절반~2/3 정도 느낌)
                 modifier = Modifier.padding(4.dp),
-                tint = colors.background   // 흰색 아이콘
+                tint = colors.background
             )
         }
     }
