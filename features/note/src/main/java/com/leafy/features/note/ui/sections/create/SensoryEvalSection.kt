@@ -143,7 +143,7 @@ fun SensoryEvalSection(
             singleLine = false,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 250.dp)
+                .heightIn(min = 80.dp)
         )
     }
 }
@@ -172,7 +172,6 @@ fun SensoryEvalSectionPreview() {
             SensoryEvalSection(
                 flavorTags = selectedTags,
                 onFlavorTagToggle = { tag ->
-                    // 태그 토글 로직 (선택/해제)
                     selectedTags = if (selectedTags.contains(tag)) {
                         selectedTags - tag
                     } else {

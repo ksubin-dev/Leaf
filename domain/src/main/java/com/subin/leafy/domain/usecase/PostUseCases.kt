@@ -20,6 +20,8 @@ data class PostUseCases(
     val updatePost: UpdatePostUseCase,
     val deletePost: DeletePostUseCase,
 
+    val shareNoteAsPost: ShareNoteAsPostUseCase,
+
     // 3. 반응
     val toggleLike: ToggleLikeUseCase,
     val toggleBookmark: ToggleBookmarkUseCase,

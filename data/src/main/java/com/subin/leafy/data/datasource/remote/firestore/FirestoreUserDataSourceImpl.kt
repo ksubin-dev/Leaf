@@ -97,13 +97,12 @@ class FirestoreUserDataSourceImpl(
 
     override suspend fun isNicknameDuplicate(nickname: String): Boolean {
         return try {
-            val snapshot = firestore.collection(FirestoreConstants.COLLECTION_USERS)
+            val snapshot = usersCollection
                 .whereEqualTo(FirestoreConstants.FIELD_NICKNAME, nickname)
                 .get()
                 .await()
             !snapshot.isEmpty
         } catch (e: Exception) {
-            // 에러나면 안전하게 중복된 걸로 처리하거나 에러 던짐 (여기선 true로 처리)
             true
         }
     }
@@ -314,10 +313,18 @@ class FirestoreUserDataSourceImpl(
 
     override suspend fun updateNotificationSetting(userId: String, isAgreed: Boolean): DataResourceResult<Unit> {
         return try {
-            firestore.collection(FirestoreConstants.COLLECTION_USERS)
-                .document(userId)
+            usersCollection.document(userId)
                 .update(FIELD_IS_NOTI_AGREED, isAgreed)
                 .await()
+            DataResourceResult.Success(Unit)
+        } catch (e: Exception) {
+            DataResourceResult.Failure(e)
+        }
+    }
+
+    override suspend fun deleteUser(userId: String): DataResourceResult<Unit> {
+        return try {
+            usersCollection.document(userId).delete().await()
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)

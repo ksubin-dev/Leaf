@@ -11,12 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.leafy.features.community.ui.model.CommunityPostUiModel
 import com.leafy.shared.ui.component.RatingStars
@@ -47,6 +47,7 @@ fun CommunityFeedCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // [Header] 프로필
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -75,7 +76,7 @@ fun CommunityFeedCard(
                     )
                 }
 
-                IconButton(onClick = { /* 더보기 메뉴 (신고 등) */ }) {
+                IconButton(onClick = { /* 더보기 */ }) {
                     Icon(
                         painter = painterResource(id = SharedR.drawable.ic_more_vert),
                         contentDescription = "More",
@@ -86,6 +87,7 @@ fun CommunityFeedCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // [Image]
             if (post.imageUrls.isNotEmpty()) {
                 Box(
                     modifier = Modifier
@@ -101,7 +103,7 @@ fun CommunityFeedCard(
                         modifier = Modifier.matchParentSize(),
                         contentScale = ContentScale.Crop
                     )
-                    
+
                     if (post.isBrewingNote) {
                         Surface(
                             modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
@@ -120,6 +122,7 @@ fun CommunityFeedCard(
                 Spacer(modifier = Modifier.height(14.dp))
             }
 
+            // [Title & Content]
             Text(
                 text = post.title,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -135,17 +138,15 @@ fun CommunityFeedCard(
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
 
+            // [Chips & Rating]
             if (post.isBrewingNote) {
                 Spacer(modifier = Modifier.height(12.dp))
-
                 if (post.brewingChips.isNotEmpty()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        post.brewingChips.forEach { chip ->
-                            BrewingInfoChip(text = chip)
-                        }
+                        post.brewingChips.forEach { chip -> BrewingInfoChip(text = chip) }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -165,50 +166,88 @@ fun CommunityFeedCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // [Action Buttons Row] - 아이콘 + 숫자 가로 배치
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onLikeClick) {
-                    Icon(
-                        painter = painterResource(
-                            id = if (post.isLiked) SharedR.drawable.ic_like_filled else SharedR.drawable.ic_like
-                        ),
-                        contentDescription = "Like",
-                        tint = if (post.isLiked) colors.error else colors.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                // 1. 좋아요
+                ActionButton(
+                    iconRes = if (post.isLiked) SharedR.drawable.ic_like_filled else SharedR.drawable.ic_like,
+                    count = post.likeCount,
+                    isActive = post.isLiked,
+                    activeColor = colors.error,
+                    inactiveColor = colors.onSurfaceVariant,
+                    onClick = onLikeClick
+                )
 
-                IconButton(onClick = onCommentClick) {
-                    Icon(
-                        painter = painterResource(id = SharedR.drawable.ic_comment),
-                        contentDescription = "Comment",
-                        tint = colors.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                IconButton(onClick = onBookmarkClick) {
-                    Icon(
-                        painter = painterResource(
-                            id = if (post.isBookmarked) SharedR.drawable.ic_bookmark_filled else SharedR.drawable.ic_bookmark_outline
-                        ),
-                        contentDescription = "Bookmark",
-                        tint = if (post.isBookmarked) colors.primary else colors.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.width(16.dp))
 
-            if (post.likeCount != "0") {
-                Spacer(modifier = Modifier.height(4.dp))
+                // 2. 댓글
+                ActionButton(
+                    iconRes = SharedR.drawable.ic_comment,
+                    count = post.commentCount,
+                    isActive = false,
+                    activeColor = colors.onSurfaceVariant,
+                    inactiveColor = colors.onSurfaceVariant,
+                    onClick = onCommentClick
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // 3. 북마크
+                ActionButton(
+                    iconRes = if (post.isBookmarked) SharedR.drawable.ic_bookmark_filled else SharedR.drawable.ic_bookmark_outline,
+                    count = post.bookmarkCount,
+                    isActive = post.isBookmarked,
+                    activeColor = colors.primary,
+                    inactiveColor = colors.onSurfaceVariant,
+                    onClick = onBookmarkClick
+                )
+
+                // 4. 우측 정렬된 조회수
+                Spacer(modifier = Modifier.weight(1f))
+
                 Text(
-                    text = "${post.likeCount}명이 좋아합니다",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                    color = colors.onSurface,
-                    modifier = Modifier.padding(start = 12.dp)
+                    text = "조회 ${post.viewCount}회",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.onSurfaceVariant.copy(alpha = 0.8f)
                 )
             }
+        }
+    }
+}
+
+// 📌 [재사용 컴포넌트] 아이콘 + 숫자 버튼
+@Composable
+private fun ActionButton(
+    iconRes: Int,
+    count: String,
+    isActive: Boolean,
+    activeColor: androidx.compose.ui.graphics.Color,
+    inactiveColor: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clickable(onClick = onClick) // 클릭 영역 확장 (터치 편하게)
+            .padding(4.dp) // 클릭 리플 여백
+    ) {
+        Icon(
+            painter = painterResource(id = iconRes),
+            contentDescription = null,
+            tint = if (isActive) activeColor else inactiveColor,
+            modifier = Modifier.size(22.dp)
+        )
+        // 숫자가 '0'이면 숨길 수도 있지만, 보통은 보여주는 게 레이아웃 유지에 좋습니다.
+        if (count != "0") {
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = count,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                color = if (isActive) activeColor else inactiveColor
+            )
         }
     }
 }
@@ -218,7 +257,6 @@ private fun BrewingInfoChip(text: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        border = null // 깔끔하게
     ) {
         Text(
             text = text,

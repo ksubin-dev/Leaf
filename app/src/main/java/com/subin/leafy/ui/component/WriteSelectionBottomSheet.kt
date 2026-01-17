@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WriteSelectionBottomSheet(
@@ -29,7 +30,7 @@ fun WriteSelectionBottomSheet(
         onDismissRequest = onDismissRequest,
         containerColor = Color.White,
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
     ) {
         Column(
             modifier = Modifier

@@ -15,7 +15,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +30,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.leafy.features.auth.navigation.AuthRouteGraph
 import com.leafy.features.auth.navigation.authNavGraph
 import com.leafy.features.community.navigation.communityNavGraph
 import com.leafy.features.home.navigation.homeNavGraph
@@ -47,7 +45,7 @@ import com.subin.leafy.ui.component.WriteSelectionBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EntryPointScreen(container: ApplicationContainer) {
+fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
     LeafyTheme {
         val colors = MaterialTheme.colorScheme
         val navController = rememberNavController()
@@ -63,7 +61,10 @@ fun EntryPointScreen(container: ApplicationContainer) {
             destination.route?.let { route ->
                 route.contains("AuthRoute") ||
                         route.contains("NoteDetail") ||
-                        route.contains("TimerTab")
+                        route.contains("TimerTab") ||
+                        route.contains("NoteTab") ||
+                        route.contains("CommunityWrite") ||
+                        route.contains("CommunityDetail")
             } ?: false
         } == true
 
@@ -167,7 +168,7 @@ fun EntryPointScreen(container: ApplicationContainer) {
             }
             NavHost(
                 navController = navController,
-                startDestination = AuthRouteGraph,
+                startDestination = startDestination,
                 modifier = Modifier.padding(
                     bottom = if (shouldHideBottomBar) 0.dp else paddingValues.calculateBottomPadding()
                 )
@@ -177,7 +178,7 @@ fun EntryPointScreen(container: ApplicationContainer) {
                     container = container,
                     onAuthSuccess = {
                         navController.navigate(MainNavigationRoute.HomeTab) {
-                            popUpTo(AuthRouteGraph) { inclusive = true }
+                            popUpTo<MainNavigationRoute.Auth> { inclusive = true }
                         }
                     }
                 )
@@ -195,9 +196,6 @@ fun EntryPointScreen(container: ApplicationContainer) {
     }
 }
 
-/**
- * 현재 Destination 이 지정한 LeafyNavigation 목적지와 같은지 체크
- */
 private fun isDestinationSelected(
     currentDestination: NavDestination?,
     target: LeafyNavigation
@@ -207,14 +205,3 @@ private fun isDestinationSelected(
         ?.hierarchy
         ?.any { it.route == targetRoute } == true
 }
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun EntryPointScreenPreview() {
-//    LeafyTheme {
-//        val dummyContainer = ApplicationContainerImpl(
-//            context = TODO()
-//        )
-//        EntryPointScreen(container = dummyContainer)
-//    }
-//}

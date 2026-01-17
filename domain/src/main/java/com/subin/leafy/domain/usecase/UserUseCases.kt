@@ -12,5 +12,6 @@ data class UserUseCases(
     val getFollowingIdsFlow: GetFollowingIdsFlowUseCase,
     val getUserBadges: GetUserBadgesUseCase,
     val searchUsers: SearchUsersUseCase,
-    val checkNickname: CheckProfileNicknameUseCase
+    val checkNickname: CheckProfileNicknameUseCase,
+
 )

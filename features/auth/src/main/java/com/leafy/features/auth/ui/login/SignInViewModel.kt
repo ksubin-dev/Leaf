@@ -1,10 +1,13 @@
 package com.leafy.features.auth.ui.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.AuthUseCases
+import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.setting.ManageLoginSettingUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +16,7 @@ import kotlinx.coroutines.launch
 
 class SignInViewModel(
     private val authUseCases: AuthUseCases,
+    private val noteUseCases: NoteUseCases,
     private val manageLoginSettingUseCase: ManageLoginSettingUseCase
 ) : ViewModel() {
 
@@ -67,6 +71,16 @@ class SignInViewModel(
         viewModelScope.launch {
             when (val result = authUseCases.login(state.email, state.password)) {
                 is DataResourceResult.Success -> {
+                    Log.d("SYNC_LOG", "로그인 성공! 동기화 요청")
+                    launch(Dispatchers.IO) {
+                        try {
+                            noteUseCases.syncNotes()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }.join()
+                    Log.d("SYNC_LOG", "로그인 후 동기화 완료")
+
                     launch { manageLoginSettingUseCase.setAutoLogin(state.isAutoLogin) }
                     launch { manageLoginSettingUseCase.saveEmail(state.email) }
 

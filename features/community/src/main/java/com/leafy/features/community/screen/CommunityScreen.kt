@@ -130,6 +130,7 @@ fun CommunityScreen(
         NoteCommentBottomSheet(
             onDismissRequest = viewModel::hideComments,
             comments = uiState.comments,
+            currentUserProfileUrl = uiState.currentUserProfileUrl,
             isLoading = uiState.isCommentLoading,
             commentInput = uiState.commentInput,
             onInputChange = viewModel::updateCommentInput,

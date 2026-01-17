@@ -22,13 +22,14 @@ fun NavGraphBuilder.authNavGraph(
     container: ApplicationContainer,
     onAuthSuccess: () -> Unit
 ) {
-    navigation<AuthRouteGraph>(startDestination = AuthRoute.Login) {
+    navigation<MainNavigationRoute.Auth>(startDestination = AuthRoute.Login) {
 
         // 1. 로그인 화면
         composable<AuthRoute.Login> {
             val loginViewModel: SignInViewModel = viewModel(
                 factory = SignInViewModelFactory(
                     authUseCases = container.authUseCases,
+                    noteUseCases = container.noteUseCases,
                     manageLoginSettingUseCase = container.settingUseCases.manageLoginSetting
                 )
             )

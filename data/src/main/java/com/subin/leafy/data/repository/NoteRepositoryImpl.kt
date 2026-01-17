@@ -1,5 +1,6 @@
 package com.subin.leafy.data.repository
 
+import android.util.Log
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.RemoteNoteDataSource
@@ -106,20 +107,27 @@ class NoteRepositoryImpl(
     // =================================================================
 
     override suspend fun syncNotes(): DataResourceResult<Unit> {
-        val myUid = authDataSource.getCurrentUserId()
-            ?: return DataResourceResult.Failure(Exception("로그인이 필요합니다."))
+        Log.d("SYNC_LOG", "🔄 동기화 시작...")
 
-        // (1) 서버에서 내 모든 백업 노트 가져오기
+        val myUid = authDataSource.getCurrentUserId()
+            ?: return DataResourceResult.Failure(Exception("로그인 필요"))
+
         val result = remoteNoteDataSource.getMyBackupNotes(myUid)
 
         return if (result is DataResourceResult.Success) {
             val remoteNotes = result.data
+            Log.d("SYNC_LOG", "✅ 서버에서 가져온 노트 개수: ${remoteNotes.size}개")
+
             if (remoteNotes.isNotEmpty()) {
                 localNoteDataSource.insertNotes(remoteNotes)
+                Log.d("SYNC_LOG", "💾 로컬 DB 저장 완료")
             }
             DataResourceResult.Success(Unit)
         } else {
-            DataResourceResult.Failure((result as DataResourceResult.Failure).exception)
+            val exception = (result as DataResourceResult.Failure).exception
+            Log.e("SYNC_LOG", "❌ 서버 통신 실패 원인: ${exception.message}", exception)
+
+            DataResourceResult.Failure(exception)
         }
     }
 
