@@ -22,7 +22,16 @@ class ShareNoteAsPostUseCase(
         }
         val note = noteResult.data
 
-        val newPostId = UUID.randomUUID().toString()
+        if (!note.isPublic) {
+            val updatedNote = note.copy(isPublic = true)
+            val updateResult = noteRepository.updateNote(updatedNote)
+
+            if (updateResult is DataResourceResult.Failure) {
+                return DataResourceResult.Failure(Exception("노트 공개 설정 변경에 실패했습니다."))
+            }
+        }
+
+        val newPostId = note.id
 
         return postRepository.createPost(
             postId = newPostId,

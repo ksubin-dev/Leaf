@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.R as SharedR
 
 @Composable
@@ -38,6 +39,12 @@ fun LeafyProfileImage(
 ) {
     val model = if (imageUrl.isNullOrBlank()) null else imageUrl
 
+    val safeOnClick = if (onClick != null) {
+        singleClick { onClick() }
+    } else {
+        null
+    }
+
     val containerModifier = modifier
         .size(size)
         .clip(CircleShape)
@@ -47,7 +54,7 @@ fun LeafyProfileImage(
             else Modifier
         )
         .then(
-            if (onClick != null) Modifier.clickable(onClick = onClick)
+            if (safeOnClick != null) Modifier.clickable(onClick = safeOnClick)
             else Modifier
         )
 
@@ -56,23 +63,23 @@ fun LeafyProfileImage(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(id = SharedR.drawable.ic_leaf),
-            contentDescription = null,
-            tint = iconTint,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp)
+                .padding(8.dp),
+            painter = painterResource(id = SharedR.drawable.ic_leaf),
+            contentDescription = null,
+            tint = iconTint
         )
 
         if (model != null) {
             AsyncImage(
+                modifier = Modifier.fillMaxSize(),
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(model)
                     .crossfade(true)
                     .build(),
                 contentDescription = contentDescription,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                contentScale = ContentScale.Crop
             )
         }
     }

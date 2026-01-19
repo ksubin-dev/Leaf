@@ -4,14 +4,15 @@ import com.subin.leafy.data.datasource.local.room.entity.TimerPresetEntity
 import com.subin.leafy.data.model.dto.TimerPresetDto
 import com.subin.leafy.domain.model.BrewingRecipe
 import com.subin.leafy.domain.model.TeaType
+import com.subin.leafy.domain.model.TeawareType
 import com.subin.leafy.domain.model.TimerPreset
 
 // =================================================================
 // 1. Entity (Room DB) <-> Domain
 // =================================================================
 
-// Entity -> Domain (DB에서 꺼내서 쓸 때)
-fun TimerPresetEntity.toDomain(): TimerPreset {
+// Entity -> Domain
+fun TimerPresetEntity.toTimerPresetDomain(): TimerPreset {
     return TimerPreset(
         id = this.id,
         name = this.name,
@@ -23,13 +24,13 @@ fun TimerPresetEntity.toDomain(): TimerPreset {
             leafAmount = this.leafAmount,
             waterAmount = this.waterAmount,
             infusionCount = this.infusionCount,
-            teaware = this.teaware
+            teaware = runCatching { TeawareType.valueOf(this.teaware) }.getOrDefault(TeawareType.ETC)
         )
     )
 }
 
-// Domain -> Entity (DB에 저장할 때)
-fun TimerPreset.toEntity(): TimerPresetEntity {
+// Domain -> Entity
+fun TimerPreset.toTimerPresetEntity(): TimerPresetEntity {
     return TimerPresetEntity(
         id = this.id,
         name = this.name,
@@ -41,33 +42,16 @@ fun TimerPreset.toEntity(): TimerPresetEntity {
         leafAmount = this.recipe.leafAmount,
         waterAmount = this.recipe.waterAmount,
         infusionCount = this.recipe.infusionCount,
-        teaware = this.recipe.teaware
+        teaware = this.recipe.teaware.name
     )
 }
 
 // =================================================================
-// 2. DTO (Server/DataStore) <-> Entity & Domain
+// 2. DTO (Server/NavArgs) <-> Domain & Entity
 // =================================================================
 
-// DTO -> Entity (서버 데이터를 로컬 DB에 넣을 때)
-fun TimerPresetDto.toEntity(): TimerPresetEntity {
-    return TimerPresetEntity(
-        id = this.id,
-        name = this.name,
-        teaType = this.teaType,
-        isDefault = this.isDefault,
-
-        waterTemp = this.waterTemp,
-        brewTimeSeconds = this.timeSeconds,
-        leafAmount = this.leafAmount,
-        waterAmount = this.waterAmount,
-        infusionCount = this.infusionCount,
-        teaware = ""
-    )
-}
-
-// DTO -> Domain (리스트 변환 헬퍼에서 필요함!)
-fun TimerPresetDto.toDomain(): TimerPreset {
+// DTO -> Domain
+fun TimerPresetDto.toTimerPresetDomain(): TimerPreset {
     return TimerPreset(
         id = this.id,
         name = this.name,
@@ -79,17 +63,44 @@ fun TimerPresetDto.toDomain(): TimerPreset {
             leafAmount = this.leafAmount,
             waterAmount = this.waterAmount,
             infusionCount = this.infusionCount,
-            teaware = ""
+            teaware = runCatching { TeawareType.valueOf(this.teaware) }.getOrDefault(TeawareType.ETC)
         )
     )
 }
 
-// =================================================================
-// 3. 리스트 변환 헬퍼 (List Helper)
-// =================================================================
+// Domain -> DTO
+fun TimerPreset.toTimerPresetDto(userId: String): TimerPresetDto {
+    return TimerPresetDto(
+        id = this.id,
+        userId = userId,
+        name = this.name,
+        teaType = this.teaType.name,
+        isDefault = this.isDefault,
+        waterTemp = this.recipe.waterTemp,
+        timeSeconds = this.recipe.brewTimeSeconds,
+        leafAmount = this.recipe.leafAmount,
+        waterAmount = this.recipe.waterAmount,
+        infusionCount = this.recipe.infusionCount,
+        teaware = this.recipe.teaware.name
+    )
+}
 
-// DTO 리스트 -> Domain 리스트
-fun List<TimerPresetDto>.toTimerDomainListFromDto() = this.map { it.toDomain() }
+// DTO -> Entity
+fun TimerPresetDto.toTimerPresetEntity(): TimerPresetEntity {
+    return TimerPresetEntity(
+        id = this.id,
+        name = this.name,
+        teaType = this.teaType,
+        isDefault = this.isDefault,
 
-// Entity 리스트 -> Domain 리스트 (로컬 DB용)
-fun List<TimerPresetEntity>.toTimerDomainListFromEntity() = this.map { it.toDomain() }
+        waterTemp = this.waterTemp,
+        brewTimeSeconds = this.timeSeconds,
+        leafAmount = this.leafAmount,
+        waterAmount = this.waterAmount,
+        infusionCount = this.infusionCount,
+        teaware = this.teaware
+    )
+}
+
+fun List<TimerPresetDto>.toTimerDomainListFromDto() = this.map { it.toTimerPresetDomain() }
+fun List<TimerPresetEntity>.toTimerDomainListFromEntity() = this.map { it.toTimerPresetDomain() }

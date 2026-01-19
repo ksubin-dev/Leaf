@@ -15,6 +15,7 @@ import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.BrewingRecipe
+import com.subin.leafy.domain.model.TeawareType
 
 @Composable
 fun BrewingRecipeSection(
@@ -58,9 +59,7 @@ fun BrewingRecipeSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (recipe.teaware.isNotBlank()) {
-            DetailInfoRow(label = "사용 다구", value = recipe.teaware)
-        }
+        DetailInfoRow(label = "사용 다구", value = recipe.teaware.label)
         DetailInfoRow(label = "물 양", value = "${recipe.waterAmount}ml")
     }
 }
@@ -75,7 +74,7 @@ fun BrewingRecipeSectionPreview() {
         waterAmount = 150,
         brewTimeSeconds = 270,
         infusionCount = 3,
-        teaware = "개완 (Gaiwan)"
+        teaware = TeawareType.GAIWAN
     )
 
     LeafyTheme {

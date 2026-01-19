@@ -14,14 +14,13 @@ class LocalNoteDataSourceImpl(
     private val noteDao: NoteDao
 ) : LocalNoteDataSource {
 
-    // --- 조회 (Read) ---
-    override fun getAllNotesFlow(): Flow<List<BrewingNote>> {
-        return noteDao.getAllNotes().map { entities ->
+    override fun getAllNotesFlow(ownerId: String): Flow<List<BrewingNote>> {
+        return noteDao.getAllNotes(ownerId).map { entities ->
             entities.toNoteDomainList()
         }
     }
 
-    override fun getNotesByMonthFlow(year: Int, month: Int): Flow<List<BrewingNote>> {
+    override fun getNotesByMonthFlow(ownerId: String, year: Int, month: Int): Flow<List<BrewingNote>> {
         val calendar = Calendar.getInstance()
         calendar.set(year, month - 1, 1, 0, 0, 0)
         calendar.set(Calendar.MILLISECOND, 0)
@@ -30,7 +29,7 @@ class LocalNoteDataSourceImpl(
         calendar.add(Calendar.MONTH, 1)
         val endTimestamp = calendar.timeInMillis
 
-        return noteDao.getNotesByDateRange(startTimestamp, endTimestamp)
+        return noteDao.getNotesByDateRange(ownerId, startTimestamp, endTimestamp)
             .map { entities ->
                 entities.toNoteDomainList()
             }
@@ -40,8 +39,8 @@ class LocalNoteDataSourceImpl(
         return noteDao.getNoteById(noteId)?.toDomain()
     }
 
-    override fun searchNotes(query: String): Flow<List<BrewingNote>> {
-        return noteDao.searchNotes(query).map { entities ->
+    override fun searchNotes(ownerId: String, query: String): Flow<List<BrewingNote>> {
+        return noteDao.searchNotes(ownerId, query).map { entities ->
             entities.toNoteDomainList()
         }
     }
@@ -60,7 +59,11 @@ class LocalNoteDataSourceImpl(
         noteDao.deleteNote(noteId)
     }
 
-    override suspend fun deleteAllNotes() {
-        noteDao.deleteAllNotes()
+    override suspend fun deleteMyAllNotes(ownerId: String) {
+        noteDao.deleteMyAllNotes(ownerId)
+    }
+
+    override suspend fun clearAllTables() {
+        noteDao.clearDatabase()
     }
 }

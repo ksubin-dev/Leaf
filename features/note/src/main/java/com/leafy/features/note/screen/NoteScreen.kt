@@ -50,6 +50,7 @@ import com.leafy.features.note.ui.sections.create.TastingContextSection
 import com.leafy.features.note.viewmodel.NoteUiState
 import com.leafy.features.note.viewmodel.NoteViewModel
 import com.leafy.shared.common.singleClick
+import com.subin.leafy.domain.model.TeawareType
 
 @Composable
 fun NoteScreen(
@@ -140,7 +141,7 @@ fun NoteContent(
     onWaterAmountChange: (String) -> Unit,
     onBrewTimeChange: (String) -> Unit,
     onInfusionCountChange: (String) -> Unit,
-    onTeawareChange: (String) -> Unit,
+    onTeawareChange: (TeawareType) -> Unit,
     onFlavorTagToggle: (FlavorTag) -> Unit,
     onSweetnessChange: (Float) -> Unit,
     onSournessChange: (Float) -> Unit,
@@ -168,7 +169,7 @@ fun NoteContent(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(onClick = singleClick { onNavigateBack() }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_back),
                                 contentDescription = "뒤로가기",
@@ -319,6 +320,7 @@ fun NoteScreenPreview() {
             teaBrand = "오설록",
             teaType = TeaType.GREEN,
             teaOrigin = "제주",
+            teaware = TeawareType.GAIWAN,
             waterTemp = "70",
             leafAmount = "5",
             waterAmount = "150",

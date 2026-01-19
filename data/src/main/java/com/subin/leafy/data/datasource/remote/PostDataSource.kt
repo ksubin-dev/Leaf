@@ -3,6 +3,7 @@ package com.subin.leafy.data.datasource.remote
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.Comment
 import com.subin.leafy.domain.model.CommunityPost
+import com.subin.leafy.domain.model.RankingPeriod
 import com.subin.leafy.domain.model.TeaMaster
 import com.subin.leafy.domain.model.TeaType
 import kotlinx.coroutines.flow.Flow
@@ -15,10 +16,10 @@ interface PostDataSource {
     fun getWeeklyRanking(teaType: TeaType?): Flow<DataResourceResult<List<CommunityPost>>>
 
     // 이번 주 인기 노트 (조회수 + 좋아요 기준)
-    fun getPopularPosts(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getPopularPosts(limit: Int = 20): Flow<DataResourceResult<List<CommunityPost>>>
 
     // 가장 많이 북마크된 노트 (명예의 전당)
-    fun getMostBookmarkedPosts(): Flow<DataResourceResult<List<CommunityPost>>>
+    fun getMostBookmarkedPosts(period: RankingPeriod, limit: Int): Flow<DataResourceResult<List<CommunityPost>>>
 
     // 팔로잉 피드 (내가 팔로우한 사람들의 글)
     fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>>
@@ -54,7 +55,7 @@ interface PostDataSource {
 
     // --- 4. 소셜 액션 (Action) ---
 
-    suspend fun toggleLike(postId: String, isLiked: Boolean): DataResourceResult<Unit>
-    suspend fun toggleBookmark(postId: String, isBookmarked: Boolean): DataResourceResult<Unit>
+    suspend fun toggleLike(postId: String, isLiked: Boolean, userId: String): DataResourceResult<Unit>
+    suspend fun toggleBookmark(postId: String, isBookmarked: Boolean, userId: String): DataResourceResult<Unit>
     suspend fun incrementViewCount(postId: String): DataResourceResult<Unit>
 }

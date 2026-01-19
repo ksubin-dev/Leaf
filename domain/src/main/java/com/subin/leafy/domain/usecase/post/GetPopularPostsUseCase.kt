@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 class GetPopularPostsUseCase(
     private val postRepository: PostRepository
 ) {
-    operator fun invoke(): Flow<DataResourceResult<List<CommunityPost>>> {
-        return postRepository.getPopularPosts()
+    operator fun invoke(limit: Int = 20): Flow<DataResourceResult<List<CommunityPost>>> {
+        return postRepository.getPopularPosts(limit)
     }
 }

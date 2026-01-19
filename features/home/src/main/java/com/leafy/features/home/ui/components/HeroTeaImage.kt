@@ -1,12 +1,11 @@
 package com.leafy.features.home.ui.components
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,20 +16,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.R
+import coil.compose.AsyncImage
+import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
-
-
 
 @Composable
 fun HeroTeaImage(
     modifier: Modifier = Modifier,
+    imageUrl: String?,
+    title: String,
+    description: String,
+    label: String? = null,
     onImageClick: () -> Unit = {}
 ) {
     Card(
@@ -39,55 +42,82 @@ fun HeroTeaImage(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // 배경 이미지
-            Image(
-                painter = painterResource(id = R.drawable.img_home_hero_tea),
-                contentDescription = "Tea hero image",
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                error = painterResource(id = SharedR.drawable.img_home_hero_tea),
+                placeholder = painterResource(id = SharedR.drawable.img_home_hero_tea)
             )
 
-            // 텍스트 영역 (왼쪽 아래)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.7f)
+                            ),
+                            startY = 200f
+                        )
+                    )
+            )
+
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(20.dp)
+                    .padding(24.dp)
             ) {
                 Text(
-                    text = "Tea of the Month",
-                    style = MaterialTheme.typography.labelSmall.copy(
+                    text = description,
+                    style = MaterialTheme.typography.labelMedium.copy(
                         color = Color.White.copy(alpha = 0.9f)
                     )
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = "Discover premium Dragon Well",
-                    style = MaterialTheme.typography.titleMedium.copy(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall.copy(
                         color = Color.White,
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    maxLines = 2
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Limited Edition",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color.White.copy(alpha = 0.9f)
+
+                if (label != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
-                )
+                }
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 360, heightDp = 200)
 @Composable
 private fun HeroTeaImagePreview() {
     LeafyTheme {
         HeroTeaImage(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxSize(),
+            imageUrl = null,
+            title = "Discover premium Dragon Well",
+            description = "Tea of the Month",
+            label = "Limited Edition"
         )
     }
 }

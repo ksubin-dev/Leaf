@@ -12,6 +12,6 @@ class GetNotesByMonthUseCase(
         if (year < 2000 || month !in 1..12) {
             return flowOf(emptyList())
         }
-        return noteRepository.getNotesByMonthFlow(year, month)
+        return noteRepository.getNotesByMonthFlow( year, month)
     }
 }

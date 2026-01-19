@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.leafy.shared.common.singleClick
 
 @Composable
 fun LeafyDialog(
@@ -52,11 +53,11 @@ fun LeafyDialog(
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(modifier = Modifier.align(Alignment.End)) {
-                TextButton(onClick = onDismissRequest) {
+                TextButton(onClick = singleClick { onDismissRequest() }) {
                     Text(text = dismissText, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onConfirmClick) {
+                TextButton(onClick = singleClick { onConfirmClick() }) {
                     Text(text = confirmText, color = MaterialTheme.colorScheme.primary)
                 }
             }

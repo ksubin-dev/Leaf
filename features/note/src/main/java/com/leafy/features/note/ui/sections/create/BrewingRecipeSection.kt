@@ -26,30 +26,34 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.note.ui.common.NoteDropdownField
 import com.leafy.features.note.ui.common.NoteInputTextField
 import com.leafy.features.note.ui.common.NoteSectionHeader
 import com.leafy.shared.R
+import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.component.LeafyDropdownField
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.TeawareType
 
 @Composable
 fun BrewingRecipeSection(
+    modifier: Modifier = Modifier,
     waterTemp: String,
-    onWaterTempChange: (String) -> Unit,
     leafAmount: String,
-    onLeafAmountChange: (String) -> Unit,
     waterAmount: String,
-    onWaterAmountChange: (String) -> Unit,
     brewTime: String,
-    onBrewTimeChange: (String) -> Unit,
     infusionCount: String,
+    teaware: TeawareType,
+    onWaterTempChange: (String) -> Unit,
+    onLeafAmountChange: (String) -> Unit,
+    onWaterAmountChange: (String) -> Unit,
+    onBrewTimeChange: (String) -> Unit,
     onInfusionCountChange: (String) -> Unit,
-    teaware: String,
-    onTeawareChange: (String) -> Unit,
-    onTimerClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onTeawareChange: (TeawareType) -> Unit,
+    onTimerClick: () -> Unit
 ) {
-    val teawareOptions = listOf("찻주전자", "개완", "머그컵", "유리포트", "기타")
+    val teawareOptions = remember {
+        TeawareType.entries.map { it.label }
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         NoteSectionHeader(
@@ -109,7 +113,7 @@ fun BrewingRecipeSection(
                     .size(56.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.primary)
-                    .clickable { onTimerClick() },
+                    .clickable(onClick = singleClick { onTimerClick() }),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -136,14 +140,20 @@ fun BrewingRecipeSection(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            NoteDropdownField(
-                label = "사용 다구",
-                options = teawareOptions,
-                selectedOption = teaware.ifEmpty { teawareOptions[0] },
-                onOptionSelected = onTeawareChange,
-                labelMapper = { it },
-                modifier = Modifier.weight(0.7f)
-            )
+            Box(
+                modifier = Modifier
+                    .weight(0.65f)
+                    .padding(bottom = 4.dp)
+            ) {
+                LeafyDropdownField(
+                    label = "사용 다구",
+                    options = TeawareType.entries.toList(),
+                    selectedOption = teaware,
+                    onOptionSelected = onTeawareChange,
+                    labelMapper = { it.label },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -157,7 +167,7 @@ fun BrewingRecipeSectionPreview() {
         var water by remember { mutableStateOf("") }
         var time by remember { mutableStateOf("") }
         var count by remember { mutableStateOf("1") }
-        var ware by remember { mutableStateOf("찻주전자") }
+        var ware by remember { mutableStateOf(TeawareType.MUG) }
 
         Column(
             modifier = Modifier

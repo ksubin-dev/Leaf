@@ -15,7 +15,7 @@ import com.leafy.features.auth.ui.signup.SignUpViewModel
 import com.leafy.features.auth.ui.signup.SignUpViewModelFactory
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
-import com.leafy.shared.util.ImageCompressor
+import com.leafy.shared.utils.ImageCompressor
 
 fun NavGraphBuilder.authNavGraph(
     navController: NavController,

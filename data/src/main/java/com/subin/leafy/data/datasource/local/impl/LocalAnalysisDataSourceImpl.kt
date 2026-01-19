@@ -17,8 +17,8 @@ class LocalAnalysisDataSourceImpl(
     private val noteDao: NoteDao
 ) : AnalysisDataSource {
 
-    override fun getUserAnalysis(): Flow<UserAnalysis> {
-        return noteDao.getAllNotes().map { notes ->
+    override fun getUserAnalysis(ownerId: String): Flow<UserAnalysis> {
+        return noteDao.getAllNotes(ownerId).map { notes ->
             if (notes.isEmpty()) {
                 createEmptyAnalysis()
             } else {

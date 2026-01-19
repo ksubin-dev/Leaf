@@ -9,7 +9,7 @@ class AnalysisRepositoryImpl(
     private val analysisDataSource: AnalysisDataSource
 ) : AnalysisRepository {
 
-    override fun getUserAnalysisFlow(): Flow<UserAnalysis> {
-        return analysisDataSource.getUserAnalysis()
+    override fun getUserAnalysisFlow(ownerId: String): Flow<UserAnalysis> {
+        return analysisDataSource.getUserAnalysis(ownerId)
     }
 }

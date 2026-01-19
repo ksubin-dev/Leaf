@@ -2,6 +2,8 @@ package com.leafy.features.note.navigation
 
 
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -31,16 +33,29 @@ fun NavGraphBuilder.noteNavGraph(
         val route: MainNavigationRoute.NoteTab = backStackEntry.toRoute()
         val viewModel: NoteViewModel = viewModel(factory = factory)
 
+
+        LaunchedEffect(route.initialRecords) {
+            route.initialRecords?.let { json ->
+                viewModel.initFromTimerData(json)
+            }
+        }
+
         LaunchedEffect(route.noteId) {
             route.noteId?.let { id ->
                 viewModel.loadNoteForEdit(id)
             }
         }
 
-        // 수정 모드 진입 시 데이터 로드
-        LaunchedEffect(route.noteId) {
-            route.noteId?.let { id ->
-                viewModel.loadNoteForEdit(id)
+        val savedStateHandle = backStackEntry.savedStateHandle
+        val brewingResult by savedStateHandle.getStateFlow<String?>("brewing_result", null).collectAsState()
+
+        LaunchedEffect(brewingResult) {
+            brewingResult?.let { json ->
+                // ViewModel에 데이터 전달 (기존 입력값 덮어쓰기 방지 로직이 ViewModel에 있어야 함)
+                viewModel.initFromTimerData(json)
+
+                // 데이터를 소비했으면 제거해줍니다 (중복 실행 방지)
+                savedStateHandle.remove<String>("brewing_result")
             }
         }
 
@@ -51,12 +66,14 @@ fun NavGraphBuilder.noteNavGraph(
                 navController.popBackStack()
             },
             onNavigateToTimer = {
-                // ✅ 타이머 탭으로 이동 (MainNavigationRoute에 정의된 대로)
-                //navController.navigate(MainNavigationRoute.TimerTab)
+                navController.navigate(MainNavigationRoute.TimerTab) {
+                    popUpTo(MainNavigationRoute.HomeTab) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             }
         )
     }
-
     composable<MainNavigationRoute.NoteDetail> { backStackEntry ->
         val route: MainNavigationRoute.NoteDetail = backStackEntry.toRoute()
         val viewModel: DetailViewModel = viewModel(factory = factory)

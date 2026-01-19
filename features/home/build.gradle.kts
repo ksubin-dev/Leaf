@@ -43,6 +43,7 @@ kotlin{
 }
 
 dependencies {
+    implementation(project(":domain"))
     implementation(project(":shared"))
 
     implementation(libs.androidx.core.ktx)
@@ -52,6 +53,10 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
+
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.compose.runtime)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

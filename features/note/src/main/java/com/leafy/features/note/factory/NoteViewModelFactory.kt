@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.leafy.features.note.viewmodel.DetailViewModel
 import com.leafy.features.note.viewmodel.NoteViewModel
-import com.leafy.shared.util.ImageCompressor
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases

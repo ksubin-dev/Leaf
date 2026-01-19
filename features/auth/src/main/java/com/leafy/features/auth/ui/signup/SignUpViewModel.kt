@@ -3,11 +3,9 @@ package com.leafy.features.auth.ui.signup
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.shared.util.ImageCompressor
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.AuthUseCases
-import com.subin.leafy.domain.usecase.ImageUseCases
-import com.subin.leafy.domain.usecase.UserUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

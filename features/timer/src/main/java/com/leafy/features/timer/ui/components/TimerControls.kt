@@ -15,37 +15,48 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.singleClick
 
 @Composable
 fun TimerControls(
     modifier: Modifier = Modifier,
     isRunning: Boolean,
+    isResetAvailable: Boolean = true,
     onToggleTimer: () -> Unit,
     onResetTimer: () -> Unit,
-    onRecordInfusion: () -> Unit
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
+
+        val resetAlpha = if (!isRunning && isResetAvailable) 1f else 0.3f
         IconButton(
-            onClick = onResetTimer,
+            onClick = singleClick {
+                if (!isRunning && isResetAvailable) {
+                    onResetTimer()
+                }
+            },
+            enabled = !isRunning && isResetAvailable,
             modifier = Modifier
                 .size(56.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = resetAlpha),
+                    CircleShape
+                )
         ) {
             Icon(
                 imageVector = Icons.Default.Refresh,
                 contentDescription = "Reset",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = resetAlpha)
             )
         }
 
         Spacer(modifier = Modifier.width(32.dp))
 
         IconButton(
-            onClick = onToggleTimer,
+            onClick = singleClick { onToggleTimer() },
             modifier = Modifier
                 .size(88.dp)
                 .background(
@@ -63,17 +74,6 @@ fun TimerControls(
 
         Spacer(modifier = Modifier.width(32.dp))
 
-        IconButton(
-            onClick = onRecordInfusion,
-            modifier = Modifier
-                .size(56.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Lap",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Box(modifier = Modifier.size(56.dp))
     }
 }

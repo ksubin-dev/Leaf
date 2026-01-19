@@ -28,6 +28,7 @@ object TeaConstants {
             TeaType.WHITE -> "15~55mg"
             TeaType.HERBAL -> "0mg"
             TeaType.ETC -> "-"
+            TeaType.UNKNOWN -> "-"
         }
     }
 

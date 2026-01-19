@@ -16,5 +16,6 @@ data class NoteUseCases(
     val deleteNote: DeleteNoteUseCase,
 
     // 동기화
-    val syncNotes: SyncNotesUseCase
+    val syncNotes: SyncNotesUseCase,
+    val clearLocalCache: ClearLocalCacheUseCase
 )

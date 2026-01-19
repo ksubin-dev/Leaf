@@ -1,29 +1,39 @@
 package com.leafy.features.timer.ui
-//
-//import com.subin.leafy.domain.model.InfusionRecord
-//import com.subin.leafy.domain.model.TimerPreset
-//
-//data class TimerUiState(
-//    val isLoading: Boolean = false,
-//    val isBottomSheetOpen: Boolean = false,
-//    val selectedPreset: TimerPreset = TimerPreset(name = "Loading...", baseTimeSeconds = 0),
-//    val timeLeft: Int = 0,
-//    val initialTime: Int = 0,
-//    val isRunning: Boolean = false,
-//    val currentInfusion: Int = 1,
-//    val records: List<InfusionRecord> = emptyList(),
-//    val presets: List<TimerPreset> = emptyList(),
-//    val errorMessage: String? = null
-//) {
-//    // 진행률 계산
-//    val progress: Float
-//        get() = if (initialTime > 0) timeLeft.toFloat() / initialTime else 0f
-//
-//    // "02:00" 형태의 시간 포맷
-//    val formattedTime: String
-//        get() {
-//            val m = timeLeft / 60
-//            val s = timeLeft % 60
-//            return "%02d:%02d".format(m, s)
-//        }
-//}
+
+import com.subin.leafy.domain.model.InfusionRecord
+import com.subin.leafy.domain.model.TeaType
+import com.subin.leafy.domain.model.TeawareType
+import com.subin.leafy.domain.model.TimerPreset
+import com.subin.leafy.domain.model.TimerSettings
+
+enum class TimerStatus {
+    IDLE,       // 대기 (설정 가능)
+    RUNNING,    // 카운트다운 중
+    PAUSED,     // 일시 정지
+    COMPLETED   // 완료 (알람 울림)
+}
+
+data class TimerUiState(
+    val isLoading: Boolean = false,
+
+    val presets: List<TimerPreset> = emptyList(),
+    val settings: TimerSettings = TimerSettings(),
+
+    val currentTeaName: String = "나만의 차",
+    val targetTimeSeconds: Int = 180,
+    val targetTemperature: Int = 90,
+    val leafAmount: Float = 3f,
+    val waterAmount: Int = 150,
+
+    val selectedTeaType: TeaType = TeaType.GREEN,
+    val selectedPresetId: String? = null,
+    val selectedTeaware: TeawareType = TeawareType.MUG,
+
+    val status: TimerStatus = TimerStatus.IDLE,
+    val remainingSeconds: Int = 180,
+    val progress: Float = 1.0f,
+
+    val infusionRecords: List<InfusionRecord> = emptyList(),
+    val isAlarmFired: Boolean = false,
+    val userMessage: String? = null
+)

@@ -13,6 +13,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.theme.LeafyTheme
 
 /**
@@ -30,6 +31,8 @@ fun LeafySectionHeader(
     onMoreClick: () -> Unit = {}
 ) {
     val colors = MaterialTheme.colorScheme
+
+    val safeOnMoreClick = singleClick { onMoreClick() }
 
     Row(
         modifier = modifier
@@ -54,7 +57,7 @@ fun LeafySectionHeader(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onMoreClick
+                        onClick = safeOnMoreClick
                     )
             )
         }

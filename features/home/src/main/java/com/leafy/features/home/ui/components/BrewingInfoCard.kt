@@ -1,7 +1,10 @@
+package com.leafy.features.home.ui.components
+
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +32,7 @@ fun BrewingInfoCard(
     value: String
 ) {
     val colors = MaterialTheme.colorScheme
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
@@ -37,13 +41,14 @@ fun BrewingInfoCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalAlignment = Alignment.Start
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Surface(
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(14.dp)),
                 color = colors.primaryContainer.copy(alpha = 0.4f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -51,19 +56,21 @@ fun BrewingInfoCard(
                         painter = painterResource(id = iconRes),
                         contentDescription = title,
                         tint = colors.primary,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
 
-
             Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant
             )
+
             Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium.copy(
@@ -81,7 +88,7 @@ private fun BrewingInfoCardPreview() {
     LeafyTheme {
         BrewingInfoCard(
             iconRes = R.drawable.ic_temp,
-            title = "Temperature",
+            title = "온도",
             value = "85℃",
             modifier = Modifier.padding(16.dp)
         )

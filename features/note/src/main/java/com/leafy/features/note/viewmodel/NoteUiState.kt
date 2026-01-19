@@ -5,11 +5,13 @@ import com.leafy.shared.ui.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.FlavorTag
 import com.subin.leafy.domain.model.TeaType
+import com.subin.leafy.domain.model.TeawareType
 import com.subin.leafy.domain.model.WeatherType
 
 data class NoteUiState(
     val noteId: String? = null,
     val originalCreatedAt: Long? = null,
+
 
     // --- 1. 차 정보 ---
     val teaName: String = "",
@@ -25,7 +27,7 @@ data class NoteUiState(
     val waterAmount: String = "150",
     val brewTime: String = "180",
     val infusionCount: String = "1",
-    val teaware: String = "",
+    val teaware: TeawareType = TeawareType.MUG,
 
     // --- 3. 감각 평가 ---
     val flavorTags: List<FlavorTag> = emptyList(),
@@ -53,6 +55,7 @@ data class NoteUiState(
     // --- 6. 화면 상태 ---
     val isLoading: Boolean = false,
     val isSaveSuccess: Boolean = false,
+    val userMessage: String? = null,
     val errorMessage: String? = null
 ) {
     val isFormValid: Boolean

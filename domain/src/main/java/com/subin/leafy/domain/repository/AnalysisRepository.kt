@@ -4,5 +4,5 @@ import com.subin.leafy.domain.model.UserAnalysis
 import kotlinx.coroutines.flow.Flow
 
 interface AnalysisRepository {
-    fun getUserAnalysisFlow(): Flow<UserAnalysis>
+    fun getUserAnalysisFlow(ownerId: String): Flow<UserAnalysis>
 }

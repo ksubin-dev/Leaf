@@ -2,7 +2,7 @@ package com.leafy.features.auth.ui.signup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.leafy.shared.util.ImageCompressor
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.usecase.AuthUseCases
 
 class SignUpViewModelFactory(

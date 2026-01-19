@@ -5,7 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.leafy.shared.di.ApplicationContainer
-import com.leafy.shared.util.ImageCompressor
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.data.datasource.local.datastore.dataStore
 import com.subin.leafy.data.datasource.local.datastore.timerDataStore
 import com.subin.leafy.data.datasource.local.impl.LocalAnalysisDataSourceImpl
@@ -20,6 +20,7 @@ import com.subin.leafy.data.repository.*
 import com.subin.leafy.domain.repository.*
 import com.subin.leafy.domain.usecase.*
 import com.subin.leafy.domain.usecase.auth.*
+import com.subin.leafy.domain.usecase.home.GetHomeContentUseCase
 import com.subin.leafy.domain.usecase.image.*
 import com.subin.leafy.domain.usecase.note.*
 import com.subin.leafy.domain.usecase.post.*
@@ -48,6 +49,8 @@ class ApplicationContainerImpl(
     // [Remote] Firestore & Auth & Storage
     // Auth
     private val authDataSource = FirebaseAuthDataSourceImpl(firebaseAuth)
+
+    private val homeDataSource = FirestoreHomeDataSourceImpl(firestore)
 
     // Note (Remote)
     private val remoteNoteDataSource = FirestoreNoteDataSourceImpl(firestore)
@@ -101,6 +104,10 @@ class ApplicationContainerImpl(
     private val userRepository: UserRepository = UserRepositoryImpl(
         authDataSource = authDataSource,
         userDataSource = userDataSource
+    )
+
+    private val homeRepository: HomeRepository = HomeRepositoryImpl(
+        homeDataSource = homeDataSource
     )
 
     // Note Repository
@@ -174,6 +181,10 @@ class ApplicationContainerImpl(
         getFollowingIdsFlow = GetFollowingIdsFlowUseCase(userRepository)
     )
 
+    override val homeUseCases = HomeUseCases(
+        getHomeContent = GetHomeContentUseCase(homeRepository)
+    )
+
     // [C] Note UseCases
     override val noteUseCases = NoteUseCases(
         getMyNotes = GetMyNotesUseCase(noteRepository),
@@ -184,7 +195,8 @@ class ApplicationContainerImpl(
         saveNote = SaveNoteUseCase(noteRepository),
         updateNote = UpdateNoteUseCase(noteRepository),
         deleteNote = DeleteNoteUseCase(noteRepository),
-        syncNotes = SyncNotesUseCase(noteRepository)
+        syncNotes = SyncNotesUseCase(noteRepository),
+        clearLocalCache = ClearLocalCacheUseCase(noteRepository)
     )
 
     // [D] Timer UseCases
@@ -219,7 +231,8 @@ class ApplicationContainerImpl(
         getComments = GetCommentsUseCase(postRepository),
         addComment = AddCommentUseCase(postRepository),
         deleteComment = DeleteCommentUseCase(postRepository),
-        shareNoteAsPost = ShareNoteAsPostUseCase(noteRepository = noteRepository, postRepository = postRepository)
+        shareNoteAsPost = ShareNoteAsPostUseCase(noteRepository = noteRepository, postRepository = postRepository),
+        postChangeFlow = postRepository.postChangeFlow
     )
 
     // [F] Image UseCases
