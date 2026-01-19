@@ -8,6 +8,7 @@ object FirestoreConstants {
     const val COLLECTION_BADGES = "badges"
 
     const val FIELD_UID = "uid"
+    const val FIELD_POST_COUNT = "postCount"
     const val FIELD_NICKNAME = "nickname"
     const val FIELD_PROFILE_IMAGE = "profileImageUrl"
     const val FIELD_BIO = "bio"

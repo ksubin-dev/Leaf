@@ -3,13 +3,12 @@ package com.leafy.features.note.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.model.BrewingNote
+import com.subin.leafy.domain.repository.PostChangeEvent
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class DetailViewModel(
@@ -21,92 +20,103 @@ class DetailViewModel(
     private val _uiState = MutableStateFlow(DetailUiState())
     val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
 
+    private val _userMessage = MutableSharedFlow<String>()
+    val userMessage = _userMessage.asSharedFlow()
+
     private var currentNoteId: String? = null
 
-    fun loadNote(noteId: String) {
+    init {
+        observePostChanges()
+    }
 
+    fun loadNote(noteId: String) {
         currentNoteId = noteId
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val myIdResult = userUseCases.getCurrentUserId()
-            val myId = if (myIdResult is DataResourceResult.Success) myIdResult.data else null
+        viewModelScope.launch {
+            val myId = (userUseCases.getCurrentUserId() as? DataResourceResult.Success)?.data
 
             when (val result = noteUseCases.getNoteDetail(noteId)) {
                 is DataResourceResult.Success -> {
                     val note = result.data
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            note = note,
-                            isAuthor = (myId != null && myId == note.ownerId),
-                            isLiked = note.myState.isLiked,
-                            isBookmarked = note.myState.isBookmarked
-                        )
+                    val isAuthor = (myId == note.ownerId)
+
+                    if (!isAuthor && !note.isPublic) {
+                        _uiState.update { it.copy(isLoading = false, errorMessage = "비공개 처리된 노트입니다.") }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                note = note,
+                                isAuthor = isAuthor,
+                                isLiked = note.myState.isLiked,
+                                isBookmarked = note.myState.isBookmarked
+                            )
+                        }
                     }
                 }
                 is DataResourceResult.Failure -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = "노트를 불러오지 못했습니다."
-                        )
-                    }
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "노트를 불러오지 못했습니다.") }
                 }
-
-                is DataResourceResult.Loading ->{
-
-                }
+                is DataResourceResult.Loading -> { /* Handle generic loading if needed */ }
             }
         }
     }
 
     fun retry() {
-        currentNoteId?.let { id ->
-            loadNote(id)
-        }
+        currentNoteId?.let { loadNote(it) }
     }
 
     fun toggleLike() {
-        val noteId = uiState.value.note?.id ?: return
+        val currentNote = uiState.value.note ?: return
 
-        _uiState.update { it.copy(isLiked = !it.isLiked) }
+        val newLiked = !uiState.value.isLiked
+        val updatedNote = currentNote.updateLikeState(isLiked = newLiked)
+
+        updateUiStateWithNote(updatedNote)
 
         viewModelScope.launch {
-            val result = postUseCases.toggleLike(noteId)
+            val result = postUseCases.toggleLike(currentNote.id)
             if (result is DataResourceResult.Failure) {
-                _uiState.update { it.copy(isLiked = !it.isLiked) }
+                // 실패 시 롤백 (원래 노트로 복구)
+                updateUiStateWithNote(currentNote)
+                _uiState.update { it.copy(errorMessage = "좋아요 처리에 실패했습니다.") }
             }
         }
     }
 
     fun toggleBookmark() {
-        val noteId = uiState.value.note?.id ?: return
+        val currentNote = uiState.value.note ?: return
 
-        _uiState.update { it.copy(isBookmarked = !it.isBookmarked) }
+        val newBookmarked = !uiState.value.isBookmarked
+        val updatedNote = currentNote.updateBookmarkState(isBookmarked = newBookmarked)
+
+        updateUiStateWithNote(updatedNote)
 
         viewModelScope.launch {
-            val result = postUseCases.toggleBookmark(noteId)
+            val result = postUseCases.toggleBookmark(currentNote.id)
             if (result is DataResourceResult.Failure) {
-                _uiState.update { it.copy(isBookmarked = !it.isBookmarked) }
+                updateUiStateWithNote(currentNote)
+                _uiState.update { it.copy(errorMessage = "북마크 처리에 실패했습니다.") }
+            } else {
+                if (newBookmarked) _userMessage.emit("북마크에 저장되었습니다.")
             }
         }
     }
-
 
     fun deleteNote() {
         val noteId = uiState.value.note?.id ?: return
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val result = noteUseCases.deleteNote(noteId)
-
-            if (result is DataResourceResult.Success) {
-                _uiState.update { it.copy(isLoading = false, isDeleteSuccess = true) }
-            } else {
-                _uiState.update {
-                    it.copy(isLoading = false, errorMessage = "삭제에 실패했습니다.")
+            when (noteUseCases.deleteNote(noteId)) {
+                is DataResourceResult.Success -> {
+                    _uiState.update { it.copy(isLoading = false, isDeleteSuccess = true) }
                 }
+                is DataResourceResult.Failure -> {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "삭제에 실패했습니다.") }
+                }
+                else -> {}
             }
         }
     }
@@ -114,4 +124,62 @@ class DetailViewModel(
     fun userMessageShown() {
         _uiState.update { it.copy(errorMessage = null) }
     }
+
+
+    private fun observePostChanges() {
+        postUseCases.postChangeFlow
+            .filter { it.postId == uiState.value.note?.id }
+            .onEach { event ->
+                val currentNote = uiState.value.note ?: return@onEach
+
+                val updatedNote = when (event) {
+                    is PostChangeEvent.Like -> currentNote.syncLikeState(event.isLiked)
+                    is PostChangeEvent.Bookmark -> currentNote.syncBookmarkState(event.isBookmarked)
+                }
+
+                updateUiStateWithNote(updatedNote)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun updateUiStateWithNote(note: BrewingNote) {
+        _uiState.update { state ->
+            state.copy(
+                note = note,
+                isLiked = note.myState.isLiked,
+                isBookmarked = note.myState.isBookmarked
+            )
+        }
+    }
+}
+
+private fun BrewingNote.updateLikeState(isLiked: Boolean): BrewingNote {
+    val currentCount = this.stats.likeCount
+    val newCount = if (isLiked) currentCount + 1 else maxOf(0, currentCount - 1)
+
+    return this.copy(
+        stats = this.stats.copy(likeCount = newCount),
+        myState = this.myState.copy(isLiked = isLiked)
+    )
+}
+
+private fun BrewingNote.updateBookmarkState(isBookmarked: Boolean): BrewingNote {
+    val currentCount = this.stats.bookmarkCount
+    val newCount = if (isBookmarked) currentCount + 1 else maxOf(0, currentCount - 1)
+
+    return this.copy(
+        stats = this.stats.copy(bookmarkCount = newCount),
+        myState = this.myState.copy(isBookmarked = isBookmarked)
+    )
+}
+private fun BrewingNote.syncLikeState(targetState: Boolean): BrewingNote {
+    if (this.myState.isLiked == targetState) return this
+
+    return this.updateLikeState(targetState)
+}
+
+private fun BrewingNote.syncBookmarkState(targetState: Boolean): BrewingNote {
+    if (this.myState.isBookmarked == targetState) return this
+
+    return this.updateBookmarkState(targetState)
 }

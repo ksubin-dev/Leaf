@@ -8,6 +8,9 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.toObject
 import com.subin.leafy.data.datasource.remote.PostDataSource
 import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.FIELD_COMMENT_COUNT
+import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.FIELD_POST_COUNT
+import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.KEY_BOOKMARK_COUNT
+import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.KEY_LIKE_COUNT
 import com.subin.leafy.data.mapper.toDomain
 import com.subin.leafy.data.mapper.toDto
 import com.subin.leafy.data.model.dto.CommentDto
@@ -15,6 +18,7 @@ import com.subin.leafy.data.model.dto.CommunityPostDto
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.Comment
 import com.subin.leafy.domain.model.CommunityPost
+import com.subin.leafy.domain.model.RankingPeriod
 import com.subin.leafy.domain.model.TeaType
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -29,42 +33,64 @@ class FirestorePostDataSourceImpl(
 ) : PostDataSource {
 
     private val postsCollection = firestore.collection(FirestoreConstants.COLLECTION_POSTS)
+    private val usersCollection = firestore.collection(FirestoreConstants.COLLECTION_USERS)
 
-    // --- 1. 피드 조회 (Read) ---
-
-    // 이번 주 인기 노트 (최근 7일 + 조회수 기준)
-    override fun getPopularPosts(): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
-        // 1. 7일 전 날짜 계산
+    override fun getPopularPosts(limit: Int): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
         val calendar = Calendar.getInstance()
         calendar.add(Calendar.DAY_OF_YEAR, -7)
         val oneWeekAgo = calendar.timeInMillis
 
-        // 2. 쿼리 작성 (시간 필터 + 정렬)
-        // [주의] 이 쿼리는 Firestore 콘솔에서 '복합 인덱스' 생성이 필요합니다!
-        // (createdAt Ascending/Descending + viewCount Descending)
         val query = postsCollection
-            .whereGreaterThan(FirestoreConstants.FIELD_CREATED_AT, oneWeekAgo) // 7일 이내
-            .orderBy(FirestoreConstants.FIELD_VIEW_COUNT, Query.Direction.DESCENDING) // 조회수 순
-            .limit(20)
+            .whereGreaterThan(FirestoreConstants.FIELD_CREATED_AT, oneWeekAgo)
+            .orderBy(FirestoreConstants.FIELD_CREATED_AT, Query.Direction.DESCENDING)
+            .orderBy(FirestoreConstants.FIELD_VIEW_COUNT, Query.Direction.DESCENDING)
+            .limit(limit.toLong())
 
         val listener = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 trySend(DataResourceResult.Failure(error))
                 return@addSnapshotListener
             }
+
             val posts = snapshot?.documents?.mapNotNull {
                 it.toObject<CommunityPostDto>()?.toDomain()
             } ?: emptyList()
-            trySend(DataResourceResult.Success(posts))
+
+            val sortedPosts = posts.sortedByDescending { it.stats.viewCount }
+
+            trySend(DataResourceResult.Success(sortedPosts))
         }
         awaitClose { listener.remove() }
     }
 
-    // 명예의 전당
-    override fun getMostBookmarkedPosts(): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
-        val query = postsCollection
+    override fun getMostBookmarkedPosts(
+        period: RankingPeriod,
+        limit: Int
+    ): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
+
+        val calendar = Calendar.getInstance()
+        val startTime = when (period) {
+            RankingPeriod.WEEKLY -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -7)
+                calendar.timeInMillis
+            }
+            RankingPeriod.MONTHLY -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -30)
+                calendar.timeInMillis
+            }
+            RankingPeriod.ALL_TIME -> 0L
+        }
+
+        var query = postsCollection
             .orderBy(FirestoreConstants.FIELD_BOOKMARK_COUNT, Query.Direction.DESCENDING)
-            .limit(20)
+
+        if (period != RankingPeriod.ALL_TIME) {
+            query = postsCollection
+                .whereGreaterThan(FirestoreConstants.FIELD_CREATED_AT, startTime)
+                .orderBy(FirestoreConstants.FIELD_BOOKMARK_COUNT, Query.Direction.DESCENDING)
+        }
+
+        query = query.limit(limit.toLong())
 
         val listener = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -79,7 +105,6 @@ class FirestorePostDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
-    // 팔로잉 피드 (인원 제한 없이 모두 보기)
     override fun getFollowingFeed(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>> {
         if (followingIds.isEmpty()) {
             return flowOf(DataResourceResult.Success(emptyList()))
@@ -114,7 +139,6 @@ class FirestorePostDataSourceImpl(
         }
     }
 
-    // ID 리스트로 글 목록 가져오기
     override suspend fun getPostsByIds(postIds: List<String>): DataResourceResult<List<CommunityPost>> {
         if (postIds.isEmpty()) return DataResourceResult.Success(emptyList())
 
@@ -137,9 +161,7 @@ class FirestorePostDataSourceImpl(
         }
     }
 
-    // 특정 유저 글 모아보기 (프로필)
     override fun getUserPosts(userId: String): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
-        // [주의] 여기도 복합 인덱스 필요 (authorId + createdAt)
         val query = postsCollection
             .whereEqualTo(FirestoreConstants.FIELD_AUTHOR_ID, userId)
             .orderBy(FirestoreConstants.FIELD_CREATED_AT, Query.Direction.DESCENDING)
@@ -157,7 +179,6 @@ class FirestorePostDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
-    // 글 상세 조회
     override suspend fun getPostDetail(postId: String): DataResourceResult<CommunityPost> {
         return try {
             val snapshot = postsCollection.document(postId).get().await()
@@ -172,18 +193,19 @@ class FirestorePostDataSourceImpl(
         }
     }
 
-
-    // --- 2. 글 작성/수정/삭제 (CRUD) ---
     override suspend fun createPost(post: CommunityPost): DataResourceResult<Unit> {
         return try {
 
             val postId = post.id.ifEmpty { postsCollection.document().id }
-
-            val docRef = postsCollection.document(postId)
+            val postRef = postsCollection.document(postId)
+            val userRef = usersCollection.document(post.author.id)
 
             val dto = post.toDto().copy(id = postId)
 
-            docRef.set(dto).await()
+            firestore.runTransaction { transaction ->
+                transaction.set(postRef, dto)
+                transaction.update(userRef, FIELD_POST_COUNT, FieldValue.increment(1))
+            }.await()
 
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
@@ -205,15 +227,38 @@ class FirestorePostDataSourceImpl(
 
     override suspend fun deletePost(postId: String): DataResourceResult<Unit> {
         return try {
-            postsCollection.document(postId).delete().await()
+            val postRef = postsCollection.document(postId)
+            val noteRef = firestore.collection(FirestoreConstants.COLLECTION_NOTES).document(postId)
+
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(postRef)
+
+                if (!snapshot.exists()) {
+                    throw Exception("Post not found")
+                }
+
+                val postDto = snapshot.toObject<CommunityPostDto>()
+                val authorId = postDto?.author?.id
+
+                transaction.delete(postRef)
+
+                if (!authorId.isNullOrEmpty()) {
+                    val userRef = usersCollection.document(authorId)
+                    transaction.update(userRef, FIELD_POST_COUNT, FieldValue.increment(-1))
+                }
+
+                val noteSnapshot = transaction.get(noteRef)
+                if (noteSnapshot.exists()) {
+                    transaction.update(noteRef, FirestoreConstants.FIELD_IS_PUBLIC, false)
+                }
+
+            }.await()
+
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
         }
     }
-
-
-    // --- 3. 댓글 (SubCollection) ---
 
     override fun getComments(postId: String): Flow<DataResourceResult<List<Comment>>> = callbackFlow {
         val query = postsCollection.document(postId)
@@ -270,27 +315,68 @@ class FirestorePostDataSourceImpl(
         }
     }
 
-
-    // --- 4. 소셜 액션 (Transaction) ---
-
-    override suspend fun toggleLike(postId: String, isLiked: Boolean): DataResourceResult<Unit> {
+    override suspend fun toggleLike(postId: String, isLiked: Boolean, userId: String): DataResourceResult<Unit> {
         return try {
-            val postRef = postsCollection.document(postId)
-            val increment = if (isLiked) 1L else -1L
+            firestore.runTransaction { transaction ->
+                val postRef = postsCollection.document(postId)
+                val noteRef = firestore.collection(FirestoreConstants.COLLECTION_NOTES).document(postId)
+                val userRef = usersCollection.document(userId)
 
-            postRef.update(FirestoreConstants.FIELD_LIKE_COUNT, FieldValue.increment(increment)).await()
+                val postSnapshot = transaction.get(postRef)
+                val noteSnapshot = transaction.get(noteRef)
+
+                val increment = if (isLiked) 1L else -1L
+
+                if (postSnapshot.exists()) {
+                    transaction.update(postRef, FirestoreConstants.FIELD_LIKE_COUNT, FieldValue.increment(increment))
+                }
+
+                if (noteSnapshot.exists()) {
+                    transaction.update(noteRef, FirestoreConstants.KEY_LIKE_COUNT, FieldValue.increment(increment))
+                }
+
+                if (isLiked) {
+                    transaction.update(userRef, FirestoreConstants.FIELD_LIKED_POST_IDS, FieldValue.arrayUnion(postId))
+                } else {
+                    transaction.update(userRef, FirestoreConstants.FIELD_LIKED_POST_IDS, FieldValue.arrayRemove(postId))
+                }
+
+            }.await()
+
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
         }
     }
 
-    override suspend fun toggleBookmark(postId: String, isBookmarked: Boolean): DataResourceResult<Unit> {
+    override suspend fun toggleBookmark(postId: String, isBookmarked: Boolean, userId: String): DataResourceResult<Unit> {
         return try {
-            val postRef = postsCollection.document(postId)
-            val increment = if (isBookmarked) 1L else -1L
+            firestore.runTransaction { transaction ->
+                val postRef = postsCollection.document(postId)
+                val noteRef = firestore.collection(FirestoreConstants.COLLECTION_NOTES).document(postId)
+                val userRef = usersCollection.document(userId)
 
-            postRef.update(FirestoreConstants.FIELD_BOOKMARK_COUNT, FieldValue.increment(increment)).await()
+                val postSnapshot = transaction.get(postRef)
+                val noteSnapshot = transaction.get(noteRef)
+
+                val increment = if (isBookmarked) 1L else -1L
+
+                if (postSnapshot.exists()) {
+                    transaction.update(postRef, FirestoreConstants.FIELD_BOOKMARK_COUNT, FieldValue.increment(increment))
+                }
+
+                if (noteSnapshot.exists()) {
+                    transaction.update(noteRef, FirestoreConstants.KEY_BOOKMARK_COUNT, FieldValue.increment(increment))
+                }
+
+                if (isBookmarked) {
+                    transaction.update(userRef, FirestoreConstants.FIELD_BOOKMARKED_POST_IDS, FieldValue.arrayUnion(postId))
+                } else {
+                    transaction.update(userRef, FirestoreConstants.FIELD_BOOKMARKED_POST_IDS, FieldValue.arrayRemove(postId))
+                }
+
+            }.await()
+
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
@@ -308,14 +394,12 @@ class FirestorePostDataSourceImpl(
         }
     }
 
-    // [검색 기능 구현]
     override suspend fun searchPosts(query: String): DataResourceResult<List<CommunityPost>> {
         if (query.isBlank()) return DataResourceResult.Success(emptyList())
 
         return try {
             val collection = postsCollection
 
-            // 1. 태그 검색 (#으로 시작할 경우)
             val querySnapshot = if (query.startsWith("#")) {
                 val tag = query.removePrefix("#")
                 collection
@@ -324,7 +408,6 @@ class FirestorePostDataSourceImpl(
                     .get()
                     .await()
             }
-            // 2. 제목 검색 (일반 단어)
             else {
                 collection
                     .whereGreaterThanOrEqualTo(FirestoreConstants.FIELD_TITLE, query)

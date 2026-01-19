@@ -1,12 +1,16 @@
 package com.subin.leafy.data.model.dto
 
+import com.google.firebase.firestore.PropertyName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class BrewingNoteDto(
     val id: String = "",
     val ownerId: String = "",
-    val isPublic: Boolean = false,
+
+    @get:PropertyName("public")
+    @set:PropertyName("public")
+    var isPublic: Boolean = false,
 
     // 1. TeaInfo
     val teaName: String = "",

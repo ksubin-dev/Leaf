@@ -9,5 +9,6 @@ data class DetailUiState(
     val isLiked: Boolean = false,
     val isBookmarked: Boolean = false,
     val errorMessage: String? = null,
-    val isDeleteSuccess: Boolean = false
+    val isDeleteSuccess: Boolean = false,
+
 )

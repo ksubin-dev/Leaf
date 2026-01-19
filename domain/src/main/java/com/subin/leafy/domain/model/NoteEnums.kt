@@ -18,7 +18,8 @@ enum class TeaType(val label: String) {
     YELLOW("황차"),
     PUERH("보이차"),
     HERBAL("허브차/대용차"),
-    ETC("기타")
+    ETC("기타"),
+    UNKNOWN("알 수 없음")
 }
 
 enum class FlavorTag(val label: String) {
@@ -32,4 +33,16 @@ enum class FlavorTag(val label: String) {
     EARTHY("흙 향"),
     CREAMY("크리미"),
     ROASTED("구운 향");
+}
+
+enum class TeawareType(val label: String) {
+    MUG("머그컵"),
+    TEAPOT("티팟"),
+    GAIWAN("개완"),
+    YIXING("자사호"),
+    KYUSU("다관"),
+    MATCHA_BOWL("차선/다완"),
+    GLASS_POT("유리포트"),
+    ETC("기타");
+
 }

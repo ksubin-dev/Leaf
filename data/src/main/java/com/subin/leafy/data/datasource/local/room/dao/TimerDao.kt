@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface TimerDao {
 
     // 1. 전체 프리셋 가져오기 (실시간)
-    @Query("SELECT * FROM timer_presets")
+    @Query("SELECT * FROM timer_presets ORDER BY isDefault DESC, name ASC")
     fun getAllPresets(): Flow<List<TimerPresetEntity>>
 
     // 2. 프리셋 저장 & 수정 (ID 같으면 덮어쓰기)

@@ -1,6 +1,8 @@
 package com.subin.leafy.domain.usecase
 
+import com.subin.leafy.domain.repository.PostChangeEvent
 import com.subin.leafy.domain.usecase.post.*
+import kotlinx.coroutines.flow.Flow
 
 data class PostUseCases(
     // 1. 조회
@@ -30,7 +32,9 @@ data class PostUseCases(
     // 4. 댓글
     val getComments: GetCommentsUseCase,
     val addComment: AddCommentUseCase,
-    val deleteComment: DeleteCommentUseCase
+    val deleteComment: DeleteCommentUseCase,
+
+    val postChangeFlow: Flow<PostChangeEvent>
 
     //나중에 추가
     //신고 기능

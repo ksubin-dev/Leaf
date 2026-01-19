@@ -12,7 +12,7 @@ data class User(
     val socialStats: UserSocialStatistics,
     val relationState: UserRelationState,
 
-
+    val postCount: Int = 0,
     val followingIds: List<String>,
     val likedPostIds: List<String>,
     val bookmarkedPostIds: List<String>,

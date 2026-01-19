@@ -4,8 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import com.subin.leafy.data.datasource.local.TimerDataSource
 import com.subin.leafy.data.datasource.local.room.dao.TimerDao
-import com.subin.leafy.data.mapper.toEntity
 import com.subin.leafy.data.mapper.toTimerDomainListFromEntity
+import com.subin.leafy.data.mapper.toTimerPresetEntity
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TimerPreset
 import com.subin.leafy.domain.model.TimerSettings
@@ -39,7 +39,7 @@ class LocalTimerDataSourceImpl(
 
     override suspend fun savePreset(preset: TimerPreset): DataResourceResult<Unit> {
         return try {
-            timerDao.insertPreset(preset.toEntity())
+            timerDao.insertPreset(preset.toTimerPresetEntity())
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
@@ -59,7 +59,7 @@ class LocalTimerDataSourceImpl(
     override suspend fun checkAndInitDefaultPresets(defaultPresets: List<TimerPreset>): DataResourceResult<Unit> {
         return try {
             if (timerDao.getPresetCount() == 0) {
-                timerDao.insertPresets(defaultPresets.map { it.toEntity() })
+                timerDao.insertPresets(defaultPresets.map { it.toTimerPresetEntity() })
             }
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {

@@ -1,26 +1,24 @@
 package com.leafy.features.home.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafy.shared.R as SharedR
+import com.leafy.shared.ui.component.LeafyProfileImage // 커스텀 컴포넌트 import
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopAppBar(
+    userProfileUrl: String?,
     onSearchClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit
@@ -29,7 +27,6 @@ fun HomeTopAppBar(
 
     TopAppBar(
         title = {
-            // Leafy 텍스트 로고
             Text(
                 text = "Leafy",
                 style = MaterialTheme.typography.headlineMedium.copy(
@@ -40,7 +37,6 @@ fun HomeTopAppBar(
             )
         },
         actions = {
-            // 검색 아이콘
             IconButton(onClick = onSearchClick) {
                 Icon(
                     painter = painterResource(id = SharedR.drawable.ic_search),
@@ -49,7 +45,6 @@ fun HomeTopAppBar(
                     modifier = Modifier.size(24.dp)
                 )
             }
-            // 알림 아이콘
             IconButton(onClick = onNotificationClick) {
                 Icon(
                     painter = painterResource(id = SharedR.drawable.ic_notification),
@@ -58,18 +53,14 @@ fun HomeTopAppBar(
                     modifier = Modifier.size(24.dp)
                 )
             }
-            // 프로필 이미지
-            IconButton(onClick = onProfileClick) {
-                Image(
-                    painter = painterResource(id = SharedR.drawable.ic_profile_3),
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
+
+            LeafyProfileImage(
+                imageUrl = userProfileUrl,
+                size = 32.dp,
+                onClick = onProfileClick
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = colors.background
@@ -82,6 +73,7 @@ fun HomeTopAppBar(
 private fun HomeTopAppBarPreview() {
     LeafyTheme {
         HomeTopAppBar(
+            userProfileUrl = null,
             onSearchClick = {},
             onNotificationClick = {},
             onProfileClick = {}

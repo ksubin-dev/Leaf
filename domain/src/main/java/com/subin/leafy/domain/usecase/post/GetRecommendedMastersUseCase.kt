@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 class GetRecommendedMastersUseCase(
     private val postRepository: PostRepository
 ) {
-    operator fun invoke(): Flow<DataResourceResult<List<TeaMaster>>> {
-        return postRepository.getRecommendedMasters()
+    operator fun invoke(limit: Int = 10): Flow<DataResourceResult<List<TeaMaster>>> {
+        return postRepository.getRecommendedMasters(limit)
     }
 }

@@ -18,7 +18,7 @@ import com.subin.leafy.data.datasource.local.room.entity.TimerPresetEntity
         TimerPresetEntity::class,
         TeaEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

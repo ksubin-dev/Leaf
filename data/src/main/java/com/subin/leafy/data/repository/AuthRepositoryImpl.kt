@@ -157,6 +157,7 @@ class AuthRepositoryImpl(
             masterTitle = null,
             socialStats = UserSocialStatistics(0, 0),
             relationState = UserRelationState(isFollowing = false),
+            postCount = 0,
             followingIds = emptyList(),
             likedPostIds = emptyList(),
             bookmarkedPostIds = emptyList(),

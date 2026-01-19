@@ -19,7 +19,7 @@ fun UserDto.toUserDomain() = User(
         followerCount = this.socialStats.followerCount,
         followingCount = this.socialStats.followingCount
     ),
-    // 팔로우 여부는 Repository에서 계산해서 넣어주므로 초기값은 false
+    postCount = this.postCount,
     relationState = UserRelationState(isFollowing = false),
     followingIds = followingIds,
     likedPostIds = likedPostIds,
@@ -37,6 +37,8 @@ fun UserDto.toAuthDomain(
     email = email,
     nickname = nickname,
     profileUrl = profileImageUrl,
+
+    postCount = this.postCount,
     followingIds = followingIds,
     likedPostIds = likedPostIds,
     bookmarkedPostIds = bookmarkedPostIds,
@@ -59,7 +61,6 @@ fun UserAnalysisDto.toDomain() = UserAnalysis(
     currentStreakDays = currentStreakDays,
     monthlyBrewingCount = monthlyBrewingCount,
 
-    // 분석 데이터 매핑
     preferredTimeSlot = mostFrequentTimeSlot,
     averageBrewingTime = formatBrewTime(avgBrewTimeSeconds),
     preferredTemperature = favoriteTemperature,
@@ -110,6 +111,7 @@ fun UserDto.toTeaMasterDomain(isFollowing: Boolean = false): TeaMaster {
         profileImageUrl = this.profileImageUrl,
         isFollowing = isFollowing,
         followerCount = this.socialStats.followerCount,
+        postCount = this.postCount,
 
         expertTypes = this.expertTypes.mapNotNull { typeName ->
             runCatching { TeaType.valueOf(typeName) }.getOrNull()

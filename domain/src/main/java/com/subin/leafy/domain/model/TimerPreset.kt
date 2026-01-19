@@ -1,23 +1,22 @@
 package com.subin.leafy.domain.model
 
-
-
+import java.util.UUID
 
 data class TimerPreset(
     val id: String,
     val name: String,           // 예: "나만의 우롱차 레시피", "잠 깨는 녹차"
     val teaType: TeaType,       // 아이콘 표시용
     val recipe: BrewingRecipe,
-
     val isDefault: Boolean = false // 기본 제공 프리셋인지 (삭제 방지용)
 )
 
 
 data class InfusionRecord(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val count: Int,          // 1, 2, 3... (몇 번째 우림)
-    val timeSeconds: Int,    // 실제 우린 시간 (초)
-    val timestamp: Long = System.currentTimeMillis() // 언제 우렸는지 기록 (선택 사항)
+    val id: String = UUID.randomUUID().toString(),
+    val count: Int,
+    val timeSeconds: Int,
+    val waterTemp: Int,
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 

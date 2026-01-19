@@ -32,7 +32,7 @@ data class BrewingRecipe(
     val waterAmount: Int,         // 물의 양 (예: 150)
     val brewTimeSeconds: Int,     // 우린 시간 (예: 180)
     val infusionCount: Int,       // 우림 횟수 (예: 1)
-    val teaware: String = ""
+    val teaware: TeawareType
 )
 
 // 3. 맛 평가

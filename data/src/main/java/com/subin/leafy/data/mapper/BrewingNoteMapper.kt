@@ -27,7 +27,7 @@ fun BrewingNoteDto.toBrewingDomain() = BrewingNote(
         waterAmount = this.waterAmount,
         brewTimeSeconds = this.brewTimeSeconds,
         infusionCount = this.infusionCount,
-        teaware = this.teaware
+        teaware = runCatching { TeawareType.valueOf(this.teaware) }.getOrDefault(TeawareType.ETC)
     ),
     evaluation = SensoryEvaluation(
         flavorTags = this.flavorNotes.mapNotNull { tag ->
@@ -80,7 +80,7 @@ fun BrewingNote.toDto() = BrewingNoteDto(
     waterAmount = this.recipe.waterAmount,
     brewTimeSeconds = this.recipe.brewTimeSeconds,
     infusionCount = this.recipe.infusionCount,
-    teaware = this.recipe.teaware,
+    teaware = this.recipe.teaware.name,
 
     // Evaluation
     flavorNotes = this.evaluation.flavorTags.map { it.name },
@@ -135,7 +135,7 @@ fun NoteEntity.toDomain() = BrewingNote(
         waterAmount = this.waterAmount,
         brewTimeSeconds = this.brewTimeSeconds,
         infusionCount = this.infusionCount,
-        teaware = this.teaware
+        teaware = runCatching { TeawareType.valueOf(this.teaware) }.getOrDefault(TeawareType.ETC)
     ),
     evaluation = SensoryEvaluation(
         flavorTags = this.flavorNotes.mapNotNull { tag ->
@@ -186,7 +186,7 @@ fun BrewingNote.toEntity() = NoteEntity(
     waterAmount = this.recipe.waterAmount,
     brewTimeSeconds = this.recipe.brewTimeSeconds,
     infusionCount = this.recipe.infusionCount,
-    teaware = this.recipe.teaware,
+    teaware = this.recipe.teaware.name,
 
     flavorNotes = this.evaluation.flavorTags.map { it.name },
     sweetness = this.evaluation.sweetness,

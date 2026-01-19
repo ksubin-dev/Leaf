@@ -1,0 +1,265 @@
+package com.leafy.features.timer.screen
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.leafy.features.timer.ui.components.DetailedPresetCard
+import com.leafy.features.timer.ui.components.FilterChipItem
+import com.leafy.features.timer.ui.components.PresetEditDialog
+import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.BrewingRecipe
+import com.subin.leafy.domain.model.TeaType
+import com.subin.leafy.domain.model.TeawareType
+import com.subin.leafy.domain.model.TimerPreset
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PresetListScreen(
+    presets: List<TimerPreset>,
+    onBackClick: () -> Unit,
+    onPresetSelect: (TimerPreset) -> Unit,
+    onAddPreset: (TimerPreset) -> Unit,
+    onUpdatePreset: (TimerPreset) -> Unit,
+    onDeletePreset: (String) -> Unit,
+    userMessage: String? = null,
+    onLockedClick: () -> Unit = {},
+    onMessageShown: () -> Unit = {}
+) {
+    var selectedCategory by remember { mutableStateOf<TeaType?>(null) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var targetPreset by remember { mutableStateOf<TimerPreset?>(null) }
+
+    val filteredPresets = remember(presets, selectedCategory) {
+        if (selectedCategory == null) presets
+        else presets.filter { it.teaType == selectedCategory }
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(userMessage) {
+        if (userMessage != null) {
+            snackbarHostState.showSnackbar(userMessage)
+            onMessageShown()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Brewing Presets", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = singleClick { onBackClick() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = singleClick {
+                            targetPreset = null
+                            showEditDialog = true
+                        },
+                        contentPadding = PaddingValues(horizontal = 12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "레시피 추가",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Add",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    FilterChipItem(
+                        text = "All",
+                        isSelected = selectedCategory == null,
+                        onClick = { selectedCategory = null }
+                    )
+                }
+                val teaTypes = TeaType.entries.filter { it != TeaType.UNKNOWN }
+                items(teaTypes) { type ->
+                    FilterChipItem(
+                        text = type.label,
+                        isSelected = selectedCategory == type,
+                        onClick = { selectedCategory = type }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (filteredPresets.isEmpty()) {
+                EmptyPresetState(modifier = Modifier.weight(1f))
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(filteredPresets, key = { it.id }) { preset ->
+                        DetailedPresetCard(
+                            preset = preset,
+                            onClick = { onPresetSelect(preset) },
+                            onEditClick = {
+                                targetPreset = preset
+                                showEditDialog = true
+                            },
+                            onLockedClick = onLockedClick
+
+                        )
+                    }
+                }
+            }
+        }
+
+        if (showEditDialog) {
+            PresetEditDialog(
+                initialPreset = targetPreset,
+                onDismissRequest = { showEditDialog = false },
+                onSaveClick = {
+                    if (targetPreset == null) onAddPreset(it) else onUpdatePreset(it)
+                    showEditDialog = false
+                },
+                onDeleteClick = {
+                    onDeletePreset(it)
+                    showEditDialog = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun EmptyPresetState(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("해당하는 레시피가 없습니다.", color = MaterialTheme.colorScheme.outline)
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PresetListScreenPreview() {
+    // 1. 테스트용 더미 데이터 생성
+    val mockPresets = remember {
+        listOf(
+            TimerPreset(
+                id = "1",
+                name = "우전 녹차 (표준)",
+                teaType = TeaType.GREEN,
+                isDefault = true,
+                recipe = BrewingRecipe(
+                    waterTemp = 75,
+                    leafAmount = 3f,
+                    waterAmount = 150,
+                    brewTimeSeconds = 120,
+                    infusionCount = 1,
+                    teaware = TeawareType.KYUSU
+                )
+            ),
+            TimerPreset(
+                id = "2",
+                name = "진한 오후의 홍차",
+                teaType = TeaType.BLACK,
+                isDefault = false,
+                recipe = BrewingRecipe(
+                    waterTemp = 95,
+                    leafAmount = 2.5f,
+                    waterAmount = 200,
+                    brewTimeSeconds = 180,
+                    infusionCount = 1,
+                    teaware = TeawareType.MUG
+                )
+            ),
+            TimerPreset(
+                id = "3",
+                name = "철관음 다회 우림",
+                teaType = TeaType.OOLONG,
+                isDefault = false,
+                recipe = BrewingRecipe(
+                    waterTemp = 90,
+                    leafAmount = 5f,
+                    waterAmount = 100,
+                    brewTimeSeconds = 45,
+                    infusionCount = 5,
+                    teaware = TeawareType.GAIWAN
+                )
+            ),
+            TimerPreset(
+                id = "4",
+                name = "백차 (수미)",
+                teaType = TeaType.WHITE,
+                isDefault = false,
+                recipe = BrewingRecipe(
+                    waterTemp = 85,
+                    leafAmount = 4f,
+                    waterAmount = 150,
+                    brewTimeSeconds = 60,
+                    infusionCount = 3,
+                    teaware = TeawareType.GLASS_POT
+                )
+            )
+        )
+    }
+
+    // 2. 테마로 감싸서 프리뷰 실행
+    LeafyTheme {
+        PresetListScreen(
+            presets = mockPresets,
+            onBackClick = { /* 뒤로가기 액션 */ },
+            onPresetSelect = { /* 프리셋 선택 액션 */ },
+            onAddPreset = { /* 추가 액션 */ },
+            onUpdatePreset = { /* 수정 액션 */ },
+            onDeletePreset = { /* 삭제 액션 */ }
+        )
+    }
+}
+@Preview(showBackground = true)
+@Composable
+fun PresetEditDialogPreview() {
+    LeafyTheme {
+        PresetEditDialog(
+            initialPreset = null,
+            onDismissRequest = {},
+            onSaveClick = {},
+            onDeleteClick = {}
+        )
+    }
+}

@@ -2,6 +2,7 @@ package com.subin.leafy.data.datasource.local.assets
 
 import com.subin.leafy.domain.model.BrewingRecipe
 import com.subin.leafy.domain.model.TeaType
+import com.subin.leafy.domain.model.TeawareType
 import com.subin.leafy.domain.model.TimerPreset
 
 object DefaultTimerPresets {
@@ -17,7 +18,7 @@ object DefaultTimerPresets {
                 leafAmount = 3f,
                 waterAmount = 150,
                 infusionCount = 1,
-                teaware = "다관"
+                teaware = TeawareType.KYUSU
             )
         ),
         TimerPreset(
@@ -31,7 +32,7 @@ object DefaultTimerPresets {
                 leafAmount = 3f,
                 waterAmount = 150,
                 infusionCount = 1,
-                teaware = "머그컵"
+                teaware = TeawareType.MUG
             )
         ),
         TimerPreset(
@@ -41,11 +42,11 @@ object DefaultTimerPresets {
             isDefault = true,
             recipe = BrewingRecipe(
                 waterTemp = 90,
-                brewTimeSeconds = 120, // 2분
+                brewTimeSeconds = 120,
                 leafAmount = 4f,
                 waterAmount = 150,
                 infusionCount = 1,
-                teaware = "개완"
+                teaware = TeawareType.GAIWAN
             )
         )
     )

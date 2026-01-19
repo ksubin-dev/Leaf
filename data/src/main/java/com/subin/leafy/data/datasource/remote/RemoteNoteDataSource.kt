@@ -25,5 +25,5 @@ interface RemoteNoteDataSource {
     suspend fun updateNote(note: BrewingNote): DataResourceResult<Unit>
 
     // 삭제 (Delete)
-    suspend fun deleteNote(noteId: String): DataResourceResult<Unit>
+    suspend fun deleteNote(noteId: String, userId: String): DataResourceResult<Unit>
 }

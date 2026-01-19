@@ -5,6 +5,9 @@ data class AuthUser(
     val email: String,
     val nickname: String? = null,
     val profileUrl: String? = null,
+
+    val postCount: Int = 0,
+
     val followingIds: List<String> = emptyList(),
     val likedPostIds: List<String> = emptyList(),
     val bookmarkedPostIds: List<String> = emptyList(),

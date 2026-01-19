@@ -1,7 +1,7 @@
 package com.leafy.features.home.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,74 +29,92 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.home.data.TeaRankingItem
+import coil.compose.AsyncImage
 import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
-
+import com.subin.leafy.domain.model.RankingItem
+import com.subin.leafy.domain.model.TeaType
 
 @Composable
 fun RankedTeaRow(
-    item: TeaRankingItem
+    item: RankingItem,
+    rank: Int,
+    onClick: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
+
+    val badgeColor = when (rank) {
+        1 -> colors.primary
+        2 -> colors.secondary
+        3 -> colors.secondaryContainer
+        else -> colors.surfaceVariant
+    }
 
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = Color.White,
         shadowElevation = 2.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 순위
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
-                    .background(item.badgeColor),
+                    .background(badgeColor),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = item.rank.toString(),
+                    text = rank.toString(),
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
-            // 썸네일
-            Image(
-                painter = painterResource(id = item.imageRes),
-                contentDescription = item.name,
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.teaName,
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.Crop
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.surfaceVariant),
+                contentScale = ContentScale.Crop,
+                error = painterResource(id = R.drawable.ic_leaf)
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold
+                    text = item.teaName,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold
                     ),
-                    color = colors.onBackground
+                    color = colors.onBackground,
+                    maxLines = 1
                 )
+
                 Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
-                    text = item.typeCountry,
+                    text = item.teaType.label,
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -104,21 +122,24 @@ fun RankedTeaRow(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "rating",
                         tint = colors.error,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
+
                     Text(
-                        text = "${item.rating}",
+                        text = "${item.rating ?: 0.0}",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold
                         ),
-                        color = colors.onTertiaryContainer
+                        color = colors.onSurface
                     )
+
                     Spacer(modifier = Modifier.width(4.dp))
+
                     Text(
-                        text = "(${item.ratingCount})",
+                        text = "(${item.viewCount})",
                         style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
+                        color = colors.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -131,15 +152,17 @@ fun RankedTeaRow(
 private fun RankedTeaRowPreview() {
     LeafyTheme {
         RankedTeaRow(
-            item = TeaRankingItem(
+            item = RankingItem(
                 rank = 1,
-                name = "Premium Sencha",
-                typeCountry = "녹차 · 일본",
-                rating = 4.8,
-                ratingCount = 234,
-                imageRes = R.drawable.img_rank_1,
-                badgeColor = MaterialTheme.colorScheme.primary
-            )
+                postId = "1",
+                teaName = "Premium Sencha",
+                teaType = TeaType.GREEN,
+                rating = 5,
+                viewCount = 234,
+                imageUrl = null
+            ),
+            rank = 1,
+            onClick = {}
         )
     }
 }

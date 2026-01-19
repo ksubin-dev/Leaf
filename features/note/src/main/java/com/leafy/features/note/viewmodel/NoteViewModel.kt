@@ -3,9 +3,8 @@ package com.leafy.features.note.viewmodel
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.note.viewmodel.NoteUiState
 import com.leafy.shared.ui.utils.LeafyTimeUtils
-import com.leafy.shared.util.ImageCompressor
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.BrewingNote
@@ -32,6 +31,9 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.math.roundToInt
 import androidx.core.net.toUri
+import com.leafy.shared.model.BrewingSessionNavArgs
+import com.subin.leafy.domain.model.TeawareType
+import kotlinx.serialization.json.Json
 
 class NoteViewModel(
     private val noteUseCases: NoteUseCases,
@@ -59,7 +61,7 @@ class NoteViewModel(
     fun updateWaterAmount(amount: String) = _uiState.update { it.copy(waterAmount = amount) }
     fun updateBrewTime(time: String) = _uiState.update { it.copy(brewTime = time) }
     fun updateInfusionCount(count: String) = _uiState.update { it.copy(infusionCount = count) }
-    fun updateTeaware(teaware: String) = _uiState.update { it.copy(teaware = teaware) }
+    fun updateTeaware(teaware: TeawareType) = _uiState.update { it.copy(teaware = teaware) }
 
     fun updateFlavorTag(tag: FlavorTag) {
         _uiState.update { state ->
@@ -231,7 +233,10 @@ class NoteViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            val result = noteUseCases.getNoteDetail(noteId)
+            val myIdResult = userUseCases.getCurrentUserId()
+            val myId = if (myIdResult is DataResourceResult.Success) myIdResult.data else null
+
+            val result = noteUseCases.getNoteDetail(noteId = noteId)
 
             if (result is DataResourceResult.Success) {
                 val note = result.data
@@ -283,6 +288,54 @@ class NoteViewModel(
                 _uiState.update {
                     it.copy(isLoading = false, errorMessage = "노트 정보를 불러오지 못했습니다.")
                 }
+            }
+        }
+    }
+
+    fun initFromTimerData(jsonArgs: String) {
+        viewModelScope.launch {
+            try {
+                val args = Json.decodeFromString<BrewingSessionNavArgs>(jsonArgs)
+
+                val teaTypeEnum = try {
+                    TeaType.valueOf(args.teaType)
+                } catch (e: Exception) {
+                    TeaType.UNKNOWN
+                }
+
+                val teawareEnum = try {
+                    TeawareType.valueOf(args.teaware)
+                } catch (e: Exception) {
+                    TeawareType.MUG
+                }
+
+                val totalTimeSeconds = args.records.sumOf { it.timeSeconds }
+
+                val recordMemo = buildString {
+                    append("[타이머 기록]\n")
+                    args.records.forEach { record ->
+                        append("${record.count}회차: ${record.waterTemp}°C / ${record.timeSeconds}초\n")
+                    }
+                }
+
+                _uiState.update { state ->
+                    state.copy(
+                        teaName = if (state.teaName.isBlank()) args.teaName else state.teaName,
+                        teaType = if (state.teaType == TeaType.UNKNOWN) teaTypeEnum else state.teaType,
+
+                        waterTemp = args.waterTemp.toString(),
+                        leafAmount = args.leafAmount.toString(),
+                        waterAmount = args.waterAmount.toString(),
+                        infusionCount = args.records.size.toString(),
+                        brewTime = totalTimeSeconds.toString(),
+                        teaware = teawareEnum,
+                        memo = if (state.memo.isBlank()) recordMemo else "${state.memo}\n\n$recordMemo",
+                        userMessage = "타이머 기록이 적용되었습니다."
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.update { it.copy(errorMessage = "데이터를 불러오는데 실패했습니다.") }
             }
         }
     }

@@ -73,6 +73,13 @@ fun NoteDetailScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.userMessage.collect { message ->
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
     if (showDeleteDialog) {
         LeafyDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -118,7 +125,7 @@ fun NoteDetailContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(bottom = paddingValues.calculateBottomPadding())
                 .background(MaterialTheme.colorScheme.background)
         ) {
             if (uiState.note == null && uiState.errorMessage != null && !uiState.isLoading) {
@@ -249,7 +256,7 @@ fun NoteDetailScreenPreview() {
                 waterAmount = 150,
                 brewTimeSeconds = 120,
                 infusionCount = 2,
-                teaware = "다관"
+                teaware = TeawareType.KYUSU
             ),
             evaluation = SensoryEvaluation(
                 flavorTags = listOf(FlavorTag.GREENISH, FlavorTag.NUTTY, FlavorTag.FRUITY),

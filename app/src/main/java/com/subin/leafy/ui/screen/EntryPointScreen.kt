@@ -34,6 +34,7 @@ import com.leafy.features.auth.navigation.authNavGraph
 import com.leafy.features.community.navigation.communityNavGraph
 import com.leafy.features.home.navigation.homeNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
+import com.leafy.features.timer.navigation.timerNavGraph
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.LeafyNavigation
 import com.leafy.shared.navigation.MainNavigationRoute
@@ -58,14 +59,21 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
         val currentDestination = navBackStackEntry?.destination
 
         val shouldHideBottomBar = currentDestination?.hierarchy?.any { destination ->
-            destination.route?.let { route ->
-                route.contains("AuthRoute") ||
-                        route.contains("NoteDetail") ||
-                        route.contains("TimerTab") ||
-                        route.contains("NoteTab") ||
-                        route.contains("CommunityWrite") ||
-                        route.contains("CommunityDetail")
-            } ?: false
+            val route = destination.route ?: return@any false
+            listOf(
+                "Auth",             // 로그인/회원가입
+                "TimerTab",         // 타이머 화면 (몰입)
+                "NoteTab",          // 노트 작성/수정 화면
+                "NoteDetail",       // 노트 상세
+                "CommunityWrite",   // 커뮤니티 글쓰기
+                "CommunityDetail",  // 게시글 상세
+                "PopularPostList",  // 인기글 더보기 리스트
+                "TeaMasterList",    // 다인 추천 더보기 리스트
+                "HallOfFameList",   // 명예의 전당 더보기 리스트
+                "DailyRecords",     // 캘린더 상세 기록
+                "AnalysisReport",   // 분석 리포트
+                "UserProfile"       // 타 유저 프로필
+            ).any { route.contains(it) }
         } == true
 
         Scaffold(
@@ -75,7 +83,8 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         NavigationBar(
                             modifier = Modifier.align(Alignment.BottomCenter),
-                            containerColor = colors.background
+                            containerColor = colors.background,
+                            tonalElevation = 0.dp
                         ) {
                             allItems.forEach { item ->
                                 val isTimer = item.destination == MainNavigationRoute.TimerTab
@@ -182,14 +191,16 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
                         }
                     }
                 )
-
-                homeNavGraph(navController)
+                homeNavGraph(
+                    navController = navController,
+                    container = container
+                )
                 noteNavGraph(
                     navController = navController,
                     container = container
                 )
                 communityNavGraph(navController = navController, container = container)
-                //timerNavGraph(navController = navController, container = container)
+                timerNavGraph(navController = navController, container = container)
                 //mypageNavGraph(container = container, navController = navController)
             }
         }

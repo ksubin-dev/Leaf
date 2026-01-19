@@ -1,14 +1,17 @@
 package com.subin.leafy.data.datasource.remote.firestore
 
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.toObject
 import com.subin.leafy.data.datasource.remote.RemoteNoteDataSource
 import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.COLLECTION_NOTES
+import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.COLLECTION_USERS
 import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.FIELD_CREATED_AT
 import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.FIELD_IS_PUBLIC
 import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.FIELD_OWNER_ID
+import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.FIELD_POST_COUNT
 import com.subin.leafy.data.mapper.toBrewingDomain
 import com.subin.leafy.data.mapper.toDto
 import com.subin.leafy.data.model.dto.BrewingNoteDto
@@ -21,6 +24,7 @@ class FirestoreNoteDataSourceImpl(
 ) : RemoteNoteDataSource {
 
     private val notesCollection = firestore.collection(COLLECTION_NOTES)
+    private val usersCollection = firestore.collection(COLLECTION_USERS)
 
     // 1. 내 백업 노트 (비공개 포함 전부)
     override suspend fun getMyBackupNotes(userId: String): DataResourceResult<List<BrewingNote>> {
@@ -79,7 +83,12 @@ class FirestoreNoteDataSourceImpl(
     override suspend fun createNote(note: BrewingNote): DataResourceResult<Unit> {
         return try {
             val dto = note.toDto()
-            notesCollection.document(note.id).set(dto).await()
+            val noteRef = notesCollection.document(note.id)
+
+            firestore.runTransaction { transaction ->
+                transaction.set(noteRef, dto)
+            }.await()
+
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
@@ -97,10 +106,34 @@ class FirestoreNoteDataSourceImpl(
         }
     }
 
-    // 6. 삭제 (Delete)
-    override suspend fun deleteNote(noteId: String): DataResourceResult<Unit> {
+    override suspend fun deleteNote(noteId: String, userId: String): DataResourceResult<Unit> {
         return try {
-            notesCollection.document(noteId).delete().await()
+            val noteRef = notesCollection.document(noteId)
+            val postRef = firestore.collection(FirestoreConstants.COLLECTION_POSTS).document(noteId)
+            val userRef = usersCollection.document(userId)
+
+            firestore.runTransaction { transaction ->
+                val noteSnapshot = transaction.get(noteRef)
+                if (!noteSnapshot.exists()) {
+                    throw Exception("Note not found")
+                }
+
+                val ownerId = noteSnapshot.getString(FIELD_OWNER_ID)
+                if (ownerId != userId) {
+                    throw Exception("Permission denied: You are not the owner.")
+                }
+
+                val postSnapshot = transaction.get(postRef)
+
+                transaction.delete(noteRef)
+
+                if (postSnapshot.exists()) {
+                    transaction.delete(postRef)
+                    transaction.update(userRef, FirestoreConstants.FIELD_POST_COUNT, FieldValue.increment(-1))
+                }
+
+            }.await()
+
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
