@@ -1,21 +1,30 @@
 package com.leafy.features.mypage.ui.factory
-//
-//import androidx.lifecycle.ViewModel
-//import androidx.lifecycle.ViewModelProvider
-//import com.leafy.features.mypage.ui.MyPageViewModel
-//import com.leafy.shared.di.ApplicationContainer
-//
-//class MyPageViewModelFactory(private val container: ApplicationContainer) : ViewModelProvider.Factory {
-//    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-//        if (modelClass.isAssignableFrom(MyPageViewModel::class.java)) {
-//            return MyPageViewModel(
-//                getCurrentUserIdUseCase = container.userUseCases.getCurrentUserId,
-//                getUserUseCase = container.userUseCases.getUser,
-//                getUserStatsUseCase = container.userUseCases.getUserStats,
-//                getMonthlyRecordsUseCase = container.noteUseCases.getMonthlyRecords,
-//                getBrewingInsightsUseCase = container.noteUseCases.getBrewingInsights
-//            ) as T
-//        }
-//        throw IllegalArgumentException("Unknown ViewModel class")
-//    }
-//}
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.leafy.features.mypage.ui.MyPageViewModel
+import com.subin.leafy.domain.usecase.AnalysisUseCases
+import com.subin.leafy.domain.usecase.NoteUseCases
+import com.subin.leafy.domain.usecase.PostUseCases
+import com.subin.leafy.domain.usecase.UserUseCases
+
+class MyPageViewModelFactory(
+    private val userUseCases: UserUseCases,
+    private val noteUseCases: NoteUseCases,
+    private val postUseCases: PostUseCases,
+    private val analysisUseCases: AnalysisUseCases
+) : ViewModelProvider.Factory {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MyPageViewModel::class.java)) {
+            return MyPageViewModel(
+                userUseCases = userUseCases,
+                noteUseCases = noteUseCases,
+                postUseCases = postUseCases,
+                analysisUseCases = analysisUseCases
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}

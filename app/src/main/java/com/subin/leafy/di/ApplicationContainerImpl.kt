@@ -19,6 +19,7 @@ import com.subin.leafy.data.datasource.remote.storage.FirebaseStorageDataSourceI
 import com.subin.leafy.data.repository.*
 import com.subin.leafy.domain.repository.*
 import com.subin.leafy.domain.usecase.*
+import com.subin.leafy.domain.usecase.analysis.GetUserAnalysisUseCase
 import com.subin.leafy.domain.usecase.auth.*
 import com.subin.leafy.domain.usecase.home.GetHomeContentUseCase
 import com.subin.leafy.domain.usecase.image.*
@@ -240,6 +241,9 @@ class ApplicationContainerImpl(
         uploadImage = UploadImageUseCase(imageRepository),
         uploadImages = UploadImagesUseCase(imageRepository),
         deleteImage = DeleteImageUseCase(imageRepository)
+    )
+    override val analysisUseCases = AnalysisUseCases(
+        getUserAnalysis = GetUserAnalysisUseCase(analysisRepository)
     )
 
     // [G] Setting UseCases

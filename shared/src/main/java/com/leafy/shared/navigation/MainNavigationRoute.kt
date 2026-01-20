@@ -42,6 +42,14 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object MyPageTab : MainNavigationRoute
     @Serializable data class DailyRecords(val date: String) : MainNavigationRoute
 
+    @Serializable data object BookmarkedPosts : MainNavigationRoute
+    @Serializable data object LikedPosts : MainNavigationRoute
+
+    @Serializable data object FollowerList : MainNavigationRoute
+
+    @Serializable data object FollowingList : MainNavigationRoute
+    @Serializable data object Settings : MainNavigationRoute
+
     @Serializable data object AnalysisReport : MainNavigationRoute
 }
 

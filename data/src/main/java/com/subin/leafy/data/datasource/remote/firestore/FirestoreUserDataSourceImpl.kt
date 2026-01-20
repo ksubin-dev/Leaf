@@ -186,7 +186,7 @@ class FirestoreUserDataSourceImpl(
             val userList = mutableListOf<User>()
             userIds.chunked(10).forEach { chunk ->
                 val snapshot = usersCollection
-                    .whereIn(FirestoreConstants.FIELD_UID, chunk)
+                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
                     .get()
                     .await()
 

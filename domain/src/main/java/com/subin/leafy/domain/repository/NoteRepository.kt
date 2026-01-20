@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface NoteRepository {
     fun getMyNotesFlow(): Flow<List<BrewingNote>>
-    fun getNotesByMonthFlow(year: Int, month: Int): Flow<List<BrewingNote>>
+    fun getNotesByMonthFlow(userId: String, year: Int, month: Int): Flow<List<BrewingNote>>
     fun searchMyNotes(query: String): Flow<List<BrewingNote>>
 
     suspend fun getNoteDetail(noteId: String): DataResourceResult<BrewingNote>

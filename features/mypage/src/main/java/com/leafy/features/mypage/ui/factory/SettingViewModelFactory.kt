@@ -1,0 +1,19 @@
+package com.leafy.features.mypage.ui.factory
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.leafy.features.mypage.ui.setting.SettingViewModel
+import com.subin.leafy.domain.usecase.AuthUseCases
+import com.subin.leafy.domain.usecase.SettingUseCases
+import com.subin.leafy.domain.usecase.UserUseCases
+
+class SettingViewModelFactory(
+    private val settingUseCases: SettingUseCases,
+    private val authUseCases: AuthUseCases,
+    private val userUseCases: UserUseCases
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return SettingViewModel(settingUseCases, authUseCases, userUseCases) as T
+    }
+}

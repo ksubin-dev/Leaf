@@ -36,7 +36,7 @@ fun InsightCard(
             .clickable(enabled = insight.action != null) { onClick(insight.action) },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp // 아주 가벼운 그림자
+        shadowElevation = 1.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

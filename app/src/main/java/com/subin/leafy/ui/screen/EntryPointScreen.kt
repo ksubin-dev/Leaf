@@ -20,8 +20,10 @@ import androidx.navigation.compose.rememberNavController
 import com.leafy.features.auth.navigation.authNavGraph
 import com.leafy.features.community.navigation.communityNavGraph
 import com.leafy.features.home.navigation.homeNavGraph
+import com.leafy.features.mypage.navigation.mypageNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
 import com.leafy.features.search.searchNavGraph
+
 import com.leafy.features.timer.navigation.timerNavGraph
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
@@ -57,7 +59,9 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
                 "HallOfFameList",   // 명예의 전당 더보기 리스트
                 "DailyRecords",     // 캘린더 상세 기록
                 "AnalysisReport",   // 분석 리포트
-                "UserProfile"       // 타 유저 프로필
+                "UserProfile",       // 타 유저 프로필
+                "DailyRecords",     // [확인] 마이페이지 상세 화면
+                "AnalysisReport",
             ).any { route.contains(it) }
         } == true
 
@@ -122,6 +126,10 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
                         navController = navController,
                         postUseCases = container.postUseCases,
                         userUseCases = container.userUseCases
+                    )
+                    mypageNavGraph(
+                        container = container,
+                        navController = navController
                     )
                 }
             }

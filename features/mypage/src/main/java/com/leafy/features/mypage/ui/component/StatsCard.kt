@@ -16,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun StatsCard(
@@ -60,5 +62,17 @@ fun StatsCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StatsCardPreview() {
+    LeafyTheme {
+        StatsCard(
+            label = "총 우림",
+            value = "124",
+            unit = "회"
+        )
     }
 }

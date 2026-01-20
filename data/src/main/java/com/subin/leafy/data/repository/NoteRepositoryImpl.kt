@@ -27,7 +27,7 @@ class NoteRepositoryImpl(
         return localNoteDataSource.getAllNotesFlow(myUid)
     }
 
-    override fun getNotesByMonthFlow(year: Int, month: Int): Flow<List<BrewingNote>> {
+    override fun getNotesByMonthFlow(userId: String, year: Int, month: Int): Flow<List<BrewingNote>> {
         val myUid = authDataSource.getCurrentUserId() ?: return flowOf(emptyList())
         return localNoteDataSource.getNotesByMonthFlow(myUid, year, month)
     }
