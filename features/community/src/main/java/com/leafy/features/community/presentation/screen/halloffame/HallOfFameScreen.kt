@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.leafy.features.community.presentation.components.card.CommunityCompactCard
 import com.leafy.features.community.presentation.screen.halloffame.component.HallOfFameTopCard
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.singleClick
 import com.subin.leafy.domain.model.RankingPeriod
 

@@ -394,58 +394,66 @@ class FirestorePostDataSourceImpl(
         }
     }
 
-    override suspend fun searchPosts(query: String): DataResourceResult<List<CommunityPost>> {
+    override suspend fun searchPosts(
+        query: String,
+        lastPostId: String?,
+        limit: Int
+    ): DataResourceResult<List<CommunityPost>> {
         if (query.isBlank()) return DataResourceResult.Success(emptyList())
 
         return try {
-            val collection = postsCollection
-
-            val querySnapshot = if (query.startsWith("#")) {
-                val tag = query.removePrefix("#")
-                collection
-                    .whereArrayContains(FirestoreConstants.FIELD_TAGS, tag)
-                    .orderBy(FirestoreConstants.FIELD_CREATED_AT, Query.Direction.DESCENDING)
-                    .get()
-                    .await()
+            val lastDocument = lastPostId?.let {
+                postsCollection.document(it).get().await()
             }
-            else {
-                collection
+
+            var firestoreQuery: Query = if (query.startsWith("#")) {
+                postsCollection
+                    .whereArrayContains(FirestoreConstants.FIELD_TAGS, query)
+            } else {
+                postsCollection
                     .whereGreaterThanOrEqualTo(FirestoreConstants.FIELD_TITLE, query)
                     .whereLessThanOrEqualTo(FirestoreConstants.FIELD_TITLE, query + "\uf8ff")
-                    .get()
-                    .await()
+                    .orderBy(FirestoreConstants.FIELD_TITLE)
             }
+
+            if (lastDocument != null && lastDocument.exists()) {
+                firestoreQuery = firestoreQuery.startAfter(lastDocument)
+            }
+
+            val querySnapshot = firestoreQuery.limit(limit.toLong()).get().await()
 
             val posts = querySnapshot.documents.mapNotNull {
                 it.toObject<CommunityPostDto>()?.toDomain()
             }
-            DataResourceResult.Success(posts)
+
+            val finalPosts = if (query.startsWith("#")) {
+                posts.sortedByDescending { it.createdAt }
+            } else {
+                posts
+            }
+
+            DataResourceResult.Success(finalPosts)
 
         } catch (e: Exception) {
+            e.printStackTrace()
             DataResourceResult.Failure(e)
         }
     }
 
-    // 랭킹용 데이터 조회
-    // teaType이 null이면 '전체(이번 주)' 탭, 값이 있으면 '녹차', '홍차' 탭
     override fun getWeeklyRanking(teaType: TeaType?): Flow<DataResourceResult<List<CommunityPost>>> = callbackFlow {
 
-        // 1. 기간 설정 (최근 7일)
         val oneWeekInMillis = 1000L * 60 * 60 * 24 * 7
         val oneWeekAgo = System.currentTimeMillis() - oneWeekInMillis
 
-        // 2. 쿼리 구성
         var query = postsCollection
             .whereGreaterThan(FirestoreConstants.FIELD_CREATED_AT, oneWeekAgo)
             .orderBy(FirestoreConstants.FIELD_VIEW_COUNT, Query.Direction.DESCENDING)
             .limit(10)
 
-        // 3. 차 종류 필터링
         if (teaType != null) {
             query = query.whereEqualTo(FirestoreConstants.FIELD_TEA_TYPE, teaType.name)
         }
 
-        // 4. 실행
         val listener = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 trySend(DataResourceResult.Failure(error))

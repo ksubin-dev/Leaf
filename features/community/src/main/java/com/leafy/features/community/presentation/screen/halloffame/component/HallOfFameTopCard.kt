@@ -18,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.R as SharedR
@@ -29,6 +29,8 @@ fun HallOfFameTopCard(
     onClick: () -> Unit,
     onBookmarkClick: () -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -62,7 +64,7 @@ fun HallOfFameTopCard(
             )
 
             Surface(
-                color = MaterialTheme.colorScheme.primary,
+                color = colors.primary,
                 shape = RoundedCornerShape(bottomEnd = 16.dp),
                 modifier = Modifier.align(Alignment.TopStart)
             ) {
@@ -80,17 +82,29 @@ fun HallOfFameTopCard(
                     .align(Alignment.BottomStart)
                     .padding(24.dp)
             ) {
-                Surface(
-                    color = Color.White.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        text = "MASTERPIECE",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = Color.White.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "MASTERPIECE",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    if (post is CommunityPostUiModel.BrewingNote) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = post.teaType, // 스마트 캐스트 적용
+                            color = colors.primaryContainer,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -111,7 +125,7 @@ fun HallOfFameTopCard(
                 Text(
                     text = "by ${post.authorName}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outlineVariant
+                    color = colors.outlineVariant
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -126,7 +140,7 @@ fun HallOfFameTopCard(
                             else SharedR.drawable.ic_bookmark_outline
                         ),
                         contentDescription = "Bookmark",
-                        tint = if (post.isBookmarked) MaterialTheme.colorScheme.primary else Color.White,
+                        tint = if (post.isBookmarked) colors.primary else Color.White,
                         modifier = Modifier
                             .size(24.dp)
                             .clickableSingle { onBookmarkClick() }
@@ -154,7 +168,7 @@ fun HallOfFameTopCard(
 @Composable
 private fun HallOfFameTopCardPreview() {
     LeafyTheme {
-        val dummyPost = CommunityPostUiModel(
+        val dummyPost = CommunityPostUiModel.BrewingNote(
             postId = "1",
             authorId = "user1",
             authorName = "티마스터_연우",
@@ -163,16 +177,18 @@ private fun HallOfFameTopCardPreview() {
             title = "동양차의 깊이, 무이암차의 모든 것",
             content = "내용",
             imageUrls = listOf("https://via.placeholder.com/600x800"),
+            tags = listOf("#무이암차"),
             timeAgo = "2시간 전",
             teaType = "무이암차",
-            brewingSummary = null,
             rating = 5,
+            brewingChips = listOf("95℃", "3m"),
             likeCount = "1.2k",
             commentCount = "84",
             viewCount = "5000",
             bookmarkCount = "1.2k",
             isLiked = false,
-            isBookmarked = false
+            isBookmarked = false,
+            originNoteId = null
         )
 
         Box(modifier = Modifier.padding(16.dp)) {
@@ -189,7 +205,7 @@ private fun HallOfFameTopCardPreview() {
 @Composable
 private fun HallOfFameTopCardBookmarkedPreview() {
     LeafyTheme {
-        val dummyPost = CommunityPostUiModel(
+        val dummyPost = CommunityPostUiModel.General(
             postId = "1",
             authorId = "user1",
             authorName = "그린티홀릭",
@@ -198,10 +214,8 @@ private fun HallOfFameTopCardBookmarkedPreview() {
             title = "실패 없는 말차 격불의 정석 (영상 포함)",
             content = "내용",
             imageUrls = emptyList(),
+            tags = listOf("#말차"),
             timeAgo = "1일 전",
-            teaType = "말차",
-            brewingSummary = null,
-            rating = 5,
             likeCount = "856",
             commentCount = "120",
             viewCount = "3000",

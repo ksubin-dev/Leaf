@@ -42,7 +42,7 @@ fun PopularTop3Section(
 
     Column(modifier = modifier) {
         LeafySectionHeader(
-            title = "지금 인기 있는 시음 기록 Top 3",
+            title = "지금 가장 주목받는 티 포스트 Top 3",
             titleStyle = MaterialTheme.typography.titleMedium.copy(
                 fontSize = 20.sp
             ),

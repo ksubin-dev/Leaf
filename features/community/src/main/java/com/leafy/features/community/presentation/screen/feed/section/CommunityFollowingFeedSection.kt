@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.presentation.screen.feed.CommunityFeedCard
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.component.CommunityFeedCard
+import com.leafy.shared.ui.model.CommunityPostUiModel
 
 @Composable
 fun CommunityFollowingFeedSection(

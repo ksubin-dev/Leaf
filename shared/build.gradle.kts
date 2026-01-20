@@ -62,7 +62,6 @@ dependencies {
 
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.runtime)
-    implementation(libs.androidx.foundation)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

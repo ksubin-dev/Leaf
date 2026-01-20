@@ -1,8 +1,8 @@
 package com.leafy.features.community.presentation.screen.feed
 
-import com.leafy.features.community.presentation.common.model.CommentUiModel
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.model.CommentUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.features.community.presentation.components.bar.CommunityTab
 
 data class CommunityUiState(

@@ -3,9 +3,9 @@ package com.leafy.features.community.presentation.screen.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.community.presentation.common.mapper.toUiModel
-import com.leafy.features.community.presentation.common.model.CommentUiModel
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.mapper.toUiModel
+import com.leafy.shared.ui.model.CommentUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.PostChangeEvent
 import com.subin.leafy.domain.usecase.PostUseCases
@@ -31,17 +31,22 @@ class CommunityPostDetailViewModel(
     val uiState = _uiState.asStateFlow()
 
     init {
+        incrementViewCount()
         loadData()
         observePostChanges()
+    }
+
+    private fun incrementViewCount() {
+        viewModelScope.launch {
+            postUseCases.incrementViewCount(postId)
+        }
     }
 
     private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-
             fetchPostDetail()
             fetchCurrentUserProfile()
-
             _uiState.update { it.copy(isLoading = false) }
         }
 
@@ -53,7 +58,6 @@ class CommunityPostDetailViewModel(
     fun refresh() {
         viewModelScope.launch {
             val result = postUseCases.getPostDetail(postId)
-
             when (result) {
                 is DataResourceResult.Success -> {
                     _uiState.update { it.copy(post = result.data.toUiModel()) }
@@ -61,10 +65,7 @@ class CommunityPostDetailViewModel(
                 }
                 is DataResourceResult.Failure -> {
                     _uiState.update {
-                        it.copy(
-                            post = null,
-                            errorMessage = "삭제된 게시글입니다."
-                        )
+                        it.copy(post = null, errorMessage = "삭제된 게시글입니다.")
                     }
                 }
                 else -> {}
@@ -116,14 +117,11 @@ class CommunityPostDetailViewModel(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSendingComment = true) }
-
             val result = postUseCases.addComment(postId, content)
-
             if (result is DataResourceResult.Success) {
                 _uiState.update { it.copy(commentInput = "") }
                 fetchPostDetail()
             }
-
             _uiState.update { it.copy(isSendingComment = false) }
         }
     }
@@ -131,7 +129,6 @@ class CommunityPostDetailViewModel(
     fun deleteComment(commentId: String) {
         viewModelScope.launch {
             val result = postUseCases.deleteComment(postId, commentId)
-
             if (result is DataResourceResult.Success) {
                 fetchPostDetail()
             }
@@ -140,7 +137,6 @@ class CommunityPostDetailViewModel(
 
     fun toggleLike() {
         val currentPost = uiState.value.post ?: return
-
         val newLiked = !currentPost.isLiked
         val updatedPost = currentPost.updateLikeState(newLiked)
 
@@ -148,7 +144,6 @@ class CommunityPostDetailViewModel(
 
         viewModelScope.launch {
             val result = postUseCases.toggleLike(postId)
-
             if (result is DataResourceResult.Failure) {
                 _uiState.update { it.copy(post = currentPost) }
             }
@@ -157,7 +152,6 @@ class CommunityPostDetailViewModel(
 
     fun toggleBookmark() {
         val currentPost = uiState.value.post ?: return
-
         val newBookmarked = !currentPost.isBookmarked
         val updatedPost = currentPost.updateBookmarkState(newBookmarked)
 
@@ -165,7 +159,6 @@ class CommunityPostDetailViewModel(
 
         viewModelScope.launch {
             val result = postUseCases.toggleBookmark(postId)
-
             if (result is DataResourceResult.Failure) {
                 _uiState.update { it.copy(post = currentPost) }
             }
@@ -177,12 +170,10 @@ class CommunityPostDetailViewModel(
             .filter { it.postId == this.postId }
             .onEach { event ->
                 val currentPost = uiState.value.post ?: return@onEach
-
                 val updatedPost = when (event) {
                     is PostChangeEvent.Like -> currentPost.syncLikeState(event.isLiked)
                     is PostChangeEvent.Bookmark -> currentPost.syncBookmarkState(event.isBookmarked)
                 }
-
                 _uiState.update { it.copy(post = updatedPost) }
             }
             .launchIn(viewModelScope)
@@ -191,22 +182,22 @@ class CommunityPostDetailViewModel(
 
 private fun CommunityPostUiModel.updateLikeState(isLiked: Boolean): CommunityPostUiModel {
     val currentCount = this.likeCount.toIntOrNull() ?: 0
-    val newCount = if (isLiked) currentCount + 1 else maxOf(0, currentCount - 1)
+    val newCount = (if (isLiked) currentCount + 1 else maxOf(0, currentCount - 1)).toString()
 
-    return this.copy(
-        isLiked = isLiked,
-        likeCount = newCount.toString()
-    )
+    return when (this) {
+        is CommunityPostUiModel.General -> this.copy(isLiked = isLiked, likeCount = newCount)
+        is CommunityPostUiModel.BrewingNote -> this.copy(isLiked = isLiked, likeCount = newCount)
+    }
 }
 
 private fun CommunityPostUiModel.updateBookmarkState(isBookmarked: Boolean): CommunityPostUiModel {
     val currentCount = this.bookmarkCount.toIntOrNull() ?: 0
-    val newCount = if (isBookmarked) currentCount + 1 else maxOf(0, currentCount - 1)
+    val newCount = (if (isBookmarked) currentCount + 1 else maxOf(0, currentCount - 1)).toString()
 
-    return this.copy(
-        isBookmarked = isBookmarked,
-        bookmarkCount = newCount.toString()
-    )
+    return when (this) {
+        is CommunityPostUiModel.General -> this.copy(isBookmarked = isBookmarked, bookmarkCount = newCount)
+        is CommunityPostUiModel.BrewingNote -> this.copy(isBookmarked = isBookmarked, bookmarkCount = newCount)
+    }
 }
 
 private fun CommunityPostUiModel.syncLikeState(targetState: Boolean): CommunityPostUiModel {

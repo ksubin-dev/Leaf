@@ -2,8 +2,8 @@ package com.leafy.features.community.presentation.screen.halloffame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.community.presentation.common.mapper.toUiModel
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.mapper.toUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.RankingPeriod
 import com.subin.leafy.domain.usecase.PostUseCases
@@ -63,23 +63,21 @@ class HallOfFameViewModel(
         viewModelScope.launch {
             val result = postUseCases.toggleBookmark(postId)
             if (result is DataResourceResult.Failure) {
+                // 실패 시 롤백
                 updatePostState(postId, currentBookmarked)
                 _uiState.update { it.copy(errorMessage = "북마크 변경 실패") }
             }
         }
     }
 
+
     private fun updatePostState(postId: String, isBookmarked: Boolean) {
         _uiState.update { state ->
             val updatedPosts = state.posts.map { item ->
                 if (item.postId == postId) {
                     val currentCount = item.bookmarkCount.toIntOrNull() ?: 0
-                    val newCount = if (isBookmarked) currentCount + 1 else maxOf(0, currentCount - 1)
-
-                    item.copy(
-                        isBookmarked = isBookmarked,
-                        bookmarkCount = newCount.toString()
-                    )
+                    val newCount = (if (isBookmarked) currentCount + 1 else maxOf(0, currentCount - 1)).toString()
+                    item.updateBookmarkState(isBookmarked, newCount)
                 } else {
                     item
                 }
@@ -87,4 +85,18 @@ class HallOfFameViewModel(
             state.copy(posts = updatedPosts)
         }
     }
+}
+
+private fun CommunityPostUiModel.updateBookmarkState(
+    isBookmarked: Boolean,
+    newCount: String
+): CommunityPostUiModel = when (this) {
+    is CommunityPostUiModel.General -> this.copy(
+        isBookmarked = isBookmarked,
+        bookmarkCount = newCount
+    )
+    is CommunityPostUiModel.BrewingNote -> this.copy(
+        isBookmarked = isBookmarked,
+        bookmarkCount = newCount
+    )
 }

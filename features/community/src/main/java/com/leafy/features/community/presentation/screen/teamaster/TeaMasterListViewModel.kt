@@ -2,8 +2,8 @@ package com.leafy.features.community.presentation.screen.teamaster
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.community.presentation.common.mapper.toUiModel
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.mapper.toUiModel
+import com.leafy.shared.ui.model.UserUiModel
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases

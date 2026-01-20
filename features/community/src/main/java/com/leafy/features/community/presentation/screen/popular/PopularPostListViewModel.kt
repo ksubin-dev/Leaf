@@ -2,7 +2,7 @@ package com.leafy.features.community.presentation.screen.popular
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.community.presentation.common.mapper.toUiModel
+import com.leafy.shared.ui.mapper.toUiModel
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.PostUseCases
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.leafy.features.community.presentation.screen.feed
+package com.leafy.shared.ui.component
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -13,10 +13,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
-import com.leafy.shared.ui.component.LeafyProfileImage
 import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
@@ -30,7 +29,7 @@ fun CommunityTeaMasterCard(
     val colors = MaterialTheme.colorScheme
     val isFollowing = master.isFollowing
 
-    val isMe = currentUserId != null && master.userId == currentUserId
+    val isMe = !currentUserId.isNullOrBlank() && master.userId == currentUserId
 
     Row(
         modifier = modifier

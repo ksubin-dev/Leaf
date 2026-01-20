@@ -56,6 +56,7 @@ class LeafyApplication : Application(), ApplicationContainerProvider, ImageLoade
         }
     }
 
+    //coil 30% 설정 =? 힐트 설정
     companion object {
         private lateinit var leafyApplication: LeafyApplication
         fun getAppContext() = leafyApplication

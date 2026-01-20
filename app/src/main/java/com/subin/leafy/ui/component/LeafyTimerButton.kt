@@ -16,17 +16,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-
 @Composable
 fun LeafyTimerButton(
     iconRes: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = 64.dp
+    size: Dp = 64.dp,
+    onClick: () -> Unit
 ) {
-    val colors = MaterialTheme.colorScheme
-
     Surface(
         modifier = modifier
             .size(size)
@@ -35,7 +31,7 @@ fun LeafyTimerButton(
                 shape = CircleShape,
                 clip = false
             ),
-        color = colors.primary,
+        color = MaterialTheme.colorScheme.primary,
         shape = CircleShape,
         onClick = onClick
     ) {
@@ -46,8 +42,8 @@ fun LeafyTimerButton(
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = "Timer",
-                modifier = Modifier.padding(4.dp),
-                tint = colors.background
+                modifier = Modifier.padding(4.dp).size(32.dp),
+                tint = MaterialTheme.colorScheme.onPrimary
             )
         }
     }

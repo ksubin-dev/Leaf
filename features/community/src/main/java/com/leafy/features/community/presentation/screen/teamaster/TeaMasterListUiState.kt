@@ -1,6 +1,6 @@
 package com.leafy.features.community.presentation.screen.teamaster
 
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.model.UserUiModel
 
 data class TeaMasterListUiState(
     val isLoading: Boolean = true,

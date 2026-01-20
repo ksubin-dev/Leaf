@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyProfileImage
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -70,11 +70,12 @@ fun UserProfileHeader(
                 }
             }
         }
+        val bio = user.bio
 
-        if (!user.bio.isNullOrBlank()) {
+        if (!bio.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = user.bio,
+                text = bio,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -109,7 +110,6 @@ private fun ProfileStatItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            // 👇 onClick이 있을 때만 클릭 가능하게 설정
             .then(
                 if (onClick != null) {
                     Modifier.clickable(

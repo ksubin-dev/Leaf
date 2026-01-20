@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.features.community.presentation.screen.popular.component.PinterestPostCard
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -80,39 +80,5 @@ fun PopularPostListContent(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PopularPostListScreenPreview() {
-    LeafyTheme {
-        val dummyPosts = listOf(
-            CommunityPostUiModel(
-                postId = "1", authorId = "u1", authorName = "티러버", authorProfileUrl = null,
-                isFollowingAuthor = false, title = "비오는 날 어울리는 진한 수금귀",
-                content = "내용...", imageUrls = listOf("https://dummy"),
-                timeAgo = "1일 전", teaType = "우롱차", brewingSummary = null, rating = 5,
-                likeCount = "124", commentCount = "10", viewCount = "100", bookmarkCount = "10",
-                isLiked = false, isBookmarked = false
-            ),
-            CommunityPostUiModel(
-                postId = "2", authorId = "u2", authorName = "홍차전문가", authorProfileUrl = null,
-                isFollowingAuthor = false, title = "다즐링 세컨드 플러쉬의 매력",
-                content = "내용...", imageUrls = emptyList(),
-                timeAgo = "2일 전", teaType = "홍차", brewingSummary = null, rating = 4,
-                likeCount = "50", commentCount = "5", viewCount = "100", bookmarkCount = "10",
-                isLiked = false, isBookmarked = false
-            ),
-        )
-
-        PopularPostListContent(
-            uiState = PopularPostListUiState(
-                isLoading = false,
-                posts = dummyPosts
-            ),
-            onBackClick = {},
-            onPostClick = {}
-        )
     }
 }

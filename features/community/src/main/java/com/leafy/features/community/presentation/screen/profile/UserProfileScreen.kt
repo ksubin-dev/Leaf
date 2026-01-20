@@ -16,8 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileGallery
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileHeader
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileList
@@ -144,61 +144,5 @@ fun UserProfileContent(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun UserProfileScreenPreview() {
-    LeafyTheme {
-        val dummyUser = UserUiModel(
-            userId = "uid",
-            nickname = "차 마시는 루시",
-            title = "PRO BREWER",
-            bio = "따뜻한 우롱차와 무이암차를 사랑합니다. 매일 아침 차 한 잔으로 시작하는 기록들. 🌿",
-            profileImageUrl = null,
-            isFollowing = false,
-            followerCount = "1.2k",
-            followingCount = "480",
-            postCount = "156",
-            expertTags = listOf("무이암차", "봉황단총")
-        )
-
-        val dummyPosts = List(5) { index ->
-            CommunityPostUiModel(
-                postId = "$index",
-                authorId = "uid",
-                authorName = "루시",
-                authorProfileUrl = null,
-                isFollowingAuthor = false,
-                title = "[무이암차] 오늘의 기록 $index",
-                content = "암운이 아주 강렬하게 느껴지는 날이었습니다. 첫 잔부터 압도적이네요.",
-                imageUrls = if (index % 2 == 0) listOf("https://dummy") else emptyList(),
-                timeAgo = "1시간 전",
-                teaType = "OOLONG",
-                brewingSummary = "95℃ · 30s · 5g",
-                rating = 5,
-                likeCount = "10",
-                commentCount = "5",
-                viewCount = "100",
-                bookmarkCount = "2",
-                isLiked = false,
-                isBookmarked = false
-            )
-        }
-
-        UserProfileContent(
-            uiState = UserProfileUiState(
-                isLoading = false,
-                userProfile = dummyUser,
-                userPosts = dummyPosts,
-                isMe = false,
-                isFollowing = false
-            ),
-            onBackClick = {},
-            onPostClick = {},
-            onFollowClick = {},
-            onNavigateToUserList = { _, _, _ -> }
-        )
     }
 }

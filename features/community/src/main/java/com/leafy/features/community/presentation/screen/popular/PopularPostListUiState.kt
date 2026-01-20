@@ -1,6 +1,6 @@
 package com.leafy.features.community.presentation.screen.popular
 
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 
 data class PopularPostListUiState(
     val isLoading: Boolean = true,

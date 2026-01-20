@@ -42,18 +42,23 @@ class HomeViewModel(
     }
 
     private fun loadUserProfile() {
+        val myIdResult = userUseCases.getCurrentUserId()
+        if (myIdResult is DataResourceResult.Success) {
+            val myId = myIdResult.data
+            _uiState.update { it.copy(currentUserId = myId) }
+        }
+
         userUseCases.getMyProfile().onEach { result ->
             if (result is DataResourceResult.Success) {
                 _uiState.update {
                     it.copy(
                         userProfileUrl = result.data.profileImageUrl,
-                        currentUserId = result.data.id
+                        currentUserId = result.data.id.ifBlank { it.currentUserId }
                     )
                 }
             }
         }.launchIn(viewModelScope)
     }
-
     private suspend fun loadStaticContents() {
         val result = homeUseCases.getHomeContent()
         when (result) {

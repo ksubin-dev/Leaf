@@ -20,8 +20,8 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.community.presentation.components.bar.CommentInputBar
 import com.leafy.features.community.presentation.components.item.CommentItem
-import com.leafy.features.community.presentation.common.model.CommentUiModel
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommentUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyDialog
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -190,79 +190,5 @@ fun CommunityPostDetailScreen(
                 }
             }
         }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-private fun CommunityPostDetailScreenPreview() {
-    val dummyPost = CommunityPostUiModel(
-        postId = "1",
-        authorId = "user1",
-        authorName = "홍차왕자",
-        authorProfileUrl = null,
-        isFollowingAuthor = false,
-        title = "주말 오후의 얼그레이 티타임",
-        content = "날씨가 좋아서 오랜만에 베란다에서 차를 마셨습니다.",
-        imageUrls = listOf(""),
-        tags = listOf("#얼그레이", "#티타임", "#주말"),
-        originNoteId = "note_123",
-        timeAgo = "2시간 전",
-        teaType = "홍차",
-        brewingSummary = "95℃ · 3m · 3g",
-        rating = 5,
-        brewingChips = listOf("95℃", "3m", "3g"),
-        likeCount = "24",
-        commentCount = "2",
-        viewCount = "150",
-        bookmarkCount = "5",
-        isLiked = true,
-        isBookmarked = false
-    )
-
-    val dummyComments = listOf(
-        CommentUiModel("1", "user2", "녹차조아", null, "찻잔이 너무 예쁘네요!", "1시간 전", false),
-        CommentUiModel("2", "me", "나야나", null, "감사합니다 ^^", "방금 전", true)
-    )
-
-    LeafyTheme {
-        CommunityPostDetailScreen(
-            post = dummyPost,
-            comments = dummyComments,
-            commentInput = "댓글...",
-            currentUserProfileUrl = null,
-            isLoading = false,
-            onNavigateBack = {},
-            onInputChange = {},
-            onSendComment = {},
-            onDeleteComment = {},
-            onLikeClick = {},
-            onBookmarkClick = {},
-            onOriginNoteClick = {},
-            onUserProfileClick = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Loading State")
-@Composable
-private fun CommunityPostDetailLoadingPreview() {
-    LeafyTheme {
-        CommunityPostDetailScreen(
-            post = null,
-            comments = emptyList(),
-            commentInput = "",
-            currentUserProfileUrl = null,
-            isLoading = true,
-            onNavigateBack = {},
-            onInputChange = {},
-            onSendComment = {},
-            onDeleteComment = {},
-            onLikeClick = {},
-            onBookmarkClick = {},
-            onOriginNoteClick = {},
-            onUserProfileClick = {}
-        )
     }
 }

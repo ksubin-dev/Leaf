@@ -41,7 +41,11 @@ interface PostRepository {
 
     suspend fun getPostDetail(postId: String): DataResourceResult<CommunityPost>
 
-    suspend fun searchPosts(query: String): DataResourceResult<List<CommunityPost>>
+    suspend fun searchPosts(
+        query: String,
+        lastPostId: String? = null,
+        limit: Int = 20
+    ): DataResourceResult<List<CommunityPost>>
 
 
     // =================================================================

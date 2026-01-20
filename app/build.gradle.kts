@@ -52,6 +52,7 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":features:auth"))
+    implementation(project(":features:search"))
     implementation(project(":features:note"))
     implementation(project(":features:home"))
     implementation(project(":features:community"))
@@ -67,18 +68,16 @@ dependencies {
     implementation(libs.bundles.compose.libraries)
     implementation(libs.androidx.compose.material.icons.extended)
 
+    implementation(libs.androidx.compose.material3)
+
     implementation(platform(libs.firebase.bom))
     implementation(libs.bundles.firebase.libraries)
-
     implementation(libs.firebase.auth)
-    implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.bundles.room.libraries)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
-    implementation(libs.androidx.foundation.layout)
     implementation(libs.play.services.auth)
-
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

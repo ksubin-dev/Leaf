@@ -1,10 +1,13 @@
 package com.leafy.features.community.presentation.screen.profile
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
-import com.leafy.features.community.presentation.common.model.UserUiModel
-import com.leafy.features.community.presentation.common.mapper.toUiModel
+import androidx.navigation.toRoute
+import com.leafy.shared.navigation.MainNavigationRoute
+import com.leafy.shared.ui.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.UserUiModel
+import com.leafy.shared.ui.mapper.toUiModel
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
@@ -21,11 +24,12 @@ data class UserProfileUiState(
 )
 
 class UserProfileViewModel(
-    private val targetUserId: String,
+    savedStateHandle: SavedStateHandle,
     private val userUseCases: UserUseCases,
     private val postUseCases: PostUseCases
 ) : ViewModel() {
 
+    private val targetUserId: String = savedStateHandle.toRoute<MainNavigationRoute.UserProfile>().userId
     private val _uiState = MutableStateFlow(UserProfileUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -45,7 +49,6 @@ class UserProfileViewModel(
 
             if (userResult is DataResourceResult.Success) {
                 val userDomain = userResult.data
-
                 val isFollowingInitial = userDomain.relationState.isFollowing
 
                 _uiState.update {

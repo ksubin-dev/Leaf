@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.math.roundToInt
 import androidx.core.net.toUri
-import com.leafy.shared.model.BrewingSessionNavArgs
+import com.leafy.shared.ui.model.BrewingSessionNavArgs
 import com.subin.leafy.domain.model.TeawareType
 import kotlinx.serialization.json.Json
 

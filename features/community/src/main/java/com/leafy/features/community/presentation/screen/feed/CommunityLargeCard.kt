@@ -18,7 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.ui.component.LeafyProfileImage
 import com.leafy.shared.ui.component.RatingStars
@@ -103,11 +103,13 @@ fun CommunityLargeCard(
                     modifier = Modifier.fillMaxWidth().height(32.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (post.rating != null && post.rating > 0) {
-                        RatingStars(
-                            rating = post.rating,
-                            size = 14.dp
-                        )
+                    if (post is CommunityPostUiModel.BrewingNote) {
+                        if (post.rating > 0) {
+                            RatingStars(
+                                rating = post.rating,
+                                size = 14.dp
+                            )
+                        }
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
