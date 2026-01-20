@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.R as SharedR
 
@@ -96,7 +96,11 @@ fun CommunityCompactCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                val subtitle = post.teaType ?: post.authorName
+                val subtitle = when (post) {
+                    is CommunityPostUiModel.BrewingNote -> post.teaType
+                    is CommunityPostUiModel.General -> post.authorName
+                }
+
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,

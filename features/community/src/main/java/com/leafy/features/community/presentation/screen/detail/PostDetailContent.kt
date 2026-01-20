@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.R
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
@@ -74,43 +74,37 @@ fun PostDetailContent(
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 
-            if (post.originNoteId != null) {
-                OutlinedButton(
-                    onClick = singleClick { onOriginNoteClick(post.originNoteId) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colors.primary
-                    ),
-                    border = BorderStroke(1.dp, colors.primary.copy(alpha = 0.5f))
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Description,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "작성된 원본 시음 노트 보기",
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            when (post) {
+                is CommunityPostUiModel.BrewingNote -> {
 
-            if (post.isBrewingNote && post.teaType != null) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = colors.secondaryContainer
-                ) {
-                    Text(
-                        text = post.teaType,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = colors.onSecondaryContainer,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                    post.originNoteId?.let { originId ->
+                        OutlinedButton(
+                            onClick = singleClick { onOriginNoteClick(originId) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.primary),
+                            border = BorderStroke(1.dp, colors.primary.copy(alpha = 0.5f))
+                        ) {
+                            Icon(imageVector = Icons.Rounded.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "작성된 원본 시음 노트 보기", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    Surface(shape = RoundedCornerShape(4.dp), color = colors.secondaryContainer) {
+                        Text(
+                            text = post.teaType,
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = colors.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                is CommunityPostUiModel.General -> {
+                    // 일반 게시글일 때 추가할 레이아웃이 있다면 여기에 작성
+                }
             }
 
             Text(
@@ -126,7 +120,7 @@ fun PostDetailContent(
                 lineHeight = 24.sp
             )
 
-            if (post.isBrewingNote) {
+            if (post is CommunityPostUiModel.BrewingNote) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (post.brewingChips.isNotEmpty()) {
@@ -147,16 +141,14 @@ fun PostDetailContent(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                post.rating?.let { rating ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RatingStars(rating = rating, size = 18.dp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "$rating.0",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = colors.primary
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RatingStars(rating = post.rating, size = 18.dp) // 스마트 캐스트 적용
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${post.rating}.0",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = colors.primary
+                    )
                 }
             }
 
@@ -215,7 +207,6 @@ fun PostDetailContent(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-
                 Text(
                     text = "조회 ${post.viewCount}",
                     style = MaterialTheme.typography.bodySmall,
@@ -231,33 +222,27 @@ fun PostDetailContent(
 @Composable
 private fun PostDetailContentPreview() {
     LeafyTheme {
+        // [수정] BrewingNote 타입으로 프리뷰 데이터 생성
         PostDetailContent(
-            post = CommunityPostUiModel(
+            post = CommunityPostUiModel.BrewingNote(
                 postId = "1",
                 authorId = "user1",
                 authorName = "홍차왕자",
                 authorProfileUrl = null,
                 isFollowingAuthor = false,
-
                 title = "오늘의 티타임",
-                content = "향이 정말 좋은 차입니다. 다들 드셔보세요. 본문이 길어지면 어떻게 되는지 테스트 중입니다.",
-                imageUrls = listOf("sample_url"),
-
-                tags = listOf("#홍차", "#티타임", "#오후의차"),
+                content = "향이 정말 좋은 차입니다. 다들 드셔보세요.",
+                imageUrls = listOf(),
+                tags = listOf("#홍차", "#티타임"),
                 originNoteId = "note_123",
-
                 timeAgo = "1시간 전",
                 teaType = "홍차",
-                brewingSummary = "95℃ · 3m · 5g",
                 rating = 5,
-
                 brewingChips = listOf("95℃", "3m", "5g"),
-
                 likeCount = "10",
                 commentCount = "5",
                 viewCount = "100",
                 bookmarkCount = "3",
-
                 isLiked = true,
                 isBookmarked = false
             ),

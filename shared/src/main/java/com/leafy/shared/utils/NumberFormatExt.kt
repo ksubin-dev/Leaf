@@ -1,4 +1,4 @@
-package com.leafy.features.community.util
+package com.leafy.shared.utils
 
 /**
  * Int 타입의 숫자를 천 단위 이상일 때 'k'를 붙여 포맷하는 확장 함수.

@@ -16,29 +16,23 @@ class UserRepositoryImpl(
     private val userDataSource: UserDataSource
 ) : UserRepository {
 
-    // 1. 내 프로필 Flow
     override fun getMyProfileFlow(): Flow<DataResourceResult<User>> {
         val myUid = authDataSource.getCurrentUserId()
 
         return if (myUid != null) {
             userDataSource.getUserFlow(myUid)
         } else {
-            // 로그인 안 된 상태면 실패 혹은 빈 값 처리
             flow { emit(DataResourceResult.Failure(Exception("Not logged in"))) }
         }
     }
 
-    // 2. 상대방 프로필 조회 (팔로우 여부 계산 로직 포함)
     override suspend fun getUserProfile(targetUserId: String): DataResourceResult<User> {
-        // (1) 상대방 정보 가져오기
         val targetUserResult = userDataSource.getUser(targetUserId)
         if (targetUserResult is DataResourceResult.Failure) return targetUserResult
 
         val targetUser = (targetUserResult as DataResourceResult.Success).data
         val myUid = authDataSource.getCurrentUserId()
 
-        // (2) 내가 이 사람을 팔로우 중인지 확인
-        // 만약 '내 정보'가 있다면 followingIds를 확인, 없으면(비로그인) false
         var isFollowing = false
 
         if (myUid != null && myUid != targetUserId) {
@@ -48,7 +42,6 @@ class UserRepositoryImpl(
             }
         }
 
-        // (3) 상태 업데이트 후 반환
         return DataResourceResult.Success(
             targetUser.copy(
                 relationState = UserRelationState(isFollowing = isFollowing)
@@ -56,7 +49,6 @@ class UserRepositoryImpl(
         )
     }
 
-    // 3. 프로필 수정
     override suspend fun updateProfile(
         nickname: String?,
         bio: String?,
@@ -65,7 +57,6 @@ class UserRepositoryImpl(
         val myUid = authDataSource.getCurrentUserId()
             ?: return DataResourceResult.Failure(Exception("Not logged in"))
 
-        // 현재 내 정보 가져오기 (기존 값 유지 위함)
         val myProfileResult = userDataSource.getUser(myUid)
         if (myProfileResult !is DataResourceResult.Success) {
             return DataResourceResult.Failure(Exception("Failed to load profile"))
@@ -73,7 +64,6 @@ class UserRepositoryImpl(
 
         val currentUser = myProfileResult.data
 
-        // 변경된 필드만 적용 (null이면 기존 값 유지)
         val updatedUser = currentUser.copy(
             nickname = nickname ?: currentUser.nickname,
             bio = bio ?: currentUser.bio,
@@ -83,7 +73,6 @@ class UserRepositoryImpl(
         return userDataSource.updateUser(updatedUser)
     }
 
-    // 4. 소셜 기능
     override suspend fun followUser(targetUserId: String): DataResourceResult<Unit> {
         val myUid = authDataSource.getCurrentUserId()
             ?: return DataResourceResult.Failure(Exception("Not logged in"))
@@ -103,7 +92,6 @@ class UserRepositoryImpl(
     }
 
     override suspend fun getFollowings(userId: String): DataResourceResult<List<User>> {
-        // 내 followingIds 리스트를 가져와서 -> getUserByIds로 상세 정보 조회
         val userResult = userDataSource.getUser(userId)
 
         return if (userResult is DataResourceResult.Success) {
@@ -122,27 +110,22 @@ class UserRepositoryImpl(
         return userDataSource.getFollowingIdsFlow(userId)
     }
 
-    // 5. 뱃지 가져오기 (Library 병합 로직)
     override suspend fun getUserBadges(userId: String): DataResourceResult<List<UserBadge>> {
         val remoteBadgesResult = userDataSource.getUserBadges(userId)
 
         if (remoteBadgesResult is DataResourceResult.Success) {
             val remoteBadges = remoteBadgesResult.data
 
-            // (2) BadgeLibrary(정적 데이터)와 병합
             val combinedBadges = remoteBadges.mapNotNull { remoteBadge ->
-                // ID로 라이브러리에서 찾기
                 val libraryInfo = BadgeLibrary.findById(remoteBadge.id)
 
                 if (libraryInfo != null) {
-                    // DB의 획득 날짜 + 라이브러리의 이미지/설명 합체!
                     remoteBadge.copy(
                         name = libraryInfo.title,
                         description = libraryInfo.description,
                         imageUrl = libraryInfo.imageUrl
                     )
                 } else {
-                    // 라이브러리에 없는 뱃지면(삭제됨?) 제외하거나 그대로 표시
                     null
                 }
             }
@@ -152,9 +135,12 @@ class UserRepositoryImpl(
         return remoteBadgesResult
     }
 
-    // 6. 검색 & 중복 체크
-    override suspend fun searchUsers(query: String): DataResourceResult<List<User>> {
-        return userDataSource.searchUsers(query)
+    override suspend fun searchUsers(
+        query: String,
+        lastUserId: String?,
+        limit: Int
+    ): DataResourceResult<List<User>> {
+        return userDataSource.searchUsers(query, lastUserId, limit)
     }
 
     override suspend fun checkNicknameAvailability(nickname: String): DataResourceResult<Boolean> {

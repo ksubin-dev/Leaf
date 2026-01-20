@@ -93,12 +93,9 @@ fun NavGraphBuilder.communityNavGraph(
         )
     }
 
-    composable<MainNavigationRoute.UserProfile> { backStackEntry ->
-        val route = backStackEntry.toRoute<MainNavigationRoute.UserProfile>()
-
+    composable<MainNavigationRoute.UserProfile> {
         val viewModel: UserProfileViewModel = viewModel(
-            factory = UserProfileViewModelFactory.provide(
-                targetUserId = route.userId,
+            factory = UserProfileViewModelFactory(
                 userUseCases = container.userUseCases,
                 postUseCases = container.postUseCases
             )

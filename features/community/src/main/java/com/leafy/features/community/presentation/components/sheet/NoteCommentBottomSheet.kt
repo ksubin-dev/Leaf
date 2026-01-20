@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.leafy.features.community.presentation.common.model.CommentUiModel
+import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.features.community.presentation.components.item.CommentItem
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyDialog
@@ -34,6 +34,7 @@ fun NoteCommentBottomSheet(
     onDeleteComment: (String) -> Unit,
     onUserProfileClick: (String) -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -97,7 +98,8 @@ fun NoteCommentBottomSheet(
             Surface(
                 tonalElevation = 4.dp,
                 shadowElevation = 8.dp,
-                modifier = Modifier,
+                modifier = Modifier
+                    .imePadding(),
                 color = colors.surface
             ) {
                 Column {

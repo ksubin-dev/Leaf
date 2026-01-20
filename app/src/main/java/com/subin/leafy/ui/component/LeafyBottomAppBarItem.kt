@@ -11,9 +11,6 @@ data class LeafyBottomAppBarItem(
 ) {
     companion object {
 
-        /**
-         * Leafy 앱의 Bottom Navigation 탭 구성
-         */
         fun fetchBottomAppBarItems(): List<LeafyBottomAppBarItem> = listOf(
             LeafyBottomAppBarItem(
                 tabName = "Home",

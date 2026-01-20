@@ -3,10 +3,10 @@ package com.leafy.features.community.presentation.screen.feed
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.features.community.presentation.common.mapper.toUiModel
-import com.leafy.features.community.presentation.common.model.CommentUiModel
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.mapper.toUiModel
+import com.leafy.shared.ui.model.CommentUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.features.community.presentation.components.bar.CommunityTab
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.PostChangeEvent
@@ -81,12 +81,20 @@ class CommunityFeedViewModel(
     }
 
     private fun loadMyUserData() {
+        val sessionResult = userUseCases.getCurrentUserId()
+        if (sessionResult is DataResourceResult.Success) {
+            _currentUserId.value = sessionResult.data
+        }
+
         userUseCases.getMyProfile().onEach { result ->
             if (result is DataResourceResult.Success) {
                 _myLikedIds.value = result.data.likedPostIds.toSet()
                 _myBookmarkedIds.value = result.data.bookmarkedPostIds.toSet()
                 _currentUserProfileUrl.value = result.data.profileImageUrl
-                _currentUserId.value = result.data.id
+
+                if (result.data.id.isNotEmpty()) {
+                    _currentUserId.value = result.data.id
+                }
 
                 refreshAllLists()
             }
@@ -150,10 +158,11 @@ class CommunityFeedViewModel(
         val bookmarks = _myBookmarkedIds.value
 
         return posts.map { post ->
-            post.copy(
-                isLiked = likes.contains(post.postId),
-                isBookmarked = bookmarks.contains(post.postId)
-            )
+            val isLiked = likes.contains(post.postId)
+            val isBookmarked = bookmarks.contains(post.postId)
+
+            post.updateLike(isLiked, post.likeCount)
+                .updateBookmark(isBookmarked, post.bookmarkCount)
         }
     }
 
@@ -178,7 +187,6 @@ class CommunityFeedViewModel(
         _currentUserId
     ) { tab, uiControl, trending, bookmarked, following, masters, myProfileUrl, myId ->
 
-        val filteredMasters = masters.filter { it.userId != myId }
 
         val hasDataToShow = when(tab) {
             CommunityTab.TRENDING -> trending.isNotEmpty() || bookmarked.isNotEmpty()
@@ -193,7 +201,7 @@ class CommunityFeedViewModel(
             currentUserId = myId,
             popularPosts = trending,
             mostBookmarkedPosts = bookmarked,
-            teaMasters = filteredMasters,
+            teaMasters = masters,
 
             followingPosts = following,
             isFollowingEmpty = following.isEmpty() && !uiControl.isInitialLoading,
@@ -270,12 +278,12 @@ class CommunityFeedViewModel(
         val transform: (CommunityPostUiModel) -> CommunityPostUiModel = { post ->
             if (isLikeToggle) {
                 val current = post.likeCount.toIntOrNull() ?: 0
-                val newCount = if (isAdd) current + 1 else maxOf(0, current - 1)
-                post.copy(likeCount = newCount.toString(), isLiked = isAdd)
+                val newCount = (if (isAdd) current + 1 else maxOf(0, current - 1)).toString()
+                post.updateLike(isAdd, newCount)
             } else {
                 val current = post.bookmarkCount.toIntOrNull() ?: 0
-                val newCount = if (isAdd) current + 1 else maxOf(0, current - 1)
-                post.copy(bookmarkCount = newCount.toString(), isBookmarked = isAdd)
+                val newCount = (if (isAdd) current + 1 else maxOf(0, current - 1)).toString()
+                post.updateBookmark(isAdd, newCount)
             }
         }
 
@@ -362,35 +370,49 @@ class CommunityFeedViewModel(
         }.launchIn(viewModelScope)
     }
 
-    fun addComment() {
-        val postId = _uiControlState.value.selectedPostIdForComments ?: return
-        val content = _uiControlState.value.commentInput
-        if (content.isBlank()) return
-
-        viewModelScope.launch {
-            _uiControlState.update { it.copy(isCommentLoading = true) }
-            when (val result = postUseCases.addComment(postId, content)) {
-                is DataResourceResult.Success -> {
-                    _uiControlState.update { it.copy(commentInput = "", isCommentLoading = false) }
-                    _sideEffects.send(CommunityFeedSideEffect.HideKeyboard)
-                }
-                is DataResourceResult.Failure -> {
-                    _uiControlState.update { it.copy(errorMessage = "댓글 등록 실패", isCommentLoading = false) }
-                }
-                else -> {}
-            }
-        }
-    }
-
-    fun deleteComment(commentId: String) {
-        val postId = _uiControlState.value.selectedPostIdForComments ?: return
-        viewModelScope.launch {
-            postUseCases.deleteComment(postId, commentId)
-        }
-    }
+//    fun addComment() {
+//        val postId = _uiControlState.value.selectedPostIdForComments ?: return
+//        val content = _uiControlState.value.commentInput
+//        if (content.isBlank()) return
+//
+//        viewModelScope.launch {
+//            _uiControlState.update { it.copy(isCommentLoading = true) }
+//            when (val result = postUseCases.addComment(postId, content)) {
+//                is DataResourceResult.Success -> {
+//                    _uiControlState.update { it.copy(commentInput = "", isCommentLoading = false) }
+//                    _sideEffects.send(CommunityFeedSideEffect.HideKeyboard)
+//                }
+//                is DataResourceResult.Failure -> {
+//                    _uiControlState.update { it.copy(errorMessage = "댓글 등록 실패", isCommentLoading = false) }
+//                }
+//                else -> {}
+//            }
+//        }
+//    }
+//
+//    fun deleteComment(commentId: String) {
+//        val postId = _uiControlState.value.selectedPostIdForComments ?: return
+//        viewModelScope.launch {
+//            postUseCases.deleteComment(postId, commentId)
+//        }
+//    }
 
     fun onMessageShown() {
         _uiControlState.update { it.copy(errorMessage = null) }
+    }
+}
+
+private fun CommunityPostUiModel.updateLike(isLiked: Boolean, newCount: String): CommunityPostUiModel {
+    return when (this) {
+        is CommunityPostUiModel.BrewingNote -> this.copy(isLiked = isLiked, likeCount = newCount)
+        is CommunityPostUiModel.General -> this.copy(isLiked = isLiked, likeCount = newCount)
+    }
+}
+
+private fun CommunityPostUiModel.updateBookmark(isBookmarked: Boolean, newCount: String): CommunityPostUiModel {
+    return when (this) {
+        is CommunityPostUiModel.BrewingNote -> this.copy(isBookmarked = isBookmarked, bookmarkCount = newCount)
+        is CommunityPostUiModel.General -> this.copy(isBookmarked = isBookmarked, bookmarkCount = newCount)
     }
 }
 

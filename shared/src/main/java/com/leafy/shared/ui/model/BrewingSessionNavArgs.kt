@@ -1,4 +1,4 @@
-package com.leafy.shared.model
+package com.leafy.shared.ui.model
 
 import kotlinx.serialization.Serializable
 

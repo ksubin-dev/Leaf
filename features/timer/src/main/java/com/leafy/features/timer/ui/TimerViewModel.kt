@@ -2,7 +2,7 @@ package com.leafy.features.timer.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.shared.model.BrewingSessionNavArgs
+import com.leafy.shared.ui.model.BrewingSessionNavArgs
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.InfusionRecord
 import com.subin.leafy.domain.model.TimerPreset

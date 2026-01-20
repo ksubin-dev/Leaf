@@ -1,8 +1,7 @@
-package com.leafy.features.community.presentation.screen.feed
+package com.leafy.shared.ui.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -20,11 +19,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
-import com.leafy.shared.ui.component.LeafyProfileImage
-import com.leafy.shared.ui.component.RatingStars
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.R as SharedR
 
@@ -55,9 +52,7 @@ fun CommunityFeedCard(
                 .padding(16.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickableSingle { onProfileClick(post.authorId) },
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LeafyProfileImage(
@@ -68,7 +63,7 @@ fun CommunityFeedCard(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f).clickableSingle { onProfileClick(post.authorId) }) {
                     Text(
                         text = post.authorName,
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -111,14 +106,14 @@ fun CommunityFeedCard(
                         contentScale = ContentScale.Crop
                     )
 
-                    if (post.isBrewingNote) {
+                    if (post is CommunityPostUiModel.BrewingNote) {
                         Surface(
                             modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
                             shape = RoundedCornerShape(8.dp),
                             color = colors.secondary.copy(alpha = 0.6f)
                         ) {
                             Text(
-                                text = post.teaType ?: "Tea",
+                                text = post.teaType, // 스마트 캐스트 적용
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                 color = colors.onSecondary
@@ -144,7 +139,7 @@ fun CommunityFeedCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            if (post.isBrewingNote) {
+            if (post is CommunityPostUiModel.BrewingNote) {
                 Spacer(modifier = Modifier.height(12.dp))
                 if (post.brewingChips.isNotEmpty()) {
                     Row(
@@ -156,16 +151,14 @@ fun CommunityFeedCard(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                post.rating?.let { rating ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RatingStars(rating = rating, size = 16.dp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "$rating.0",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                            color = colors.tertiary
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RatingStars(rating = post.rating, size = 16.dp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${post.rating}.0",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = colors.tertiary
+                    )
                 }
             }
 
@@ -278,8 +271,9 @@ private fun CommunityFeedCardPreview() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
             CommunityFeedCard(
-                post = CommunityPostUiModel(
+                post = CommunityPostUiModel.BrewingNote(
                     postId = "1",
                     authorId = "user1",
                     authorName = "민지",
@@ -288,21 +282,24 @@ private fun CommunityFeedCardPreview() {
                     title = "동정오룡차 (Dong Ding Oolong)",
                     content = "은은한 꽃향과 부드러운 과일향이 조화롭게 어우러진 오룽차. 목넘김이 매끄럽고 여운이 깁니다.",
                     imageUrls = listOf("sample_url"),
+                    tags = listOf("#우롱차"),
                     timeAgo = "2시간 전",
                     teaType = "우롱차",
-                    brewingSummary = "95℃ · 3m · 5g",
                     rating = 5,
+                    brewingChips = listOf("95℃", "3m", "5g"),
                     likeCount = "23",
                     commentCount = "5",
                     viewCount = "100",
                     bookmarkCount = "10",
                     isLiked = true,
-                    isBookmarked = false
+                    isBookmarked = false,
+                    originNoteId = "note_1"
                 )
             )
 
+
             CommunityFeedCard(
-                post = CommunityPostUiModel(
+                post = CommunityPostUiModel.General(
                     postId = "2",
                     authorId = "user2",
                     authorName = "티러버",
@@ -311,10 +308,8 @@ private fun CommunityFeedCardPreview() {
                     title = "오늘 날씨랑 딱 어울리는 무이암차",
                     content = "비 오는 날엔 역시 따뜻한 암차가 최고네요. 다들 오늘 어떤 차 드시나요?",
                     imageUrls = listOf("sample_url_2"),
+                    tags = listOf("#무이암차", "#일상"),
                     timeAgo = "방금 전",
-                    teaType = null,
-                    brewingSummary = null,
-                    rating = null,
                     likeCount = "124",
                     commentCount = "18",
                     viewCount = "300",

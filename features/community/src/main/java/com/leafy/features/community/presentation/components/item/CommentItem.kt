@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.leafy.features.community.presentation.common.model.CommentUiModel
+import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyProfileImage
 import com.leafy.shared.ui.theme.LeafyTheme

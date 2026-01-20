@@ -18,7 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.leafy.features.community.presentation.screen.feed.CommunityTeaMasterCard
+import com.leafy.shared.ui.component.CommunityTeaMasterCard
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.navigation.UserListType

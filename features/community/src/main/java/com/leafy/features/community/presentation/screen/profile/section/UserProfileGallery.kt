@@ -18,7 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.R
 import com.leafy.shared.common.clickableSingle
 
@@ -84,73 +84,3 @@ private fun GalleryItem(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, name = "갤러리 모음")
-@Composable
-private fun UserProfileGalleryPreview() {
-    fun createDummyPost(id: String, hasImage: Boolean): CommunityPostUiModel {
-        return CommunityPostUiModel(
-            postId = id,
-            authorId = "user",
-            authorName = "Tester",
-            authorProfileUrl = null,
-            isFollowingAuthor = false,
-            title = "Title",
-            content = "Content",
-            imageUrls = if (hasImage) listOf("https://via.placeholder.com/150") else emptyList(),
-            timeAgo = "1시간 전",
-            teaType = null,
-            brewingSummary = null,
-            rating = null,
-            likeCount = "10",
-            commentCount = "5",
-            viewCount = "100",
-            bookmarkCount = "2",
-            isLiked = false,
-            isBookmarked = false
-        )
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            "1. 게시글 없음",
-            modifier = Modifier.padding(16.dp),
-            color = Color.Gray,
-            style = MaterialTheme.typography.labelMedium
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp)
-                .background(Color(0xFFF5F5F5))
-        ) {
-            UserProfileGallery(
-                posts = emptyList(),
-                onPostClick = {}
-            )
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-        Text(
-            "2. 갤러리 그리드 (이미지 O / X)",
-            modifier = Modifier.padding(horizontal = 16.dp),
-            color = Color.Gray,
-            style = MaterialTheme.typography.labelMedium
-        )
-
-        val dummyPosts = listOf(
-            createDummyPost("1", true),
-            createDummyPost("2", true),
-            createDummyPost("3", false),
-            createDummyPost("4", true),
-            createDummyPost("5", true),
-        )
-
-        Box(modifier = Modifier.weight(1f)) {
-            UserProfileGallery(
-                posts = dummyPosts,
-                onPostClick = {}
-            )
-        }
-    }
-}

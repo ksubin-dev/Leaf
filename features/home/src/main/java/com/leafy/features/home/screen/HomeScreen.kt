@@ -1,5 +1,6 @@
 package com.leafy.features.home.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -43,10 +44,12 @@ fun HomeRoute(
 
     HomeScreen(
         uiState = uiState,
-        onSearchClick = { /* TODO: 검색 화면 이동 */ },
+        onSearchClick = {
+            navController.navigate(MainNavigationRoute.Search)
+        },
         onNotificationClick = { /* TODO: 알림 화면 이동 */ },
         onProfileClick = {
-            uiState.currentUserId?.let { myId ->
+            uiState.currentUserId?.takeIf { it.isNotBlank() }?.let { myId ->
                 navController.navigate(MainNavigationRoute.UserProfile(userId = myId))
             }
         },

@@ -13,13 +13,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leafy.features.community.presentation.components.bar.CustomExploreTabRow
-import com.leafy.features.community.presentation.components.sheet.NoteCommentBottomSheet
 import com.leafy.features.community.presentation.screen.feed.section.CommunityFollowingFeedSection
 import com.leafy.features.community.presentation.screen.feed.section.CommunityMostBookmarkedSection
 import com.leafy.features.community.presentation.screen.feed.section.CommunityPopularSection
 import com.leafy.features.community.presentation.screen.feed.section.CommunityTeaMasterSection
-import com.leafy.features.community.presentation.common.model.CommunityPostUiModel
-import com.leafy.features.community.presentation.common.model.UserUiModel
+import com.leafy.shared.ui.model.CommunityPostUiModel
+import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.features.community.presentation.components.bar.CommunityTab
 import com.leafy.shared.common.singleClick
 import com.subin.leafy.domain.usecase.PostUseCases
@@ -117,7 +116,7 @@ fun CommunityScreen(
                             onPostClick = { onPostClick(it.postId) },
                             onLikeClick = { viewModel.toggleLike(it.postId) },
                             onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
-                            onCommentClick = { viewModel.showComments(it.postId) },
+                            onCommentClick = { onPostClick(it.postId) },
                             onProfileClick = onMasterClick
                         )
                     }
@@ -126,19 +125,19 @@ fun CommunityScreen(
         }
     }
 
-    if (uiState.showCommentSheet) {
-        NoteCommentBottomSheet(
-            onDismissRequest = viewModel::hideComments,
-            comments = uiState.comments,
-            currentUserProfileUrl = uiState.currentUserProfileUrl,
-            isLoading = uiState.isCommentLoading,
-            commentInput = uiState.commentInput,
-            onInputChange = viewModel::updateCommentInput,
-            onSendComment = viewModel::addComment,
-            onDeleteComment = viewModel::deleteComment,
-            onUserProfileClick = onMasterClick
-        )
-    }
+//    if (uiState.showCommentSheet) {
+//        NoteCommentBottomSheet(
+//            onDismissRequest = viewModel::hideComments,
+//            comments = uiState.comments,
+//            currentUserProfileUrl = uiState.currentUserProfileUrl,
+//            isLoading = uiState.isCommentLoading,
+//            commentInput = uiState.commentInput,
+//            onInputChange = viewModel::updateCommentInput,
+//            onSendComment = viewModel::addComment,
+//            onDeleteComment = viewModel::deleteComment,
+//            onUserProfileClick = onMasterClick
+//        )
+//    }
 }
 
 @Composable

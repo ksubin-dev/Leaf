@@ -27,7 +27,6 @@ class FirestoreUserDataSourceImpl(
 
     private val usersCollection = firestore.collection(FirestoreConstants.COLLECTION_USERS)
 
-    // --- 1. 유저 정보 조회 (단건) ---
     override suspend fun getUser(userId: String): DataResourceResult<User> {
         return try {
             val snapshot = firestore.collection("users").document(userId).get().await()
@@ -43,7 +42,6 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    // --- 2. 유저 정보 실시간 감지 (Flow) ---
     override fun getUserFlow(userId: String): Flow<DataResourceResult<User>> = callbackFlow {
         val listener = usersCollection.document(userId)
             .addSnapshotListener { snapshot, error ->
@@ -52,7 +50,7 @@ class FirestoreUserDataSourceImpl(
                     return@addSnapshotListener
                 }
 
-                val userDto = snapshot?.toObject<UserDto>()
+                val userDto = snapshot?.toObject<UserDto>()?.copy(uid = snapshot.id)
                 if (userDto != null) {
                     trySend(DataResourceResult.Success(userDto.toUserDomain()))
                 } else {
@@ -62,16 +60,13 @@ class FirestoreUserDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
-    // --- 3. 유저 정보 업데이트 ---
     override suspend fun updateUser(user: User): DataResourceResult<Unit> {
         return try {
             val updates = mapOf(
-
                 FirestoreConstants.FIELD_NICKNAME to user.nickname,
                 FirestoreConstants.FIELD_PROFILE_IMAGE to user.profileImageUrl,
                 FirestoreConstants.FIELD_BIO to user.bio,
                 FirestoreConstants.FIELD_EXPERT_TYPES to user.expertTypes.map { it.name },
-
 
                 FirestoreConstants.KEY_SOCIAL_STATS to mapOf(
                     FirestoreConstants.KEY_FOLLOWER_COUNT to user.socialStats.followerCount,
@@ -86,7 +81,7 @@ class FirestoreUserDataSourceImpl(
             )
 
             usersCollection.document(user.id)
-                .set(updates, SetOptions.merge()) // 없으면 생성, 있으면 병합(업데이트)
+                .set(updates, SetOptions.merge())
                 .await()
 
             DataResourceResult.Success(Unit)
@@ -107,19 +102,31 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    // --- 4. 유저 검색 ---
-    override suspend fun searchUsers(query: String): DataResourceResult<List<User>> {
-        return try {
-            if (query.isBlank()) return DataResourceResult.Success(emptyList())
+    override suspend fun searchUsers(
+        query: String,
+        lastUserId: String?,
+        limit: Int
+    ): DataResourceResult<List<User>> {
+        if (query.isBlank()) return DataResourceResult.Success(emptyList())
 
-            val snapshot = usersCollection
+        return try {
+            val lastDocument = lastUserId?.let {
+                usersCollection.document(it).get().await()
+            }
+
+            var firestoreQuery = usersCollection
                 .whereGreaterThanOrEqualTo(FirestoreConstants.FIELD_NICKNAME, query)
                 .whereLessThanOrEqualTo(FirestoreConstants.FIELD_NICKNAME, query + "\uf8ff")
-                .get()
-                .await()
+                .orderBy(FirestoreConstants.FIELD_NICKNAME)
+
+            if (lastDocument != null && lastDocument.exists()) {
+                firestoreQuery = firestoreQuery.startAfter(lastDocument)
+            }
+
+            val snapshot = firestoreQuery.limit(limit.toLong()).get().await()
 
             val users = snapshot.documents.mapNotNull { doc ->
-                doc.toObject<UserDto>()?.toUserDomain()
+                doc.toObject<UserDto>()?.copy(uid = doc.id)?.toUserDomain()
             }
             DataResourceResult.Success(users)
         } catch (e: Exception) {
@@ -127,7 +134,6 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    // --- 5. 팔로우 ---
     override suspend fun followUser(myId: String, targetUserId: String): DataResourceResult<Unit> {
         return try {
             firestore.runTransaction { transaction ->
@@ -146,7 +152,6 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    // --- 6. 언팔로우 ---
     override suspend fun unfollowUser(myId: String, targetUserId: String): DataResourceResult<Unit> {
         return try {
             firestore.runTransaction { transaction ->
@@ -164,7 +169,6 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    // --- 7. 팔로우 여부 확인 ---
     override fun isFollowingFlow(myId: String, targetUserId: String): Flow<Boolean> = callbackFlow {
         val listener = usersCollection.document(myId)
             .addSnapshotListener { snapshot, _ ->
@@ -175,7 +179,6 @@ class FirestoreUserDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
-    // --- 8. ID 리스트로 유저 목록 가져오기 ---
     override suspend fun getUsersByIds(userIds: List<String>): DataResourceResult<List<User>> {
         return try {
             if (userIds.isEmpty()) return DataResourceResult.Success(emptyList())
@@ -187,8 +190,8 @@ class FirestoreUserDataSourceImpl(
                     .get()
                     .await()
 
-                val chunkedUsers = snapshot.documents.mapNotNull {
-                    it.toObject<UserDto>()?.toUserDomain()
+                val chunkedUsers = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject<UserDto>()?.copy(uid = doc.id)?.toUserDomain()
                 }
                 userList.addAll(chunkedUsers)
             }
@@ -199,7 +202,6 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    // --- 9. 내 팔로워 목록 가져오기 ---
     override suspend fun getFollowers(myUserId: String): DataResourceResult<List<User>> {
         return try {
             val snapshot = usersCollection
@@ -207,8 +209,8 @@ class FirestoreUserDataSourceImpl(
                 .get()
                 .await()
 
-            val followers = snapshot.documents.mapNotNull {
-                it.toObject<UserDto>()?.toUserDomain()
+            val followers = snapshot.documents.mapNotNull { doc ->
+                doc.toObject<UserDto>()?.copy(uid = doc.id)?.toUserDomain()
             }
             DataResourceResult.Success(followers)
         } catch (e: Exception) {
@@ -248,7 +250,6 @@ class FirestoreUserDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
-    // --- 10. 뱃지 가져오기 ---
     override suspend fun getUserBadges(userId: String): DataResourceResult<List<UserBadge>> {
         return try {
             val snapshot = usersCollection.document(userId)
@@ -295,7 +296,6 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    // 북마크 토글
     override suspend fun toggleBookmarkPost(userId: String, postId: String, isAdding: Boolean): DataResourceResult<Unit> {
         return try {
             val userRef = usersCollection.document(userId)

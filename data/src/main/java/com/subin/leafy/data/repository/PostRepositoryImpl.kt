@@ -118,8 +118,12 @@ class PostRepositoryImpl(
         }
     }
 
-    override suspend fun searchPosts(query: String): DataResourceResult<List<CommunityPost>> {
-        val result = postDataSource.searchPosts(query)
+    override suspend fun searchPosts(
+        query: String,
+        lastPostId: String?,
+        limit: Int
+    ): DataResourceResult<List<CommunityPost>> {
+        val result = postDataSource.searchPosts(query, lastPostId, limit)
         return mapPostsWithMyStateSuspend(result)
     }
 

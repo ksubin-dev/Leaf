@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -105,12 +106,12 @@ fun RankedTeaRow(
                     maxLines = 1
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
                     text = item.teaType.label,
                     style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant
+                    color = colors.primary
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -119,27 +120,17 @@ fun RankedTeaRow(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "rating",
-                        tint = colors.error,
+                        imageVector = Icons.Default.Visibility,
+                        contentDescription = "view count",
+                        tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
 
                     Text(
-                        text = "${item.rating ?: 0.0}",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = colors.onSurface
-                    )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    Text(
-                        text = "(${item.viewCount})",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant.copy(alpha = 0.7f)
+                        text = "${item.viewCount}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
             }
