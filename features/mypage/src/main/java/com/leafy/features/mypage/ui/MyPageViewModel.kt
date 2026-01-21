@@ -1,14 +1,18 @@
 package com.leafy.features.mypage.ui
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.ui.model.UserUiModel
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.usecase.AnalysisUseCases
+import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
+import com.subin.leafy.domain.usecase.TeaUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import com.subin.leafy.domain.usecase.user.FollowType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,12 +24,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.UUID
 
 class MyPageViewModel(
     private val userUseCases: UserUseCases,
     private val noteUseCases: NoteUseCases,
     private val postUseCases: PostUseCases,
-    private val analysisUseCases: AnalysisUseCases
+    private val analysisUseCases: AnalysisUseCases,
+    private val imageUseCases: ImageUseCases,
+    private val teaUseCases: TeaUseCases,
+    private val imageCompressor: ImageCompressor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MyPageUiState())
@@ -39,22 +47,29 @@ class MyPageViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            launch {
-                noteUseCases.syncNotes()
-            }
+            launch { noteUseCases.syncNotes() }
+            launch { teaUseCases.syncTeas() }
 
             loadMyProfile()
             val result = userUseCases.getCurrentUserId()
-
             val userId = if (result is DataResourceResult.Success) result.data else null
             if (userId != null) {
                 loadAnalysisData(userId)
                 loadCalendarData(userId, LocalDate.now())
                 loadSavedLists()
                 loadFollowLists(userId)
-            }
 
+                loadTeaStats()
+            }
             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    private fun loadTeaStats() {
+        viewModelScope.launch {
+            teaUseCases.getTeaCount().collectLatest { count ->
+                _uiState.update { it.copy(myTeaCabinetCount = count) }
+            }
         }
     }
 
@@ -179,6 +194,117 @@ class MyPageViewModel(
                 loadMyProfile()
             }
         }
+    }
+
+    fun toggleEditProfileMode() {
+        _uiState.update { currentState ->
+            val isEditing = !currentState.isEditingProfile
+            if (isEditing) {
+                currentState.copy(
+                    isEditingProfile = true,
+                    editNickname = currentState.myProfile?.nickname ?: "",
+                    editBio = currentState.myProfile?.bio ?: "",
+                    editProfileImageUri = null,
+                    isNicknameValid = true,
+                    profileEditMessage = null
+                )
+            } else {
+                currentState.copy(isEditingProfile = false)
+            }
+        }
+    }
+
+    fun onProfileImageSelected(uri: Uri) {
+        _uiState.update { it.copy(editProfileImageUri = uri) }
+    }
+
+    fun onNicknameChange(newNickname: String) {
+        _uiState.update { it.copy(editNickname = newNickname) }
+        viewModelScope.launch {
+            if (newNickname == _uiState.value.myProfile?.nickname) {
+                _uiState.update { it.copy(isNicknameValid = true) }
+            } else {
+                val isAvailable = userUseCases.checkNickname(newNickname)
+                val isValid = isAvailable is DataResourceResult.Success && isAvailable.data
+                _uiState.update { it.copy(isNicknameValid = isValid) }
+            }
+        }
+    }
+
+    fun onBioChange(newBio: String) {
+        _uiState.update { it.copy(editBio = newBio) }
+    }
+
+    fun saveProfile() {
+        val currentState = _uiState.value
+
+        if (!currentState.isNicknameValid) {
+            _uiState.update { it.copy(profileEditMessage = "닉네임을 확인해주세요.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            var profileImageUrl: String? = null
+
+            if (currentState.editProfileImageUri != null) {
+                try {
+                    val compressedUriString = imageCompressor.compressImage(currentState.editProfileImageUri.toString())
+
+                    val uploadResult = imageUseCases.uploadImage(
+                        compressedUriString,
+                        "profile_images"
+                    )
+
+                    if (uploadResult is DataResourceResult.Success) {
+                        profileImageUrl = uploadResult.data
+                    } else {
+                        val errorMsg = (uploadResult as DataResourceResult.Failure).exception.message
+                        _uiState.update {
+                            it.copy(isLoading = false, profileEditMessage = "이미지 업로드 실패: $errorMsg")
+                        }
+                        return@launch
+                    }
+                } catch (e: Exception) {
+                    _uiState.update {
+                        it.copy(isLoading = false, profileEditMessage = "이미지 처리 중 오류 발생: ${e.message}")
+                    }
+                    return@launch
+                }
+            }
+
+            val updateResult = userUseCases.updateProfile(
+                nickname = currentState.editNickname,
+                bio = currentState.editBio,
+                profileUrl = profileImageUrl
+            )
+
+            if (updateResult is DataResourceResult.Failure) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        profileEditMessage = updateResult.exception.message ?: "프로필 수정 실패"
+                    )
+                }
+                return@launch
+            }
+
+            if (updateResult is DataResourceResult.Success) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isEditingProfile = false,
+                        profileEditMessage = "프로필이 수정되었습니다."
+                    )
+                }
+                loadMyProfile()
+            }
+        }
+    }
+
+    fun onProfileMessageShown() {
+        _uiState.update { it.copy(profileEditMessage = null) }
     }
 
     private fun User.toUiModel(): UserUiModel {

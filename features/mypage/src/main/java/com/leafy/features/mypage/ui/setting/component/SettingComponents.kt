@@ -76,8 +76,6 @@ fun SettingsInfoItem(title: String, value: String) {
     }
 }
 
-// --- 2. 다이얼로그 컴포넌트 ---
-
 @Composable
 fun LogoutDialog(
     onConfirm: () -> Unit,

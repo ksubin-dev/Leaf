@@ -50,6 +50,10 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object FollowingList : MainNavigationRoute
     @Serializable data object Settings : MainNavigationRoute
 
+    @Serializable data object MyTeaCabinet : MainNavigationRoute
+
+    @Serializable data class TeaAddEdit(val teaId: String? = null) : MainNavigationRoute
+
     @Serializable data object AnalysisReport : MainNavigationRoute
 }
 

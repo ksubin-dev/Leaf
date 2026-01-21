@@ -3,8 +3,10 @@ package com.leafy.features.mypage.ui.setting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.model.TimerSettings
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
+import com.subin.leafy.domain.usecase.TimerUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,17 +17,22 @@ import kotlinx.coroutines.launch
 data class SettingUiState(
     val isNotificationEnabled: Boolean = false,
     val isAutoLoginEnabled: Boolean = false,
-    val isDarkTheme: Boolean = false, // (선택) 다크모드
+    val isDarkTheme: Boolean = false,
+    val isTimerVibrationOn: Boolean = true,
+    val isTimerSoundOn: Boolean = true,
+    val isTimerScreenOn: Boolean = true,
     val appVersion: String = "1.0.0",
     val isLoading: Boolean = false,
     val logoutSuccess: Boolean = false,
-    val deleteSuccess: Boolean = false
+    val deleteSuccess: Boolean = false,
+    val errorMessage: String? = null
 )
 
 class SettingViewModel(
     private val settingUseCases: SettingUseCases,
     private val authUseCases: AuthUseCases,
-    private val userUseCases: UserUseCases
+    private val userUseCases: UserUseCases,
+    private val timerUseCases: TimerUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingUiState())
@@ -37,40 +44,46 @@ class SettingViewModel(
 
     private fun loadSettings() {
         viewModelScope.launch {
-            settingUseCases.getAppSettings.invoke().collectLatest { appSettings ->
-                _uiState.update {
-                    it.copy(
-                        isNotificationEnabled = appSettings.isNotificationAgreed,
-                        isAutoLoginEnabled = appSettings.autoLogin,
-                        isDarkTheme = appSettings.isDarkTheme
-                    )
+            launch {
+                settingUseCases.getAppSettings().collectLatest { appSettings ->
+                    _uiState.update {
+                        it.copy(
+                            isNotificationEnabled = appSettings.isNotificationAgreed,
+                            isAutoLoginEnabled = appSettings.autoLogin,
+                            isDarkTheme = appSettings.isDarkTheme
+                        )
+                    }
+                }
+            }
+
+            launch {
+                timerUseCases.getTimerSettings().collectLatest { timerSettings ->
+                    _uiState.update {
+                        it.copy(
+                            isTimerVibrationOn = timerSettings.isVibrationOn,
+                            isTimerSoundOn = timerSettings.isSoundOn,
+                            isTimerScreenOn = timerSettings.keepScreenOn
+                        )
+                    }
                 }
             }
         }
     }
 
-    // 알림 설정 토글
-    // [수정 완료] 알림 설정 토글
     fun toggleNotification(isEnabled: Boolean) {
         viewModelScope.launch {
-            // 1. UI 선반영 (즉각적인 반응)
             _uiState.update { it.copy(isNotificationEnabled = isEnabled) }
-
-            // 2. UseCase 함수 호출 (클래스 인스턴스.함수명)
             settingUseCases.updateNotificationSetting.setNotificationAgreed(isEnabled)
         }
     }
 
-    // 자동 로그인 토글
     fun toggleAutoLogin(isEnabled: Boolean) {
         viewModelScope.launch {
             _uiState.update { it.copy(isAutoLoginEnabled = isEnabled) }
-            // UseCase 호출
             settingUseCases.manageLoginSetting.setAutoLogin(isEnabled)
         }
     }
 
-    // (선택) 다크 모드 토글
     fun toggleDarkMode(isEnabled: Boolean) {
         viewModelScope.launch {
             _uiState.update { it.copy(isDarkTheme = isEnabled) }
@@ -78,36 +91,67 @@ class SettingViewModel(
         }
     }
 
-    // 로그아웃
+    fun toggleTimerVibration(isEnabled: Boolean) {
+        _uiState.update { it.copy(isTimerVibrationOn = isEnabled) }
+        updateTimerSettings { it.copy(isVibrationOn = isEnabled) }
+    }
+
+    fun toggleTimerSound(isEnabled: Boolean) {
+        _uiState.update { it.copy(isTimerSoundOn = isEnabled) }
+        updateTimerSettings { it.copy(isSoundOn = isEnabled) }
+    }
+
+    fun toggleTimerScreenOn(isEnabled: Boolean) {
+        _uiState.update { it.copy(isTimerScreenOn = isEnabled) }
+        updateTimerSettings { it.copy(keepScreenOn = isEnabled) }
+    }
+
+    private fun updateTimerSettings(transform: (TimerSettings) -> TimerSettings) {
+        viewModelScope.launch {
+            val currentSettings = TimerSettings(
+                isVibrationOn = _uiState.value.isTimerVibrationOn,
+                isSoundOn = _uiState.value.isTimerSoundOn,
+                keepScreenOn = _uiState.value.isTimerScreenOn
+            )
+            val newSettings = transform(currentSettings)
+
+            val result = timerUseCases.updateTimerSettings(newSettings)
+
+            if (result is DataResourceResult.Failure) {
+                _uiState.update { it.copy(errorMessage = "설정 저장 실패: ${result.exception.message}") }
+            }
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            val result = authUseCases.logout() // AuthRepository에서 clearSettings()까지 호출함
+            val result = authUseCases.logout()
 
             if (result is DataResourceResult.Success) {
                 _uiState.update { it.copy(isLoading = false, logoutSuccess = true) }
             } else {
-                // 로그아웃 실패 시 처리 (보통은 실패해도 화면 이동 시키긴 함)
                 _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
 
-    // 회원 탈퇴
     fun deleteAccount() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // AuthRepository에서 DB 삭제 + Auth 삭제 + 로컬 설정 초기화까지 수행함
             val result = authUseCases.deleteAccount()
 
             if (result is DataResourceResult.Success) {
                 _uiState.update { it.copy(isLoading = false, deleteSuccess = true) }
             } else {
                 _uiState.update { it.copy(isLoading = false) }
-                // 에러 처리 (토스트 메시지 등) 필요 시 추가
             }
         }
+    }
+
+    fun messageShown() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 }

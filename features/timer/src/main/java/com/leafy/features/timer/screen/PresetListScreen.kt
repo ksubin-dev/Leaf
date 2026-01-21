@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,7 +36,8 @@ fun PresetListScreen(
     onDeletePreset: (String) -> Unit,
     userMessage: String? = null,
     onLockedClick: () -> Unit = {},
-    onMessageShown: () -> Unit = {}
+    onMessageShown: () -> Unit = {},
+    onSettingsClick: () -> Unit
 ) {
     var selectedCategory by remember { mutableStateOf<TeaType?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -66,6 +68,14 @@ fun PresetListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = singleClick { onSettingsClick() }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "타이머 설정",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     TextButton(
                         onClick = singleClick {
                             targetPreset = null
@@ -100,7 +110,9 @@ fun PresetListScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Column(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()) {
 
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -177,7 +189,6 @@ fun EmptyPresetState(modifier: Modifier = Modifier) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PresetListScreenPreview() {
-    // 1. 테스트용 더미 데이터 생성
     val mockPresets = remember {
         listOf(
             TimerPreset(
@@ -239,7 +250,6 @@ fun PresetListScreenPreview() {
         )
     }
 
-    // 2. 테마로 감싸서 프리뷰 실행
     LeafyTheme {
         PresetListScreen(
             presets = mockPresets,
@@ -247,7 +257,11 @@ fun PresetListScreenPreview() {
             onPresetSelect = { /* 프리셋 선택 액션 */ },
             onAddPreset = { /* 추가 액션 */ },
             onUpdatePreset = { /* 수정 액션 */ },
-            onDeletePreset = { /* 삭제 액션 */ }
+            onDeletePreset = { /* 삭제 액션 */ },
+            userMessage = null,
+            onLockedClick = {},
+            onMessageShown = {},
+            onSettingsClick = { /* 설정 클릭 액션 */ }
         )
     }
 }

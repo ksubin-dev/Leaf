@@ -1,9 +1,15 @@
 package com.leafy.features.mypage.navigation
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -18,8 +24,13 @@ import com.leafy.features.mypage.ui.factory.MyPageViewModelFactory
 import com.leafy.features.mypage.ui.setting.SettingScreen
 import com.leafy.features.mypage.ui.setting.SettingViewModel
 import com.leafy.features.mypage.ui.factory.SettingViewModelFactory
+import com.leafy.features.mypage.ui.tea.MyTeaListScreen
+import com.leafy.features.mypage.ui.tea.MyTeaListViewModel
+import com.leafy.features.mypage.ui.tea.TeaAddEditScreen
+import com.leafy.features.mypage.ui.tea.TeaAddEditViewModel
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
+import com.leafy.shared.utils.ImageCompressor
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -30,13 +41,9 @@ fun NavGraphBuilder.mypageNavGraph(
     navController: NavController
 ) {
     composable<MainNavigationRoute.MyPageTab> {
-        val factory = MyPageViewModelFactory(
-            userUseCases = container.userUseCases,
-            noteUseCases = container.noteUseCases,
-            postUseCases = container.postUseCases,
-            analysisUseCases = container.analysisUseCases
+        val viewModel: MyPageViewModel = viewModel(
+            factory = makeMyPageViewModelFactory(container)
         )
-        val viewModel: MyPageViewModel = viewModel(factory = factory)
 
         MyPageScreen(
             viewModel = viewModel,
@@ -69,6 +76,10 @@ fun NavGraphBuilder.mypageNavGraph(
             },
             onFollowingClick = {
                 navController.navigate(MainNavigationRoute.FollowingList)
+            },
+            // [연결] 나의 찻장 클릭 시 이동
+            onMyTeaCabinetClick = {
+                navController.navigate(MainNavigationRoute.MyTeaCabinet)
             }
         )
     }
@@ -80,13 +91,12 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val factory = MyPageViewModelFactory(
-            container.userUseCases,
-            container.noteUseCases,
-            container.postUseCases,
-            container.analysisUseCases
+
+        val viewModel: MyPageViewModel = viewModel(
+            viewModelStoreOwner = parentEntry,
+            factory = makeMyPageViewModelFactory(container)
         )
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = factory)
+
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val dailyRecords = uiState.calendarNotes.filter { note ->
@@ -113,13 +123,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val factory = MyPageViewModelFactory(
-            container.userUseCases,
-            container.noteUseCases,
-            container.postUseCases,
-            container.analysisUseCases
-        )
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = factory)
+        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         SavedListScreen(
@@ -137,13 +141,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val factory = MyPageViewModelFactory(
-            container.userUseCases,
-            container.noteUseCases,
-            container.postUseCases,
-            container.analysisUseCases
-        )
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = factory)
+        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         SavedListScreen(
@@ -157,18 +155,11 @@ fun NavGraphBuilder.mypageNavGraph(
         )
     }
 
-    // 5. 팔로워 리스트
     composable<MainNavigationRoute.FollowerList> { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val factory = MyPageViewModelFactory(
-            container.userUseCases,
-            container.noteUseCases,
-            container.postUseCases,
-            container.analysisUseCases
-        )
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = factory)
+        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         LaunchedEffect(Unit) {
@@ -193,13 +184,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val factory = MyPageViewModelFactory(
-            container.userUseCases,
-            container.noteUseCases,
-            container.postUseCases,
-            container.analysisUseCases
-        )
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = factory)
+        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         LaunchedEffect(Unit) {
@@ -220,11 +205,42 @@ fun NavGraphBuilder.mypageNavGraph(
         )
     }
 
+    composable<MainNavigationRoute.MyTeaCabinet> {
+        val viewModel: MyTeaListViewModel = viewModel(
+            factory = makeMyTeaListViewModelFactory(container)
+        )
+
+        MyTeaListScreen(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() },
+            onAddTeaClick = {
+                navController.navigate(MainNavigationRoute.TeaAddEdit(teaId = null))
+            },
+            onTeaClick = { teaId ->
+                navController.navigate(MainNavigationRoute.TeaAddEdit(teaId = teaId))
+            }
+        )
+    }
+
+    // [수정] 팩토리 함수 연결
+    composable<MainNavigationRoute.TeaAddEdit> {
+        val viewModel: TeaAddEditViewModel = viewModel(
+            factory = makeTeaAddEditViewModelFactory(container)
+        )
+
+        TeaAddEditScreen(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() }
+        )
+    }
+
+
     composable<MainNavigationRoute.Settings> {
         val factory = SettingViewModelFactory(
             settingUseCases = container.settingUseCases,
             authUseCases = container.authUseCases,
-            userUseCases = container.userUseCases
+            userUseCases = container.userUseCases,
+            timerUseCases = container.timerUseCases
         )
         val viewModel: SettingViewModel = viewModel(factory = factory)
 
@@ -237,5 +253,49 @@ fun NavGraphBuilder.mypageNavGraph(
                 }
             }
         )
+    }
+}
+
+
+@Composable
+private fun makeMyPageViewModelFactory(container: ApplicationContainer): MyPageViewModelFactory {
+    val context = LocalContext.current
+    return MyPageViewModelFactory(
+        userUseCases = container.userUseCases,
+        noteUseCases = container.noteUseCases,
+        postUseCases = container.postUseCases,
+        analysisUseCases = container.analysisUseCases,
+        imageUseCases = container.imageUseCases,
+        teaUseCases = container.teaUseCases,
+        imageCompressor = ImageCompressor(context)
+    )
+}
+
+@Composable
+private fun makeMyTeaListViewModelFactory(container: ApplicationContainer): ViewModelProvider.Factory {
+    return object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return MyTeaListViewModel(
+                teaUseCases = container.teaUseCases
+            ) as T
+        }
+    }
+}
+
+@Composable
+private fun makeTeaAddEditViewModelFactory(container: ApplicationContainer): ViewModelProvider.Factory {
+    val context = LocalContext.current
+    return object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            val savedStateHandle = extras.createSavedStateHandle()
+            return TeaAddEditViewModel(
+                savedStateHandle = savedStateHandle,
+                teaUseCases = container.teaUseCases,
+                imageUseCases = container.imageUseCases,
+                imageCompressor = ImageCompressor(context)
+            ) as T
+        }
     }
 }

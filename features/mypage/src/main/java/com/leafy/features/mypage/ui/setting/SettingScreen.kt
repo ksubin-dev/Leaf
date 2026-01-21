@@ -22,10 +22,18 @@ fun SettingScreen(
     onLogoutSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.logoutSuccess, uiState.deleteSuccess) {
         if (uiState.logoutSuccess || uiState.deleteSuccess) {
             onLogoutSuccess()
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.messageShown()
         }
     }
 
@@ -45,7 +53,8 @@ fun SettingScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -59,6 +68,17 @@ fun SettingScreen(
                 isAutoLoginEnabled = uiState.isAutoLoginEnabled,
                 onToggleNoti = viewModel::toggleNotification,
                 onToggleAutoLogin = viewModel::toggleAutoLogin
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp)
+
+            TimerSettingsSection(
+                isVibOn = uiState.isTimerVibrationOn,
+                isSoundOn = uiState.isTimerSoundOn,
+                isScreenOn = uiState.isTimerScreenOn,
+                onToggleVib = viewModel::toggleTimerVibration,
+                onToggleSound = viewModel::toggleTimerSound,
+                onToggleScreen = viewModel::toggleTimerScreenOn
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp)
@@ -92,55 +112,5 @@ fun SettingScreen(
             },
             onDismiss = { showDeleteDialog = false }
         )
-    }
-}
-@Composable
-private fun AppSettingsSection(
-    isNotiEnabled: Boolean,
-    isAutoLoginEnabled: Boolean,
-    onToggleNoti: (Boolean) -> Unit,
-    onToggleAutoLogin: (Boolean) -> Unit
-) {
-    Column {
-        SettingsSectionTitle("앱 설정")
-        SettingsSwitchItem(
-            title = "알림 설정",
-            checked = isNotiEnabled,
-            onCheckedChange = onToggleNoti
-        )
-        SettingsSwitchItem(
-            title = "자동 로그인",
-            checked = isAutoLoginEnabled,
-            onCheckedChange = onToggleAutoLogin
-        )
-    }
-}
-
-@Composable
-private fun AccountSettingsSection(
-    onLogoutClick: () -> Unit,
-    onDeleteAccountClick: () -> Unit
-) {
-    Column {
-        SettingsSectionTitle("계정")
-        SettingsTextItem(
-            title = "로그아웃",
-            onClick = onLogoutClick
-        )
-        SettingsTextItem(
-            title = "회원 탈퇴",
-            color = MaterialTheme.colorScheme.error,
-            onClick = onDeleteAccountClick
-        )
-    }
-}
-
-@Composable
-private fun InfoSettingsSection(
-    appVersion: String
-) {
-    Column {
-        SettingsSectionTitle("정보")
-        SettingsInfoItem(title = "앱 버전", value = appVersion)
     }
 }

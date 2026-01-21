@@ -15,7 +15,6 @@ class ImageRepositoryImpl(
         return storageDataSource.uploadImage(uri, folder)
     }
 
-    //다중 업로드
     override suspend fun uploadImages(uris: List<String>, folder: String): DataResourceResult<List<String>> {
         if (uris.isEmpty()) return DataResourceResult.Success(emptyList())
 
@@ -27,7 +26,6 @@ class ImageRepositoryImpl(
 
                 val results = deferredUploads.awaitAll()
 
-                // 2. 결과 분석
                 val successUrls = mutableListOf<String>()
                 var hasError = false
                 var firstException: Throwable? = null
@@ -51,7 +49,6 @@ class ImageRepositoryImpl(
                         }
                     }
                 }
-                // 3. 롤백 결정
                 if (hasError) {
                     successUrls.forEach { url ->
                         async { storageDataSource.deleteImage(url) }

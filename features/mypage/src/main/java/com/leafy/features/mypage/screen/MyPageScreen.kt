@@ -1,5 +1,6 @@
 package com.leafy.features.mypage.screen
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import com.leafy.features.mypage.ui.MyPageViewModel
 import com.leafy.features.mypage.ui.component.MyPageTopAppBar
 import com.leafy.features.mypage.ui.component.ProfileHeader
 import com.leafy.features.mypage.ui.session.MyPageCalendarSection
+import com.leafy.features.mypage.ui.session.MyTeaCabinetSection
 import com.leafy.features.mypage.ui.session.SavedNotesSummarySection
 import java.time.LocalDate
 
@@ -29,7 +31,8 @@ fun MyPageScreen(
     onViewAllBookmarksClick: () -> Unit,
     onViewAllLikedPostsClick: () -> Unit,
     onFollowerClick: () -> Unit,
-    onFollowingClick: () -> Unit
+    onFollowingClick: () -> Unit,
+    onMyTeaCabinetClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -37,6 +40,13 @@ fun MyPageScreen(
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    LaunchedEffect(uiState.profileEditMessage) {
+        uiState.profileEditMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.onProfileMessageShown()
         }
     }
 
@@ -70,9 +80,20 @@ fun MyPageScreen(
             onPostDetailClick = onPostDetailClick,
             onViewAllBookmarksClick = onViewAllBookmarksClick,
             onViewAllLikedPostsClick = onViewAllLikedPostsClick,
-            // [연결]
             onFollowerClick = onFollowerClick,
-            onFollowingClick = onFollowingClick
+            onFollowingClick = onFollowingClick,
+            onProfileEditClick = {
+                if (uiState.isEditingProfile) {
+                    viewModel.saveProfile()
+                } else {
+                    viewModel.toggleEditProfileMode()
+                }
+            },
+            onProfileCancelClick = viewModel::toggleEditProfileMode,
+            onNicknameChange = viewModel::onNicknameChange,
+            onBioChange = viewModel::onBioChange,
+            onProfileImageSelected = viewModel::onProfileImageSelected,
+            onMyTeaCabinetClick = onMyTeaCabinetClick
         )
     }
 }
@@ -91,9 +112,14 @@ private fun MyPageContent(
     onPostDetailClick: (String) -> Unit,
     onViewAllBookmarksClick: () -> Unit,
     onViewAllLikedPostsClick: () -> Unit,
-    // [추가]
     onFollowerClick: () -> Unit,
-    onFollowingClick: () -> Unit
+    onFollowingClick: () -> Unit,
+    onProfileEditClick: () -> Unit,
+    onProfileCancelClick: () -> Unit,
+    onNicknameChange: (String) -> Unit,
+    onBioChange: (String) -> Unit,
+    onProfileImageSelected: (Uri) -> Unit,
+    onMyTeaCabinetClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -112,8 +138,19 @@ private fun MyPageContent(
         uiState.myProfile?.let { user ->
             ProfileHeader(
                 user = user,
+                isEditing = uiState.isEditingProfile,
+                editNickname = uiState.editNickname,
+                editBio = uiState.editBio,
+                isNicknameValid = uiState.isNicknameValid,
+                editProfileImageUri = uiState.editProfileImageUri,
+                onImageSelected = onProfileImageSelected,
+                onEditClick = onProfileEditClick,
+                onCancelClick = onProfileCancelClick,
+                onNicknameChange = onNicknameChange,
+                onBioChange = onBioChange,
                 onFollowerClick = onFollowerClick,
-                onFollowingClick = onFollowingClick
+                onFollowingClick = onFollowingClick,
+
             )
         }
 
@@ -131,6 +168,11 @@ private fun MyPageContent(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        MyTeaCabinetSection(
+            teaCount = uiState.myTeaCabinetCount,
+            onClick = onMyTeaCabinetClick
+        )
 
         SavedNotesSummarySection(
             title = "저장한 노트",

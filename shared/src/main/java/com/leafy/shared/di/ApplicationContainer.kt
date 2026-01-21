@@ -8,6 +8,7 @@ import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
+import com.subin.leafy.domain.usecase.TeaUseCases
 import com.subin.leafy.domain.usecase.TimerUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 
@@ -20,6 +21,8 @@ interface ApplicationContainer {
     val noteUseCases: NoteUseCases
     val timerUseCases: TimerUseCases
     val postUseCases: PostUseCases
+
+    val teaUseCases: TeaUseCases
 
     val imageUseCases: ImageUseCases
     val settingUseCases: SettingUseCases

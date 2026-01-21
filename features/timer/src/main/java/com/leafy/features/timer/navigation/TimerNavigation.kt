@@ -62,7 +62,10 @@ fun NavGraphBuilder.timerNavGraph(
             onUpdatePreset = viewModel::savePreset,
             onDeletePreset = viewModel::deletePreset,
             userMessage = uiState.userMessage,
-            onMessageShown = viewModel::messageShown
+            onMessageShown = viewModel::messageShown,
+            onSettingsClick = {
+                navController.navigate(MainNavigationRoute.Settings)
+            }
         )
     }
 }

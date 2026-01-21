@@ -1,6 +1,5 @@
-package com.leafy.features.auth.ui.signup
+package com.leafy.shared.ui.component
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -15,32 +14,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.ui.component.LeafyProfileImage
 
 @Composable
-fun ProfileImagePicker(
+fun LeafyEditableProfileImage(
     modifier: Modifier = Modifier,
-    profileImageUri: Uri?,
+    imageUrl: Any?,
+    size: Dp = 120.dp,
     onImageClick: () -> Unit
 ) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.BottomEnd
     ) {
+
         LeafyProfileImage(
-            imageUrl = profileImageUri?.toString(),
+            imageUrl = imageUrl.toString(),
             modifier = Modifier,
-            size = 120.dp,
+            size = size,
             borderWidth = 1.dp,
             borderColor = MaterialTheme.colorScheme.outlineVariant,
             onClick = onImageClick,
-            contentDescription = "프로필 사진 선택"
+            contentDescription = "프로필 사진 변경"
         )
+
+        val iconContainerSize = (size.value * 0.26f).dp.coerceAtLeast(24.dp)
+        val iconSize = (iconContainerSize.value * 0.6f).dp
+
         Box(
             modifier = Modifier
-                .offset(x = (-4).dp, y = (-4).dp)
-                .size(32.dp)
+                .offset(x = 0.dp, y = 0.dp)
+                .size(iconContainerSize)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary)
                 .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
@@ -50,9 +55,8 @@ fun ProfileImagePicker(
                 imageVector = Icons.Default.CameraAlt,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(iconSize)
             )
         }
     }
 }
-
