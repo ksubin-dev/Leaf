@@ -6,6 +6,7 @@ import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.HomeUseCases
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
+import com.subin.leafy.domain.usecase.NotificationUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.TeaUseCases
@@ -30,4 +31,5 @@ interface ApplicationContainer {
     val imageCompressor: ImageCompressor
 
     val analysisUseCases: AnalysisUseCases
+    val notificationUseCases: NotificationUseCases
 }

@@ -47,7 +47,9 @@ fun HomeRoute(
         onSearchClick = {
             navController.navigate(MainNavigationRoute.Search)
         },
-        onNotificationClick = { /* TODO: 알림 화면 이동 */ },
+        onNotificationClick = {
+            navController.navigate(MainNavigationRoute.Notification)
+        },
         onProfileClick = {
             uiState.currentUserId?.takeIf { it.isNotBlank() }?.let { myId ->
                 navController.navigate(MainNavigationRoute.UserProfile(userId = myId))

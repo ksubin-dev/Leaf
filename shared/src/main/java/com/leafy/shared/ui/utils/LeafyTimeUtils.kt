@@ -1,11 +1,13 @@
 package com.leafy.shared.ui.utils
 
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
+import java.util.Locale
 
 object LeafyTimeUtils {
 
@@ -81,9 +83,11 @@ object LeafyTimeUtils {
         return "%02d:%02d".format(min, sec)
     }
 
-    fun getRelativeTime(timestamp: Long): String {
+    fun formatTimeAgo(timestamp: Long): String {
         val now = System.currentTimeMillis()
         val diff = now - timestamp
+
+        // 상수 정의
         val minute = 60 * 1000L
         val hour = 60 * minute
         val day = 24 * hour
@@ -91,11 +95,11 @@ object LeafyTimeUtils {
         return when {
             diff < minute -> "방금 전"
             diff < hour -> "${diff / minute}분 전"
-            diff < day -> "${diff / hour}시간 전"
+            diff < 24 * hour -> "${diff / hour}시간 전"
             diff < 7 * day -> "${diff / day}일 전"
             else -> {
                 val date = Date(timestamp)
-                val format = java.text.SimpleDateFormat("yyyy.MM.dd", java.util.Locale.getDefault())
+                val format = SimpleDateFormat("MM.dd", Locale.getDefault())
                 format.format(date)
             }
         }

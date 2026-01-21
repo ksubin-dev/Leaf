@@ -8,26 +8,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.leafy.features.mypage.screen.DailyRecordsScreen
-import com.leafy.features.mypage.screen.FollowListScreen
-import com.leafy.features.mypage.screen.MyPageScreen
-import com.leafy.features.mypage.screen.SavedListScreen
-import com.leafy.features.mypage.ui.MyPageViewModel
-import com.leafy.features.mypage.ui.factory.MyPageViewModelFactory
-import com.leafy.features.mypage.ui.setting.SettingScreen
-import com.leafy.features.mypage.ui.setting.SettingViewModel
-import com.leafy.features.mypage.ui.factory.SettingViewModelFactory
-import com.leafy.features.mypage.ui.tea.MyTeaListScreen
-import com.leafy.features.mypage.ui.tea.MyTeaListViewModel
-import com.leafy.features.mypage.ui.tea.TeaAddEditScreen
-import com.leafy.features.mypage.ui.tea.TeaAddEditViewModel
+import com.leafy.features.mypage.presentation.record.DailyRecordsScreen
+import com.leafy.features.mypage.presentation.social.FollowListScreen
+import com.leafy.features.mypage.presentation.main.MyPageScreen
+import com.leafy.features.mypage.presentation.bookmark.SavedListScreen
+import com.leafy.features.mypage.presentation.analysis.AnalysisReportScreen
+import com.leafy.features.mypage.presentation.analysis.AnalysisViewModel
+import com.leafy.features.mypage.presentation.analysis.AnalysisViewModelFactory
+import com.leafy.features.mypage.presentation.main.MyPageViewModel
+import com.leafy.features.mypage.presentation.main.MyPageViewModelFactory
+import com.leafy.features.mypage.presentation.setting.SettingScreen
+import com.leafy.features.mypage.presentation.setting.SettingViewModel
+import com.leafy.features.mypage.presentation.setting.SettingViewModelFactory
+import com.leafy.features.mypage.presentation.tea.MyTeaListScreen
+import com.leafy.features.mypage.presentation.tea.MyTeaListViewModel
+import com.leafy.features.mypage.presentation.tea.TeaAddEditScreen
+import com.leafy.features.mypage.presentation.tea.TeaAddEditViewModel
+import com.leafy.features.mypage.presentation.tea.makeTeaAddEditViewModelFactory
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.utils.ImageCompressor
@@ -40,6 +42,7 @@ fun NavGraphBuilder.mypageNavGraph(
     container: ApplicationContainer,
     navController: NavController
 ) {
+
     composable<MainNavigationRoute.MyPageTab> {
         val viewModel: MyPageViewModel = viewModel(
             factory = makeMyPageViewModelFactory(container)
@@ -77,10 +80,26 @@ fun NavGraphBuilder.mypageNavGraph(
             onFollowingClick = {
                 navController.navigate(MainNavigationRoute.FollowingList)
             },
-            // [연결] 나의 찻장 클릭 시 이동
             onMyTeaCabinetClick = {
                 navController.navigate(MainNavigationRoute.MyTeaCabinet)
+            },
+            onAnalysisClick = {
+                navController.navigate(MainNavigationRoute.AnalysisReport)
             }
+        )
+    }
+
+    composable<MainNavigationRoute.AnalysisReport> {
+        val viewModel: AnalysisViewModel = viewModel(
+            factory = AnalysisViewModelFactory(
+                analysisUseCases = container.analysisUseCases,
+                userUseCases = container.userUseCases
+            )
+        )
+
+        AnalysisReportScreen(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() }
         )
     }
 
@@ -222,7 +241,6 @@ fun NavGraphBuilder.mypageNavGraph(
         )
     }
 
-    // [수정] 팩토리 함수 연결
     composable<MainNavigationRoute.TeaAddEdit> {
         val viewModel: TeaAddEditViewModel = viewModel(
             factory = makeTeaAddEditViewModelFactory(container)
@@ -278,23 +296,6 @@ private fun makeMyTeaListViewModelFactory(container: ApplicationContainer): View
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return MyTeaListViewModel(
                 teaUseCases = container.teaUseCases
-            ) as T
-        }
-    }
-}
-
-@Composable
-private fun makeTeaAddEditViewModelFactory(container: ApplicationContainer): ViewModelProvider.Factory {
-    val context = LocalContext.current
-    return object : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            val savedStateHandle = extras.createSavedStateHandle()
-            return TeaAddEditViewModel(
-                savedStateHandle = savedStateHandle,
-                teaUseCases = container.teaUseCases,
-                imageUseCases = container.imageUseCases,
-                imageCompressor = ImageCompressor(context)
             ) as T
         }
     }

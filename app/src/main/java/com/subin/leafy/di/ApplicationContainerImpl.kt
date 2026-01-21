@@ -25,6 +25,9 @@ import com.subin.leafy.domain.usecase.auth.*
 import com.subin.leafy.domain.usecase.home.GetHomeContentUseCase
 import com.subin.leafy.domain.usecase.image.*
 import com.subin.leafy.domain.usecase.note.*
+import com.subin.leafy.domain.usecase.notification.DeleteNotificationUseCase
+import com.subin.leafy.domain.usecase.notification.GetNotificationsUseCase
+import com.subin.leafy.domain.usecase.notification.MarkNotificationAsReadUseCase
 import com.subin.leafy.domain.usecase.post.*
 import com.subin.leafy.domain.usecase.setting.*
 import com.subin.leafy.domain.usecase.tea.DeleteTeaUseCase
@@ -78,6 +81,8 @@ class ApplicationContainerImpl(
     private val storageDataSource = FirebaseStorageDataSourceImpl(firebaseStorage)
     private val remoteTeaDataSource = FirestoreTeaDataSourceImpl(firestore)
 
+    private val notificationDataSource = FirestoreNotificationDataSourceImpl(firestore)
+
 
     // [Local] Room & DataStore
     // Note (Local)
@@ -101,6 +106,7 @@ class ApplicationContainerImpl(
     private val localTeaDataSource = LocalTeaDataSourceImpl(
         teaDao = database.teaDao()
     )
+
 
 
     // =================================================================
@@ -166,6 +172,11 @@ class ApplicationContainerImpl(
     private val teaRepository: TeaRepository = TeaRepositoryImpl(
         localTeaDataSource = localTeaDataSource,
         remoteTeaDataSource = remoteTeaDataSource,
+        authDataSource = authDataSource
+    )
+
+    private val notificationRepository: NotificationRepository = NotificationRepositoryImpl(
+        notificationDataSource = notificationDataSource,
         authDataSource = authDataSource
     )
 
@@ -284,5 +295,11 @@ class ApplicationContainerImpl(
         deleteTea = DeleteTeaUseCase(teaRepository),
         toggleFavorite = ToggleFavoriteTeaUseCase(teaRepository),
         syncTeas = SyncTeasUseCase(teaRepository)
+    )
+
+    override val notificationUseCases = NotificationUseCases(
+        getNotifications = GetNotificationsUseCase(notificationRepository),
+        markAsRead = MarkNotificationAsReadUseCase(notificationRepository),
+        deleteNotification = DeleteNotificationUseCase(notificationRepository)
     )
 }

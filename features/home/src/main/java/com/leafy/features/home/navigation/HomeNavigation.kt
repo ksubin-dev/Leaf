@@ -4,6 +4,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.leafy.features.home.notification.NotificationScreen
+import com.leafy.features.home.notification.NotificationViewModel
+import com.leafy.features.home.notification.makeNotificationViewModelFactory // 팩토리 함수 Import
 import com.leafy.features.home.screen.HomeRoute
 import com.leafy.features.home.screen.ranking.RankingDetailRoute
 import com.leafy.features.home.viewmodel.HomeViewModel
@@ -18,7 +21,6 @@ fun NavGraphBuilder.homeNavGraph(
     container: ApplicationContainer
 ) {
     composable<MainNavigationRoute.HomeTab> {
-
         val viewModel: HomeViewModel = viewModel(
             factory = HomeViewModelFactory(
                 homeUseCases = container.homeUseCases,
@@ -39,6 +41,7 @@ fun NavGraphBuilder.homeNavGraph(
         )
     }
 
+
     composable<MainNavigationRoute.RankingDetail> {
         val viewModel: RankingDetailViewModel = viewModel(
             factory = RankingDetailViewModelFactory(
@@ -52,6 +55,18 @@ fun NavGraphBuilder.homeNavGraph(
             onItemClick = { postId ->
                 navController.navigate(MainNavigationRoute.CommunityDetail(postId))
             }
+        )
+    }
+
+    composable<MainNavigationRoute.Notification> {
+        val viewModel: NotificationViewModel = viewModel(
+            factory = makeNotificationViewModelFactory(container)
+        )
+
+        NotificationScreen(
+            viewModel = viewModel,
+            navController = navController,
+            onBackClick = { navController.popBackStack() }
         )
     }
 }

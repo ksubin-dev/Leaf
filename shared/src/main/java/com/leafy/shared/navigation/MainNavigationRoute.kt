@@ -8,6 +8,7 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object Auth : MainNavigationRoute
     @Serializable data object HomeTab : MainNavigationRoute
     @Serializable data object Search : MainNavigationRoute
+    @Serializable data object Notification : MainNavigationRoute
     @Serializable
     data class RankingDetail(
         val initialFilterLabel: String = "이번 주"

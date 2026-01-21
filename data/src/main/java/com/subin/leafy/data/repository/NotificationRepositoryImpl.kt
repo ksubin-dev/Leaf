@@ -35,4 +35,16 @@ class NotificationRepositoryImpl(
             DataResourceResult.Failure(e)
         }
     }
+
+    override suspend fun deleteNotification(notificationId: String): DataResourceResult<Unit> {
+        val myUid = authDataSource.getCurrentUserId()
+            ?: return DataResourceResult.Failure(Exception("Login required"))
+
+        return try {
+            notificationDataSource.deleteNotification(myUid, notificationId)
+            DataResourceResult.Success(Unit)
+        } catch (e: Exception) {
+            DataResourceResult.Failure(e)
+        }
+    }
 }
