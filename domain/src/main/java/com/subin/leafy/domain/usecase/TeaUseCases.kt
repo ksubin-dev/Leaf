@@ -4,6 +4,7 @@ import com.subin.leafy.domain.usecase.tea.*
 
 data class TeaUseCases(
     val getTeas: GetTeasUseCase,
+    val getTeaCount: GetTeaCountUseCase,
     val searchTeas: SearchTeasUseCase,
     val getTeaDetail: GetTeaDetailUseCase,
     val saveTea: SaveTeaUseCase,

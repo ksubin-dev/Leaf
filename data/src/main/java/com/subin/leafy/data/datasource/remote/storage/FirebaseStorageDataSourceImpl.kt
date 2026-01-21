@@ -26,7 +26,6 @@ class FirebaseStorageDataSourceImpl(
         }
     }
 
-    // 이미지 삭제
     override suspend fun deleteImage(imageUrl: String): DataResourceResult<Unit> {
         return try {
             val storageRef = firebaseStorage.getReferenceFromUrl(imageUrl)

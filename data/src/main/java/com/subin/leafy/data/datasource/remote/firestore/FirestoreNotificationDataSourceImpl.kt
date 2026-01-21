@@ -52,4 +52,15 @@ class FirestoreNotificationDataSourceImpl(
                 .await()
         }
     }
+
+    override suspend fun deleteNotification(userId: String, notificationId: String) {
+        runCatching {
+            firestore.collection(COLLECTION_USERS)
+                .document(userId)
+                .collection(COLLECTION_NOTIFICATIONS)
+                .document(notificationId)
+                .delete()
+                .await()
+        }
+    }
 }

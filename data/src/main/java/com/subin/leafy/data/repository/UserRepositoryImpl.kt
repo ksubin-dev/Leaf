@@ -88,7 +88,32 @@ class UserRepositoryImpl(
     }
 
     override suspend fun getFollowers(userId: String): DataResourceResult<List<User>> {
-        return userDataSource.getFollowers(userId)
+        val followersResult = userDataSource.getFollowers(userId)
+
+        return if (followersResult is DataResourceResult.Success) {
+            val followers = followersResult.data
+            val myUid = authDataSource.getCurrentUserId()
+
+            if (myUid != null) {
+                val myProfile = userDataSource.getUser(myUid)
+                val myFollowingIds = if (myProfile is DataResourceResult.Success) {
+                    myProfile.data.followingIds.toSet()
+                } else emptySet()
+
+                val resultUsers = followers.map { user ->
+                    user.copy(
+                        relationState = user.relationState.copy(
+                            isFollowing = myFollowingIds.contains(user.id)
+                        )
+                    )
+                }
+                DataResourceResult.Success(resultUsers)
+            } else {
+                DataResourceResult.Success(followers)
+            }
+        } else {
+            followersResult
+        }
     }
 
     override suspend fun getFollowings(userId: String): DataResourceResult<List<User>> {
@@ -96,8 +121,37 @@ class UserRepositoryImpl(
 
         return if (userResult is DataResourceResult.Success) {
             val followingIds = userResult.data.followingIds
+
             if (followingIds.isNotEmpty()) {
-                userDataSource.getUsersByIds(followingIds)
+                val usersResult = userDataSource.getUsersByIds(followingIds)
+
+                if (usersResult is DataResourceResult.Success) {
+                    val users = usersResult.data
+                    val myUid = authDataSource.getCurrentUserId()
+
+                    val resultUsers = if (userId == myUid) {
+                        users.map { user ->
+                            user.copy(relationState = user.relationState.copy(isFollowing = true))
+                        }
+                    } else {
+                        val myProfile = if (myUid != null) userDataSource.getUser(myUid) else null
+                        val myFollowings = if (myProfile is DataResourceResult.Success) {
+                            myProfile.data.followingIds.toSet()
+                        } else emptySet()
+
+                        users.map { user ->
+                            user.copy(
+                                relationState = user.relationState.copy(
+                                    isFollowing = myFollowings.contains(user.id)
+                                )
+                            )
+                        }
+                    }
+
+                    DataResourceResult.Success(resultUsers)
+                } else {
+                    usersResult
+                }
             } else {
                 DataResourceResult.Success(emptyList())
             }

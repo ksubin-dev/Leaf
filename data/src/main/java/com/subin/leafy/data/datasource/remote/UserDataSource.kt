@@ -28,10 +28,6 @@ interface UserDataSource {
 
     suspend fun saveUserBadge(userId: String, badge: UserBadge): DataResourceResult<Unit>
 
-    suspend fun toggleLikePost(userId: String, postId: String, isAdding: Boolean): DataResourceResult<Unit>
-
-    suspend fun toggleBookmarkPost(userId: String, postId: String, isAdding: Boolean): DataResourceResult<Unit>
-
     suspend fun updateNotificationSetting(userId: String, isAgreed: Boolean): DataResourceResult<Unit>
 
     suspend fun deleteUser(userId: String): DataResourceResult<Unit>

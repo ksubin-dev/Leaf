@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.leafy.features.auth.ui.common.AuthButton
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.component.LeafyEditableProfileImage
 import com.leafy.shared.ui.component.LeafyTextField
 import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -119,8 +120,8 @@ fun SignUpContent(
     ) {
         Spacer(modifier = Modifier.height(48.dp))
 
-        ProfileImagePicker(
-            profileImageUri = uiState.profileImageUri,
+        LeafyEditableProfileImage(
+            imageUrl = uiState.profileImageUri,
             onImageClick = onProfileImageClick
         )
 

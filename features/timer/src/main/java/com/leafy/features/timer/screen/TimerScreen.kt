@@ -26,6 +26,7 @@ import com.leafy.shared.utils.DeviceFeedbackUtils.triggerNotificationSound
 import com.leafy.shared.utils.DeviceFeedbackUtils.triggerVibration
 import com.subin.leafy.domain.model.InfusionRecord
 import com.subin.leafy.domain.model.TeaType
+import com.leafy.shared.utils.KeepScreenOn
 
 @Composable
 fun TimerScreen(
@@ -44,16 +45,23 @@ fun TimerScreen(
         showExitDialog = true
     }
 
+    if (uiState.settings.keepScreenOn && uiState.status == TimerStatus.RUNNING) {
+        KeepScreenOn()
+    }
+
+    // 알람 트리거 (진동/소리)
     LaunchedEffect(uiState.status, uiState.isAlarmFired) {
         if (uiState.status == TimerStatus.COMPLETED && !uiState.isAlarmFired) {
 
+            // [설정값 반영] ViewModel에서 넘어온 settings 확인 후 실행
             if (uiState.settings.isVibrationOn) {
                 triggerVibration(context)
             }
 
             if (uiState.settings.isSoundOn) {
-                triggerNotificationSound(context)
+                triggerNotificationSound(context) // 파일명이 있다면 여기서 처리 가능
             }
+
             viewModel.markAlarmAsFired()
         }
     }

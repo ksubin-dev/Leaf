@@ -8,10 +8,11 @@ import kotlinx.coroutines.flow.flowOf
 class GetNotesByMonthUseCase(
     private val noteRepository: NoteRepository
 ) {
-    operator fun invoke(year: Int, month: Int): Flow<List<BrewingNote>> {
+    operator fun invoke(userId: String, year: Int, month: Int): Flow<List<BrewingNote>> {
         if (year < 2000 || month !in 1..12) {
             return flowOf(emptyList())
         }
-        return noteRepository.getNotesByMonthFlow( year, month)
+        // 이제 파라미터로 받은 userId를 넘겨줄 수 있음
+        return noteRepository.getNotesByMonthFlow(userId, year, month)
     }
 }

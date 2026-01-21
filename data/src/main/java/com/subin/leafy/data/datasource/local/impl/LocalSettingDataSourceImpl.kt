@@ -26,11 +26,7 @@ class LocalSettingDataSourceImpl(
         private val KEY_LAST_EMAIL = stringPreferencesKey("pref_last_email")
     }
 
-    // =================================================================
-    // 1. 앱 설정 (App Settings)
-    // =================================================================
 
-    // 설정값 전체 스트림 (UI 구독용)
     override fun getAppSettingsFlow(): Flow<AppSettings> {
         return dataStore.data
             .catch { exception ->
@@ -69,10 +65,6 @@ class LocalSettingDataSourceImpl(
     }
 
 
-    // =================================================================
-    // 2. 로그인 편의 기능
-    // =================================================================
-
     override suspend fun updateAutoLogin(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[KEY_AUTO_LOGIN] = enabled
@@ -90,18 +82,13 @@ class LocalSettingDataSourceImpl(
         return prefs[KEY_LAST_EMAIL]
     }
 
-    // 설정 초기화 (로그아웃 시)
+
     override suspend fun clearSettings() {
         dataStore.edit { prefs ->
-            // [주의] prefs.clear()를 쓰면 타이머 기록까지 다 날아감!
             prefs.remove(KEY_IS_DARK_THEME)
             prefs.remove(KEY_NOTI_AGREED)
             prefs.remove(KEY_AUTO_LOGIN)
 
-            // (선택) 언어랑 이메일은 로그아웃해도 남겨두는 게 UX상 좋을 때가 많습니다.
-            // 지우고 싶으면 아래 주석 해제하세요!
-            // prefs.remove(KEY_LANGUAGE)
-            // prefs.remove(KEY_LAST_EMAIL)
         }
     }
 }

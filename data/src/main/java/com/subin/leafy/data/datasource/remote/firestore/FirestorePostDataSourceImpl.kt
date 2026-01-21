@@ -1,5 +1,6 @@
 package com.subin.leafy.data.datasource.remote.firestore
 
+import android.util.Log
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -15,9 +16,11 @@ import com.subin.leafy.data.mapper.toDomain
 import com.subin.leafy.data.mapper.toDto
 import com.subin.leafy.data.model.dto.CommentDto
 import com.subin.leafy.data.model.dto.CommunityPostDto
+import com.subin.leafy.data.model.dto.NotificationDto
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.Comment
 import com.subin.leafy.domain.model.CommunityPost
+import com.subin.leafy.domain.model.NotificationType
 import com.subin.leafy.domain.model.RankingPeriod
 import com.subin.leafy.domain.model.TeaType
 import kotlinx.coroutines.channels.awaitClose
@@ -283,15 +286,30 @@ class FirestorePostDataSourceImpl(
             val postRef = postsCollection.document(postId)
             val commentsCollection = postRef.collection(FirestoreConstants.COLLECTION_COMMENTS)
 
+            val postSnapshot = postRef.get().await()
+            val authorMap = postSnapshot.get("author") as? Map<String, Any>
+            val postAuthorId = authorMap?.get("id") as? String ?: ""
+
             val newCommentRef = commentsCollection.document()
             val generatedId = newCommentRef.id
-
             val commentDto = comment.toDto().copy(id = generatedId)
 
             firestore.runTransaction { transaction ->
                 transaction.set(newCommentRef, commentDto)
                 transaction.update(postRef, FIELD_COMMENT_COUNT, FieldValue.increment(1))
             }.await()
+
+            if (postAuthorId.isNotEmpty() && postAuthorId != comment.author.id) {
+                sendNotification(
+                    targetUserId = postAuthorId,
+                    type = NotificationType.COMMENT,
+                    senderId = comment.author.id,
+                    senderName = comment.author.nickname,
+                    senderProfileUrl = comment.author.profileImageUrl,
+                    message = "${comment.author.nickname}님이 댓글을 남겼습니다: \"${comment.content}\"",
+                    targetPostId = postId
+                )
+            }
 
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
@@ -317,21 +335,28 @@ class FirestorePostDataSourceImpl(
 
     override suspend fun toggleLike(postId: String, isLiked: Boolean, userId: String): DataResourceResult<Unit> {
         return try {
+            val postSnapshot = postsCollection.document(postId).get().await()
+            val authorMap = postSnapshot.get("author") as? Map<String, Any>
+            val postAuthorId = authorMap?.get("id") as? String ?: ""
+
+            val userSnapshot = usersCollection.document(userId).get().await()
+            val myName = userSnapshot.getString(FirestoreConstants.FIELD_NICKNAME) ?: "알 수 없음"
+            val myProfile = userSnapshot.getString(FirestoreConstants.FIELD_PROFILE_IMAGE)
+
             firestore.runTransaction { transaction ->
                 val postRef = postsCollection.document(postId)
                 val noteRef = firestore.collection(FirestoreConstants.COLLECTION_NOTES).document(postId)
                 val userRef = usersCollection.document(userId)
 
-                val postSnapshot = transaction.get(postRef)
-                val noteSnapshot = transaction.get(noteRef)
+                val pSnapshot = transaction.get(postRef)
+                val nSnapshot = transaction.get(noteRef)
 
                 val increment = if (isLiked) 1L else -1L
 
-                if (postSnapshot.exists()) {
+                if (pSnapshot.exists()) {
                     transaction.update(postRef, FirestoreConstants.FIELD_LIKE_COUNT, FieldValue.increment(increment))
                 }
-
-                if (noteSnapshot.exists()) {
+                if (nSnapshot.exists()) {
                     transaction.update(noteRef, FirestoreConstants.KEY_LIKE_COUNT, FieldValue.increment(increment))
                 }
 
@@ -340,8 +365,20 @@ class FirestorePostDataSourceImpl(
                 } else {
                     transaction.update(userRef, FirestoreConstants.FIELD_LIKED_POST_IDS, FieldValue.arrayRemove(postId))
                 }
-
             }.await()
+
+            // 3. 좋아요 알림 전송 (좋아요 취소 시엔 안 보냄, 내 글엔 안 보냄)
+            if (isLiked && postAuthorId.isNotEmpty() && postAuthorId != userId) {
+                sendNotification(
+                    targetUserId = postAuthorId,
+                    type = NotificationType.LIKE,
+                    senderId = userId,
+                    senderName = myName,
+                    senderProfileUrl = myProfile,
+                    message = "${myName}님이 회원님의 게시글을 좋아합니다.",
+                    targetPostId = postId
+                )
+            }
 
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
@@ -467,5 +504,36 @@ class FirestorePostDataSourceImpl(
             trySend(DataResourceResult.Success(posts))
         }
         awaitClose { listener.remove() }
+    }
+
+    private fun sendNotification(
+        targetUserId: String,
+        type: NotificationType,
+        senderId: String,
+        senderName: String,
+        senderProfileUrl: String?,
+        message: String,
+        targetPostId: String? = null
+    ) {
+        val notiRef = usersCollection.document(targetUserId)
+            .collection(FirestoreConstants.COLLECTION_NOTIFICATIONS)
+            .document()
+
+        val notification = NotificationDto(
+            id = notiRef.id,
+            type = type.name,
+            senderId = senderId,
+            senderName = senderName,
+            senderProfileUrl = senderProfileUrl,
+            targetPostId = targetPostId,
+            message = message,
+            isRead = false,
+            createdAt = System.currentTimeMillis()
+        )
+
+        notiRef.set(notification)
+            .addOnFailureListener { e ->
+                Log.e("FirestorePostDataSource", "Failed to send notification: ${e.message}", e)
+            }
     }
 }

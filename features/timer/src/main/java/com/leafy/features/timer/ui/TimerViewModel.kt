@@ -6,7 +6,6 @@ import com.leafy.shared.ui.model.BrewingSessionNavArgs
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.InfusionRecord
 import com.subin.leafy.domain.model.TimerPreset
-import com.subin.leafy.domain.model.TimerSettings
 import com.subin.leafy.domain.usecase.TimerUseCases
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -26,10 +25,11 @@ class TimerViewModel(
     private val _internalState = MutableStateFlow(TimerUiState())
     private var timerJob: Job? = null
 
+
     val uiState: StateFlow<TimerUiState> = combine(
         _internalState,
-        timerUseCases.getPresets(),
-        timerUseCases.getTimerSettings()
+        timerUseCases.getPresets.invoke(),
+        timerUseCases.getTimerSettings.invoke()
     ) { state, presets, settings ->
         state.copy(
             presets = presets,
@@ -75,7 +75,6 @@ class TimerViewModel(
     }
 
     fun selectPreset(preset: TimerPreset) {
-        // 실행 중일 때만 아니면 변경 가능하도록 수정
         if (_internalState.value.status == TimerStatus.RUNNING) return
 
         _internalState.update {
@@ -114,7 +113,7 @@ class TimerViewModel(
                 ) }
             }
 
-            _internalState.update { it.copy(status = TimerStatus.RUNNING,isAlarmFired = false) }
+            _internalState.update { it.copy(status = TimerStatus.RUNNING, isAlarmFired = false) }
 
             while (_internalState.value.remainingSeconds > 0) {
                 delay(1000L)
@@ -126,7 +125,6 @@ class TimerViewModel(
             }
             completeTimer()
         }
-
         saveLastRecord()
     }
 
@@ -168,22 +166,11 @@ class TimerViewModel(
     fun savePreset(preset: TimerPreset) {
         viewModelScope.launch {
             val result = timerUseCases.savePreset(preset)
-
-            when (result) {
-                is DataResourceResult.Success -> {
-                    selectPreset(preset)
-                    _internalState.update {
-                        it.copy(userMessage = "레시피 '${preset.name}' 저장 완료!")
-                    }
-                }
-                is DataResourceResult.Failure -> {
-                    val errorMsg = result.exception.message ?: "저장에 실패했습니다."
-                    _internalState.update {
-                        it.copy(userMessage = errorMsg)
-                    }
-                }
-
-                else -> {}
+            if (result is DataResourceResult.Success) {
+                selectPreset(preset)
+                _internalState.update { it.copy(userMessage = "레시피 '${preset.name}' 저장 완료!") }
+            } else if (result is DataResourceResult.Failure) {
+                _internalState.update { it.copy(userMessage = result.exception.message ?: "저장 실패") }
             }
         }
     }
@@ -194,30 +181,8 @@ class TimerViewModel(
             _internalState.update { it.copy(userMessage = "기본 프리셋은 삭제할 수 없습니다.") }
             return
         }
-
         viewModelScope.launch {
             timerUseCases.deletePreset(presetId)
-        }
-    }
-
-    fun toggleVibration(isEnabled: Boolean) {
-        val currentSettings = uiState.value.settings
-        updateSettings(currentSettings.copy(isVibrationOn = isEnabled))
-    }
-
-    fun toggleSound(isEnabled: Boolean) {
-        val currentSettings = uiState.value.settings
-        updateSettings(currentSettings.copy(isSoundOn = isEnabled))
-    }
-
-    fun toggleScreenOn(isEnabled: Boolean) {
-        val currentSettings = uiState.value.settings
-        updateSettings(currentSettings.copy(keepScreenOn = isEnabled))
-    }
-
-    private fun updateSettings(newSettings: TimerSettings) {
-        viewModelScope.launch {
-            timerUseCases.updateTimerSettings(newSettings)
         }
     }
 
@@ -233,7 +198,6 @@ class TimerViewModel(
             if (state.status == TimerStatus.IDLE && state.remainingSeconds == state.targetTimeSeconds) {
                 return@update state
             }
-
             val currentTime = System.currentTimeMillis()
             val lastRecordTimestamp = state.infusionRecords.lastOrNull()?.timestamp ?: 0L
             if (currentTime - lastRecordTimestamp < 2000L) return@update state
@@ -258,35 +222,25 @@ class TimerViewModel(
         }
     }
 
-
     fun getBrewingDataJson(): String {
         val state = _internalState.value
-
-        val teaNameForNav = state.currentTeaName
-
-        val recordDtos = state.infusionRecords.map { it.toInfusionRecordDto() }
-
         val navArgs = BrewingSessionNavArgs(
-            teaName = teaNameForNav,
+            teaName = state.currentTeaName,
             teaType = state.selectedTeaType.name,
             waterTemp = state.targetTemperature,
             leafAmount = state.leafAmount,
             waterAmount = state.waterAmount,
             teaware = state.selectedTeaware.name,
-            records = recordDtos
+            records = state.infusionRecords.map { it.toInfusionRecordDto() }
         )
-
         return Json.encodeToString(navArgs)
     }
 
     fun showDefaultPresetWarning() {
-        _internalState.update {
-            it.copy(userMessage = "기본 레시피는 수정할 수 없습니다.")
-        }
+        _internalState.update { it.copy(userMessage = "기본 레시피는 수정할 수 없습니다.") }
     }
 
     fun messageShown() {
         _internalState.update { it.copy(userMessage = null) }
     }
-
 }

@@ -1,12 +1,15 @@
 package com.leafy.shared.di
 
 import com.leafy.shared.utils.ImageCompressor
+import com.subin.leafy.domain.usecase.AnalysisUseCases
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.HomeUseCases
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
+import com.subin.leafy.domain.usecase.NotificationUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
+import com.subin.leafy.domain.usecase.TeaUseCases
 import com.subin.leafy.domain.usecase.TimerUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 
@@ -20,8 +23,13 @@ interface ApplicationContainer {
     val timerUseCases: TimerUseCases
     val postUseCases: PostUseCases
 
+    val teaUseCases: TeaUseCases
+
     val imageUseCases: ImageUseCases
     val settingUseCases: SettingUseCases
 
     val imageCompressor: ImageCompressor
+
+    val analysisUseCases: AnalysisUseCases
+    val notificationUseCases: NotificationUseCases
 }

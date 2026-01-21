@@ -11,6 +11,7 @@ import com.subin.leafy.data.datasource.local.datastore.timerDataStore
 import com.subin.leafy.data.datasource.local.impl.LocalAnalysisDataSourceImpl
 import com.subin.leafy.data.datasource.local.impl.LocalNoteDataSourceImpl
 import com.subin.leafy.data.datasource.local.impl.LocalSettingDataSourceImpl
+import com.subin.leafy.data.datasource.local.impl.LocalTeaDataSourceImpl
 import com.subin.leafy.data.datasource.local.impl.LocalTimerDataSourceImpl
 import com.subin.leafy.data.datasource.local.room.LeafyDatabase
 import com.subin.leafy.data.datasource.remote.auth.FirebaseAuthDataSourceImpl
@@ -19,12 +20,24 @@ import com.subin.leafy.data.datasource.remote.storage.FirebaseStorageDataSourceI
 import com.subin.leafy.data.repository.*
 import com.subin.leafy.domain.repository.*
 import com.subin.leafy.domain.usecase.*
+import com.subin.leafy.domain.usecase.analysis.GetUserAnalysisUseCase
 import com.subin.leafy.domain.usecase.auth.*
 import com.subin.leafy.domain.usecase.home.GetHomeContentUseCase
 import com.subin.leafy.domain.usecase.image.*
 import com.subin.leafy.domain.usecase.note.*
+import com.subin.leafy.domain.usecase.notification.DeleteNotificationUseCase
+import com.subin.leafy.domain.usecase.notification.GetNotificationsUseCase
+import com.subin.leafy.domain.usecase.notification.MarkNotificationAsReadUseCase
 import com.subin.leafy.domain.usecase.post.*
 import com.subin.leafy.domain.usecase.setting.*
+import com.subin.leafy.domain.usecase.tea.DeleteTeaUseCase
+import com.subin.leafy.domain.usecase.tea.GetTeaCountUseCase
+import com.subin.leafy.domain.usecase.tea.GetTeaDetailUseCase
+import com.subin.leafy.domain.usecase.tea.GetTeasUseCase
+import com.subin.leafy.domain.usecase.tea.SaveTeaUseCase
+import com.subin.leafy.domain.usecase.tea.SearchTeasUseCase
+import com.subin.leafy.domain.usecase.tea.SyncTeasUseCase
+import com.subin.leafy.domain.usecase.tea.ToggleFavoriteTeaUseCase
 import com.subin.leafy.domain.usecase.timer.*
 import com.subin.leafy.domain.usecase.user.*
 
@@ -66,6 +79,9 @@ class ApplicationContainerImpl(
 
     // Storage
     private val storageDataSource = FirebaseStorageDataSourceImpl(firebaseStorage)
+    private val remoteTeaDataSource = FirestoreTeaDataSourceImpl(firestore)
+
+    private val notificationDataSource = FirestoreNotificationDataSourceImpl(firestore)
 
 
     // [Local] Room & DataStore
@@ -86,6 +102,11 @@ class ApplicationContainerImpl(
     private val settingDataSource = LocalSettingDataSourceImpl(
         dataStore = context.dataStore
     )
+
+    private val localTeaDataSource = LocalTeaDataSourceImpl(
+        teaDao = database.teaDao()
+    )
+
 
 
     // =================================================================
@@ -146,6 +167,17 @@ class ApplicationContainerImpl(
     // Analysis Repository
     private val analysisRepository: AnalysisRepository = AnalysisRepositoryImpl(
         analysisDataSource = analysisDataSource
+    )
+
+    private val teaRepository: TeaRepository = TeaRepositoryImpl(
+        localTeaDataSource = localTeaDataSource,
+        remoteTeaDataSource = remoteTeaDataSource,
+        authDataSource = authDataSource
+    )
+
+    private val notificationRepository: NotificationRepository = NotificationRepositoryImpl(
+        notificationDataSource = notificationDataSource,
+        authDataSource = authDataSource
     )
 
 
@@ -241,6 +273,9 @@ class ApplicationContainerImpl(
         uploadImages = UploadImagesUseCase(imageRepository),
         deleteImage = DeleteImageUseCase(imageRepository)
     )
+    override val analysisUseCases = AnalysisUseCases(
+        getUserAnalysis = GetUserAnalysisUseCase(analysisRepository)
+    )
 
     // [G] Setting UseCases
     override val settingUseCases = SettingUseCases(
@@ -249,5 +284,22 @@ class ApplicationContainerImpl(
         updateNotificationSetting = UpdateNotificationSettingUseCase(settingRepository),
         manageLoginSetting = ManageLoginSettingUseCase(settingRepository),
         clearAppSettings = ClearAppSettingsUseCase(settingRepository)
+    )
+
+    override val teaUseCases = TeaUseCases(
+        getTeas = GetTeasUseCase(teaRepository),
+        getTeaCount = GetTeaCountUseCase(teaRepository),
+        searchTeas = SearchTeasUseCase(teaRepository),
+        getTeaDetail = GetTeaDetailUseCase(teaRepository),
+        saveTea = SaveTeaUseCase(teaRepository),
+        deleteTea = DeleteTeaUseCase(teaRepository),
+        toggleFavorite = ToggleFavoriteTeaUseCase(teaRepository),
+        syncTeas = SyncTeasUseCase(teaRepository)
+    )
+
+    override val notificationUseCases = NotificationUseCases(
+        getNotifications = GetNotificationsUseCase(notificationRepository),
+        markAsRead = MarkNotificationAsReadUseCase(notificationRepository),
+        deleteNotification = DeleteNotificationUseCase(notificationRepository)
     )
 }

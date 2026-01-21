@@ -8,6 +8,7 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object Auth : MainNavigationRoute
     @Serializable data object HomeTab : MainNavigationRoute
     @Serializable data object Search : MainNavigationRoute
+    @Serializable data object Notification : MainNavigationRoute
     @Serializable
     data class RankingDetail(
         val initialFilterLabel: String = "이번 주"
@@ -41,6 +42,18 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object TimerPresetList : MainNavigationRoute
     @Serializable data object MyPageTab : MainNavigationRoute
     @Serializable data class DailyRecords(val date: String) : MainNavigationRoute
+
+    @Serializable data object BookmarkedPosts : MainNavigationRoute
+    @Serializable data object LikedPosts : MainNavigationRoute
+
+    @Serializable data object FollowerList : MainNavigationRoute
+
+    @Serializable data object FollowingList : MainNavigationRoute
+    @Serializable data object Settings : MainNavigationRoute
+
+    @Serializable data object MyTeaCabinet : MainNavigationRoute
+
+    @Serializable data class TeaAddEdit(val teaId: String? = null) : MainNavigationRoute
 
     @Serializable data object AnalysisReport : MainNavigationRoute
 }

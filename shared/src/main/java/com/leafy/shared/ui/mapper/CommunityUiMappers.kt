@@ -30,7 +30,7 @@ fun CommunityPost.toUiModel(): CommunityPostUiModel {
             content = this.content,
             imageUrls = this.imageUrls,
             tags = this.tags,
-            timeAgo = LeafyTimeUtils.getRelativeTime(this.createdAt),
+            timeAgo = LeafyTimeUtils.formatTimeAgo(this.createdAt),
             likeCount = this.stats.likeCount.toKiloFormat(),
             commentCount = this.stats.commentCount.toKiloFormat(),
             viewCount = this.stats.viewCount.toKiloFormat(),
@@ -56,7 +56,7 @@ fun CommunityPost.toUiModel(): CommunityPostUiModel {
             content = this.content,
             imageUrls = this.imageUrls,
             tags = this.tags,
-            timeAgo = LeafyTimeUtils.getRelativeTime(this.createdAt),
+            timeAgo = LeafyTimeUtils.formatTimeAgo(this.createdAt),
             likeCount = this.stats.likeCount.toKiloFormat(),
             commentCount = this.stats.commentCount.toKiloFormat(),
             viewCount = this.stats.viewCount.toKiloFormat(),
@@ -95,7 +95,7 @@ fun Comment.toUiModel(): CommentUiModel {
         authorName = this.author.nickname,
         authorProfileUrl = this.author.profileImageUrl,
         content = this.content,
-        timeAgo = LeafyTimeUtils.getRelativeTime(this.createdAt),
+        timeAgo = LeafyTimeUtils.formatTimeAgo(this.createdAt),
         isMine = this.isMine
     )
 }

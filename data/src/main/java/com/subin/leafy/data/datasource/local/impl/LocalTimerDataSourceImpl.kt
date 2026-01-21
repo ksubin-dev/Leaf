@@ -18,7 +18,6 @@ class LocalTimerDataSourceImpl(
     private val dataStore: DataStore<Preferences>
 ) : TimerDataSource {
 
-    // 수첩에 적을 '항목 이름(Key)' 정의
     companion object {
         private val KEY_LAST_TIME = intPreferencesKey("last_timer_time")
         private val KEY_LAST_TEMP = intPreferencesKey("last_timer_temp")
@@ -29,9 +28,6 @@ class LocalTimerDataSourceImpl(
         private val KEY_SOUND_FILE = stringPreferencesKey("conf_sound_file")
     }
 
-    // =============================================================
-    // 1. 프리셋 관리 (Room)
-    // =============================================================
 
     override fun getPresets(): Flow<List<TimerPreset>> {
         return timerDao.getAllPresets().map { it.toTimerDomainListFromEntity() }
@@ -55,7 +51,6 @@ class LocalTimerDataSourceImpl(
         }
     }
 
-    // 기본 프리셋 넣기
     override suspend fun checkAndInitDefaultPresets(defaultPresets: List<TimerPreset>): DataResourceResult<Unit> {
         return try {
             if (timerDao.getPresetCount() == 0) {
@@ -67,10 +62,6 @@ class LocalTimerDataSourceImpl(
         }
     }
 
-
-    // =============================================================
-    // 2. 최근 사용 기록 (DataStore)
-    // =============================================================
 
     override suspend fun saveLastUsedRecipe(timeSeconds: Int, temperature: Int): DataResourceResult<Unit> {
         return try {
@@ -105,10 +96,6 @@ class LocalTimerDataSourceImpl(
         }
     }
 
-
-    // =============================================================
-    // 3. 타이머 환경설정 (DataStore)
-    // =============================================================
 
     override fun getTimerSettings(): Flow<TimerSettings> {
         return dataStore.data.map { prefs ->

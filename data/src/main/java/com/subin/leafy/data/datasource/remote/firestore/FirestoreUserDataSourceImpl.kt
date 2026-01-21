@@ -1,5 +1,6 @@
 package com.subin.leafy.data.datasource.remote.firestore
 
+import android.util.Log
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -11,9 +12,11 @@ import com.subin.leafy.data.datasource.remote.firestore.FirestoreConstants.FIELD
 import com.subin.leafy.data.mapper.toDomain
 import com.subin.leafy.data.mapper.toDto
 import com.subin.leafy.data.mapper.toUserDomain
+import com.subin.leafy.data.model.dto.NotificationDto
 import com.subin.leafy.data.model.dto.UserBadgeDto
 import com.subin.leafy.data.model.dto.UserDto
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.model.NotificationType
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserBadge
 import kotlinx.coroutines.channels.awaitClose
@@ -136,6 +139,10 @@ class FirestoreUserDataSourceImpl(
 
     override suspend fun followUser(myId: String, targetUserId: String): DataResourceResult<Unit> {
         return try {
+            val mySnapshot = usersCollection.document(myId).get().await()
+            val myName = mySnapshot.getString(FirestoreConstants.FIELD_NICKNAME) ?: "알 수 없음"
+            val myProfile = mySnapshot.getString(FirestoreConstants.FIELD_PROFILE_IMAGE)
+
             firestore.runTransaction { transaction ->
                 val myRef = usersCollection.document(myId)
                 val targetRef = usersCollection.document(targetUserId)
@@ -145,6 +152,17 @@ class FirestoreUserDataSourceImpl(
 
                 transaction.update(targetRef, FirestoreConstants.FIELD_FOLLOWER_COUNT, FieldValue.increment(1))
             }.await()
+
+            if (myId != targetUserId) {
+                sendNotification(
+                    targetUserId = targetUserId,
+                    type = NotificationType.FOLLOW,
+                    senderId = myId,
+                    senderName = myName,
+                    senderProfileUrl = myProfile,
+                    message = "${myName}님이 회원님을 팔로우하기 시작했습니다."
+                )
+            }
 
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
@@ -186,7 +204,7 @@ class FirestoreUserDataSourceImpl(
             val userList = mutableListOf<User>()
             userIds.chunked(10).forEach { chunk ->
                 val snapshot = usersCollection
-                    .whereIn(FirestoreConstants.FIELD_UID, chunk)
+                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
                     .get()
                     .await()
 
@@ -280,37 +298,6 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    override suspend fun toggleLikePost(userId: String, postId: String, isAdding: Boolean): DataResourceResult<Unit> {
-        return try {
-            val userRef = usersCollection.document(userId)
-            val updateAction = if (isAdding) {
-                FieldValue.arrayUnion(postId)
-            } else {
-                FieldValue.arrayRemove(postId)
-            }
-
-            userRef.update(FIELD_LIKED_POST_IDS, updateAction).await()
-            DataResourceResult.Success(Unit)
-        } catch (e: Exception) {
-            DataResourceResult.Failure(e)
-        }
-    }
-
-    override suspend fun toggleBookmarkPost(userId: String, postId: String, isAdding: Boolean): DataResourceResult<Unit> {
-        return try {
-            val userRef = usersCollection.document(userId)
-            val updateAction = if (isAdding) {
-                FieldValue.arrayUnion(postId)
-            } else {
-                FieldValue.arrayRemove(postId)
-            }
-            userRef.update(FIELD_BOOKMARKED_POST_IDS, updateAction).await()
-            DataResourceResult.Success(Unit)
-        } catch (e: Exception) {
-            DataResourceResult.Failure(e)
-        }
-    }
-
     override suspend fun updateNotificationSetting(userId: String, isAgreed: Boolean): DataResourceResult<Unit> {
         return try {
             usersCollection.document(userId)
@@ -329,5 +316,36 @@ class FirestoreUserDataSourceImpl(
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
         }
+    }
+
+    private fun sendNotification(
+        targetUserId: String,
+        type: NotificationType,
+        senderId: String,
+        senderName: String,
+        senderProfileUrl: String?,
+        message: String,
+        targetPostId: String? = null
+    ) {
+        val notiRef = usersCollection.document(targetUserId)
+            .collection(FirestoreConstants.COLLECTION_NOTIFICATIONS)
+            .document()
+
+        val notification = NotificationDto(
+            id = notiRef.id,
+            type = type.name,
+            senderId = senderId,
+            senderName = senderName,
+            senderProfileUrl = senderProfileUrl,
+            targetPostId = targetPostId,
+            message = message,
+            isRead = false,
+            createdAt = System.currentTimeMillis()
+        )
+
+        notiRef.set(notification)
+            .addOnFailureListener { e ->
+                Log.e("FirestoreUserDataSource", "Failed to send notification: ${e.message}", e)
+            }
     }
 }

@@ -13,9 +13,6 @@ class TimerRepositoryImpl(
     private val timerDataSource: TimerDataSource
 ) : TimerRepository {
 
-    // =================================================================
-    // 1. 프리셋 (Presets)
-    // =================================================================
 
     override fun getPresetsFlow(): Flow<List<TimerPreset>> {
         return timerDataSource.getPresets()
@@ -33,9 +30,6 @@ class TimerRepositoryImpl(
     }
 
 
-    // =================================================================
-    // 2. 최근 사용 기록 (Recent Recipe)
-    // =================================================================
 
     override suspend fun saveLastUsedRecipe(timeSeconds: Int, temperature: Int): DataResourceResult<Unit> {
         return timerDataSource.saveLastUsedRecipe(timeSeconds, temperature)
@@ -46,9 +40,6 @@ class TimerRepositoryImpl(
     }
 
 
-    // =================================================================
-    // 3. 환경설정 (Settings)
-    // =================================================================
 
     override fun getTimerSettingsFlow(): Flow<TimerSettings> {
         return timerDataSource.getTimerSettings()
