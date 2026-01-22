@@ -1,4 +1,4 @@
-package com.leafy.features.home.screen.ranking
+package com.leafy.features.home.presentation.ranking
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -32,10 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.leafy.features.home.ui.components.LeafyFilterChip
-import com.leafy.features.home.ui.components.RankedTeaRow
-import com.leafy.features.home.viewmodel.RankingDetailViewModel
-import com.leafy.features.home.viewmodel.RankingFilter
+import com.leafy.features.home.presentation.components.LeafyFilterChip
+import com.leafy.features.home.presentation.home.RankingFilter
 import com.leafy.shared.common.singleClick
 
 @Composable
@@ -57,7 +55,7 @@ fun RankingDetailRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RankingDetailScreen(
-    uiState: com.leafy.features.home.viewmodel.RankingDetailUiState,
+    uiState: RankingDetailUiState,
     onBackClick: () -> Unit,
     onFilterClick: (RankingFilter) -> Unit,
     onItemClick: (String) -> Unit

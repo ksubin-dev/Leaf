@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
-import com.subin.leafy.domain.usecase.setting.ManageLoginSettingUseCase
+import com.subin.leafy.domain.usecase.SettingUseCases
+import com.subin.leafy.domain.usecase.UserUseCases
 
 class SignInViewModelFactory(
     private val authUseCases: AuthUseCases,
     private val noteUseCases: NoteUseCases,
-    private val manageLoginSettingUseCase: ManageLoginSettingUseCase
+    private val userUseCases: UserUseCases,
+    private val settingUseCases: SettingUseCases
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -18,7 +20,8 @@ class SignInViewModelFactory(
             return SignInViewModel(
                 authUseCases = authUseCases,
                 noteUseCases = noteUseCases,
-                manageLoginSettingUseCase = manageLoginSettingUseCase
+                userUseCases = userUseCases,
+                settingUseCases = settingUseCases
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

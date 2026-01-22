@@ -17,8 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
@@ -113,7 +114,7 @@ fun CommunityFeedCard(
                             color = colors.secondary.copy(alpha = 0.6f)
                         ) {
                             Text(
-                                text = post.teaType, // 스마트 캐스트 적용
+                                text = post.teaType,
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                 color = colors.onSecondary

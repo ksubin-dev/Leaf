@@ -1,5 +1,5 @@
 package com.leafy.features.mypage.presentation.main.session
-//
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +14,7 @@ import com.leafy.features.mypage.presentation.main.component.BrewingRecordCard
 import com.leafy.features.mypage.presentation.main.component.BrewingRecordEmptyCard
 import com.leafy.features.mypage.presentation.main.component.StatsCard
 import com.leafy.features.mypage.presentation.main.MyPageUiState
+import com.leafy.shared.common.singleClick
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -74,7 +75,7 @@ fun MyPageCalendarSection(
                     if (uiState.selectedDateNotes.size > 1) {
                         Spacer(modifier = Modifier.height(12.dp))
                         OutlinedButton(
-                            onClick = { onViewAllClick(uiState.selectedDate) },
+                            onClick = singleClick { onViewAllClick(uiState.selectedDate) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp),

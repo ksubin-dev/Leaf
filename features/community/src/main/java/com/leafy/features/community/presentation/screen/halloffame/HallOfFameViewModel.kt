@@ -63,7 +63,6 @@ class HallOfFameViewModel(
         viewModelScope.launch {
             val result = postUseCases.toggleBookmark(postId)
             if (result is DataResourceResult.Failure) {
-                // 실패 시 롤백
                 updatePostState(postId, currentBookmarked)
                 _uiState.update { it.copy(errorMessage = "북마크 변경 실패") }
             }

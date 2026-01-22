@@ -159,9 +159,7 @@ class ApplicationContainerImpl(
 
     // Setting Repository
     private val settingRepository: SettingRepository = SettingRepositoryImpl(
-        localSettingDataSource = settingDataSource,
-        authDataSource = authDataSource,
-        userDataSource = userDataSource
+        localSettingDataSource = settingDataSource
     )
 
     // Analysis Repository
@@ -210,7 +208,8 @@ class ApplicationContainerImpl(
         getUserBadges = GetUserBadgesUseCase(userRepository),
         searchUsers = SearchUsersUseCase(userRepository),
         checkNickname = CheckProfileNicknameUseCase(userRepository),
-        getFollowingIdsFlow = GetFollowingIdsFlowUseCase(userRepository)
+        getFollowingIdsFlow = GetFollowingIdsFlowUseCase(userRepository),
+        updateFcmToken = UpdateFcmTokenUseCase(userRepository)
     )
 
     override val homeUseCases = HomeUseCases(

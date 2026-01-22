@@ -1,10 +1,11 @@
-package com.leafy.features.home.viewmodel
+package com.leafy.features.home.presentation.home
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.HomeUseCases
+import com.subin.leafy.domain.usecase.NotificationUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import kotlinx.coroutines.Job
@@ -18,7 +19,8 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val homeUseCases: HomeUseCases,
     private val postUseCases: PostUseCases,
-    private val userUseCases: UserUseCases
+    private val userUseCases: UserUseCases,
+    private val notificationUseCases: NotificationUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -28,6 +30,7 @@ class HomeViewModel(
 
     init {
         loadAllData()
+        observeNotifications()
     }
 
     private fun loadAllData() {
@@ -39,6 +42,29 @@ class HomeViewModel(
             loadStaticContents()
             _uiState.update { it.copy(isLoading = false) }
         }
+    }
+
+    private fun observeNotifications() {
+        notificationUseCases.getNotifications().onEach { result ->
+            if (result is DataResourceResult.Success) {
+                val hasUnread = result.data.any { !it.isRead }
+
+                _uiState.update {
+                    it.copy(hasUnreadNotifications = hasUnread)
+                }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    fun refreshNotificationState() {
+        notificationUseCases.getNotifications().onEach { result ->
+            if (result is DataResourceResult.Success) {
+                val hasUnread = result.data.any { !it.isRead }
+                _uiState.update {
+                    it.copy(hasUnreadNotifications = hasUnread)
+                }
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun loadUserProfile() {
@@ -60,8 +86,7 @@ class HomeViewModel(
         }.launchIn(viewModelScope)
     }
     private suspend fun loadStaticContents() {
-        val result = homeUseCases.getHomeContent()
-        when (result) {
+        when (val result = homeUseCases.getHomeContent()) {
             is DataResourceResult.Success -> {
                 val content = result.data
                 _uiState.update {

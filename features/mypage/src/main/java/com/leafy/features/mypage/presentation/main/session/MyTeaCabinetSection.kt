@@ -15,12 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.clickableSingle
 
 @Composable
 fun MyTeaCabinetSection(
+    modifier: Modifier = Modifier,
     teaCount: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -32,7 +33,7 @@ fun MyTeaCabinetSection(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .clickable { onClick() }
+                .clickableSingle { onClick() }
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

@@ -22,7 +22,7 @@ fun CommentItem(
     comment: CommentUiModel,
     onDeleteClick: () -> Unit = {},
     onProfileClick: (String) -> Unit = {}
-    // onReplyClick: () -> Unit = {} // 추후 답글 기능 추가 시 주석 해제
+    // onReplyClick: () -> Unit = {} // 답글 기능 추가 시
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -65,7 +65,7 @@ fun CommentItem(
                 lineHeight = 20.sp
             )
 
-            // 답글 달기 버튼 (필요하면 주석 해제해서 사용)
+            // 답글 달기 버튼
             /*
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -100,7 +100,6 @@ fun CommentItem(
 private fun CommentItemPreview() {
     LeafyTheme {
         Column(modifier = Modifier.padding(16.dp)) {
-            // 남이 쓴 댓글
             CommentItem(
                 comment = CommentUiModel(
                     commentId = "1",
@@ -115,7 +114,6 @@ private fun CommentItemPreview() {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // 내가 쓴 댓글 (삭제 버튼 보임)
             CommentItem(
                 comment = CommentUiModel(
                     commentId = "2",

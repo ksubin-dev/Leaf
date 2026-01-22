@@ -77,6 +77,7 @@ dependencies {
     implementation(libs.bundles.room.libraries)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.play.services.auth)
 
     testImplementation(libs.junit)

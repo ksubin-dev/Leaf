@@ -19,11 +19,9 @@ import com.leafy.features.note.ui.common.NoteInputTextField
 import com.leafy.features.note.ui.common.NoteSectionHeader
 import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.leafy.shared.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.WeatherType
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)

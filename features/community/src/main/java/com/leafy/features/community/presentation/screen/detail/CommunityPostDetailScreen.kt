@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -24,7 +23,6 @@ import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyDialog
-import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun CommunityPostDetailRoute(

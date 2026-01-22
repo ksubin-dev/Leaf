@@ -28,7 +28,7 @@ import com.leafy.features.community.presentation.screen.write.section.TagInputSe
 import com.leafy.shared.R
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LoadingOverlay
-import com.leafy.shared.ui.theme.LeafyTheme // 테마가 있다면 import
+import com.leafy.shared.ui.theme.LeafyTheme
 
 
 @Composable
@@ -150,7 +150,7 @@ fun CommunityWriteContent(
         ) {
             PostImageSection(
                 selectedUris = uiState.selectedImageUris,
-                onAddImage = {
+                onAddImage = singleClick {
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )

@@ -10,8 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.leafy.features.mypage.presentation.main.MyPageUiState
-import com.leafy.features.mypage.presentation.main.MyPageViewModel
 import com.leafy.features.mypage.presentation.main.component.AnalysisTeaserCard
 import com.leafy.features.mypage.presentation.main.component.MyPageTopAppBar
 import com.leafy.features.mypage.presentation.main.component.ProfileHeader

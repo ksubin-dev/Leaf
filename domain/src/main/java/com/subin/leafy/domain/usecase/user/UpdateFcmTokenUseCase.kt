@@ -1,14 +1,12 @@
 package com.subin.leafy.domain.usecase.user
 
 import com.subin.leafy.domain.common.DataResourceResult
-import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.repository.UserRepository
-import kotlinx.coroutines.flow.Flow
 
-class GetMyProfileUseCase(
+class UpdateFcmTokenUseCase(
     private val userRepository: UserRepository
 ) {
-    operator fun invoke(): Flow<DataResourceResult<User>> {
-        return userRepository.getMyProfileFlow()
+    suspend operator fun invoke(isEnabled: Boolean): DataResourceResult<Unit> {
+        return userRepository.syncFcmToken(isEnabled)
     }
 }

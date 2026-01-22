@@ -51,9 +51,6 @@ fun BrewingRecipeSection(
     onTeawareChange: (TeawareType) -> Unit,
     onTimerClick: () -> Unit
 ) {
-    val teawareOptions = remember {
-        TeawareType.entries.map { it.label }
-    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         NoteSectionHeader(

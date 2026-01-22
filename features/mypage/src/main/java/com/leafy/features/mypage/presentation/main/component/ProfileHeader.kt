@@ -14,7 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.ui.component.LeafyEditableProfileImage // [Import]
+import com.leafy.shared.common.clickableSingle
+import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.component.LeafyEditableProfileImage
 import com.leafy.shared.ui.component.LeafyProfileImage
 import com.subin.leafy.domain.model.User
 
@@ -57,7 +59,7 @@ fun ProfileHeader(
                 LeafyEditableProfileImage(
                     imageUrl = displayImage,
                     size = 80.dp,
-                    onImageClick = {
+                    onImageClick = singleClick {
                         imagePickerLauncher.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
@@ -124,7 +126,7 @@ fun ProfileHeader(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Row(
-                        modifier = Modifier.clickable { onFollowerClick() },
+                        modifier = Modifier.clickableSingle { onFollowerClick() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -168,7 +170,7 @@ fun ProfileHeader(
         ) {
             if (isEditing) {
                 OutlinedButton(
-                    onClick = onCancelClick,
+                    onClick = singleClick { onCancelClick() },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -178,7 +180,7 @@ fun ProfileHeader(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
-                    onClick = onEditClick,
+                    onClick = singleClick { onEditClick() },
                     shape = RoundedCornerShape(8.dp),
                     enabled = isNicknameValid && editNickname.isNotBlank()
                 ) {
@@ -186,7 +188,7 @@ fun ProfileHeader(
                 }
             } else {
                 OutlinedButton(
-                    onClick = onEditClick,
+                    onClick = singleClick { onEditClick() },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(

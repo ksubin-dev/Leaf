@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.R
 import com.leafy.shared.common.clickableSingle
@@ -222,7 +222,6 @@ fun PostDetailContent(
 @Composable
 private fun PostDetailContentPreview() {
     LeafyTheme {
-        // [수정] BrewingNote 타입으로 프리뷰 데이터 생성
         PostDetailContent(
             post = CommunityPostUiModel.BrewingNote(
                 postId = "1",

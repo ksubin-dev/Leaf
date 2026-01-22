@@ -1,14 +1,13 @@
 package com.leafy.features.mypage.presentation.tea
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
@@ -16,13 +15,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
+import com.leafy.shared.common.clickableSingle
+import com.leafy.shared.common.singleClick
 import com.subin.leafy.domain.model.TeaItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,23 +48,19 @@ fun MyTeaListScreen(
             TopAppBar(
                 title = { Text("나의 찻장") },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
+                    IconButton(onClick = singleClick { onBackClick() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = singleClick { onAddTeaClick() }) {
+                        Icon(Icons.Default.Add, contentDescription = "차 추가")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddTeaClick,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "차 추가")
-            }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
@@ -125,7 +121,7 @@ fun TeaListItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickableSingle { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -174,8 +170,9 @@ fun TeaListItem(
                         color = MaterialTheme.colorScheme.tertiaryContainer,
                         shape = RoundedCornerShape(4.dp)
                     ) {
+                        // [수정] tea.type.name -> tea.type.label (한글 표시)
                         Text(
-                            text = tea.type.name,
+                            text = tea.type.label,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -196,7 +193,7 @@ fun TeaListItem(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            IconButton(onClick = onFavoriteClick) {
+            IconButton(onClick = singleClick { onFavoriteClick() }) {
                 Icon(
                     imageVector = if (tea.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "즐겨찾기",

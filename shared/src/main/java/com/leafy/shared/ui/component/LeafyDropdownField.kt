@@ -45,7 +45,6 @@ fun <T> LeafyDropdownField(
                 value = labelMapper(selectedOption),
                 onValueChange = {},
                 readOnly = true,
-                // 내부 label은 제거하고 placeholder만 유지하거나 제거합니다.
                 label = null,
                 placeholder = if (placeholder != null) { { Text(placeholder) } } else null,
                 trailingIcon = {
@@ -54,7 +53,7 @@ fun <T> LeafyDropdownField(
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant, // 색상 동기화
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                 ),

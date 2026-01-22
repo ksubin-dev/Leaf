@@ -27,7 +27,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
+import com.leafy.shared.common.clickableSingle
+import com.leafy.shared.common.singleClick
 import com.subin.leafy.domain.model.TeaType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,14 +60,13 @@ fun TeaAddEditScreen(
             TopAppBar(
                 title = { Text(if (uiState.teaId == null) "차 추가" else "차 정보 수정") },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기")
                     }
                 },
                 actions = {
-                    // 수정 모드일 때만 삭제 버튼 표시
                     if (uiState.teaId != null) {
-                        IconButton(onClick = { viewModel.deleteTea() }) {
+                        IconButton(onClick = singleClick { viewModel.deleteTea() }) {
                             Icon(Icons.Default.Delete, contentDescription = "삭제", tint = MaterialTheme.colorScheme.error)
                         }
                     }
@@ -124,8 +125,8 @@ fun TeaAddEditScreen(
                         TeaType.entries.forEach { type ->
                             FilterChip(
                                 selected = type == uiState.selectedType,
-                                onClick = { viewModel.onTypeSelected(type) },
-                                label = { Text(type.name) },
+                                onClick = singleClick { viewModel.onTypeSelected(type) },
+                                label = { Text(type.label) },
                                 leadingIcon = if (type == uiState.selectedType) {
                                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
                                 } else null
@@ -164,7 +165,7 @@ fun TeaAddEditScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { viewModel.saveTea() },
+                    onClick = singleClick { viewModel.saveTea() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = uiState.isFormValid && !uiState.isLoading,
                     shape = RoundedCornerShape(12.dp)
@@ -199,7 +200,7 @@ fun TeaImagePicker(
             .size(160.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable {
+            .clickableSingle {
                 imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             },
         contentAlignment = Alignment.Center

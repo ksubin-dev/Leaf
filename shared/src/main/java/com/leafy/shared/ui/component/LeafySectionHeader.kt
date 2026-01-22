@@ -16,9 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.theme.LeafyTheme
 
-/**
- * 앱 전역에서 사용하는 공통 섹션 헤더
- */
+
 @Composable
 fun LeafySectionHeader(
     title: String,

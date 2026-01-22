@@ -23,7 +23,7 @@ fun RatingStars(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(spaceBetween) // 별 사이 간격 설정
+        horizontalArrangement = Arrangement.spacedBy(spaceBetween)
     ) {
         repeat(5) { index ->
             val isFilled = index < rating

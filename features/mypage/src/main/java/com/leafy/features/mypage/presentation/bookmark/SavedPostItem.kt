@@ -16,7 +16,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
+import com.leafy.shared.common.clickableSingle
 import com.subin.leafy.domain.model.CommunityPost
 import com.leafy.shared.R as SharedR
 
@@ -29,7 +30,7 @@ fun SavedPostItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onPostClick(post.id) }
+            .clickableSingle { onPostClick(post.id) }
             .padding(vertical = 12.dp, horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

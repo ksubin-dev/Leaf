@@ -13,16 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.ui.model.CommunityPostUiModel
-import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileGallery
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileHeader
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileList
 import com.leafy.shared.navigation.UserListType
-import com.leafy.shared.ui.theme.LeafyTheme
 
 enum class ProfileTab(val icon: ImageVector) {
     GRID(Icons.Default.GridOn),

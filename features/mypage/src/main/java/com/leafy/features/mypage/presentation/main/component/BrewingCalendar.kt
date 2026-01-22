@@ -18,8 +18,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.features.mypage.presentation.record.CalendarDayItem
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.leafy.shared.utils.LeafyTimeUtils
 import java.time.YearMonth
 
 @Composable
@@ -61,10 +62,10 @@ fun BrewingCalendar(
                     fontWeight = FontWeight.Bold
                 )
                 Row {
-                    IconButton(onClick = onPrevMonth) {
+                    IconButton(onClick = singleClick { onPrevMonth() }) {
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "이전 달")
                     }
-                    IconButton(onClick = onNextMonth) {
+                    IconButton(onClick = singleClick { onNextMonth() }) {
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "다음 달")
                     }
                 }
@@ -107,7 +108,7 @@ fun BrewingCalendar(
                                         isSelected = day == selectedDay,
                                         isToday = isCurrentMonth && day == today.dayOfMonth,
                                         hasRecord = recordedDays.contains(day),
-                                        onClick = { onDateClick(day) }
+                                        onClick = singleClick { onDateClick(day) }
                                     )
                                 } else {
                                     Spacer(modifier = Modifier.size(40.dp))

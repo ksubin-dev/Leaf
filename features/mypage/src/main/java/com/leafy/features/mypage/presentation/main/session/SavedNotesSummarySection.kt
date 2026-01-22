@@ -16,7 +16,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
+import com.leafy.shared.common.clickableSingle
 import com.subin.leafy.domain.model.CommunityPost
 
 @Composable
@@ -47,7 +48,7 @@ fun SavedNotesSummarySection(
                 text = "모두 보기",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clickable { onViewAllClick() }
+                modifier = Modifier.clickableSingle { onViewAllClick() }
             )
         }
 
@@ -81,7 +82,7 @@ private fun SavedSummaryCard(
     Column(
         modifier = Modifier
             .width(140.dp)
-            .clickable { onClick() }
+            .clickableSingle { onClick() }
     ) {
         Box(
             modifier = Modifier

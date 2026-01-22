@@ -79,7 +79,6 @@ fun SignInScreen(
         }
     }
 
-    // 4. 준비 중 알림 다이얼로그 (아이디/비번 찾기용)
     if (showNotImplementedDialog) {
         LeafyDialog(
             onDismissRequest = { showNotImplementedDialog = false },
@@ -87,7 +86,7 @@ fun SignInScreen(
             text = "아이디/비밀번호 찾기 기능은 준비 중입니다.\n관리자에게 문의해주세요.",
             confirmText = "확인",
             onConfirmClick = { showNotImplementedDialog = false },
-            dismissText = "" // 취소 버튼 숨김
+            dismissText = ""
         )
     }
 
@@ -234,7 +233,6 @@ fun SignInContent(
                 color = Color.LightGray
             )
 
-            // 회원가입
             Text(
                 text = "회원가입",
                 fontSize = 12.sp,

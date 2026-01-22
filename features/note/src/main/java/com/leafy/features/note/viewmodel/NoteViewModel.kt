@@ -3,7 +3,7 @@ package com.leafy.features.note.viewmodel
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.leafy.shared.utils.LeafyTimeUtils
 import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BodyType

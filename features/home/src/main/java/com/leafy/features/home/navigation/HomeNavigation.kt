@@ -4,15 +4,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.leafy.features.home.notification.NotificationScreen
-import com.leafy.features.home.notification.NotificationViewModel
-import com.leafy.features.home.notification.makeNotificationViewModelFactory // 팩토리 함수 Import
-import com.leafy.features.home.screen.HomeRoute
-import com.leafy.features.home.screen.ranking.RankingDetailRoute
-import com.leafy.features.home.viewmodel.HomeViewModel
-import com.leafy.features.home.viewmodel.HomeViewModelFactory
-import com.leafy.features.home.viewmodel.RankingDetailViewModel
-import com.leafy.features.home.viewmodel.RankingDetailViewModelFactory
+import com.leafy.features.home.presentation.notification.NotificationScreen
+import com.leafy.features.home.presentation.notification.NotificationViewModel
+import com.leafy.features.home.presentation.notification.makeNotificationViewModelFactory // 팩토리 함수 Import
+import com.leafy.features.home.presentation.home.HomeRoute
+import com.leafy.features.home.presentation.ranking.RankingDetailRoute
+import com.leafy.features.home.presentation.home.HomeViewModel
+import com.leafy.features.home.presentation.home.HomeViewModelFactory
+import com.leafy.features.home.presentation.ranking.RankingDetailViewModel
+import com.leafy.features.home.presentation.ranking.RankingDetailViewModelFactory
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
 
@@ -25,7 +25,8 @@ fun NavGraphBuilder.homeNavGraph(
             factory = HomeViewModelFactory(
                 homeUseCases = container.homeUseCases,
                 postUseCases = container.postUseCases,
-                userUseCases = container.userUseCases
+                userUseCases = container.userUseCases,
+                notificationUseCases = container.notificationUseCases
             )
         )
 

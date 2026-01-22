@@ -1,6 +1,5 @@
-package com.leafy.features.home.screen
+package com.leafy.features.home.presentation.home
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,18 +19,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.leafy.features.home.ui.components.HeroTeaImage
-import com.leafy.features.home.ui.components.HomeTopAppBar
-import com.leafy.features.home.ui.section.PopularTop3Section
-import com.leafy.features.home.ui.section.QuickBrewingGuideSection
-import com.leafy.features.home.viewmodel.HomeUiState
-import com.leafy.features.home.viewmodel.HomeViewModel
-import com.leafy.features.home.viewmodel.RankingFilter
+import com.leafy.features.home.presentation.home.components.HeroTeaImage
+import com.leafy.features.home.presentation.components.HomeTopAppBar
+import com.leafy.features.home.presentation.home.HomeViewModel
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.HomeBanner
+import com.subin.leafy.domain.model.QuickBrewingGuide
 
 @Composable
 fun HomeRoute(
@@ -41,6 +40,10 @@ fun HomeRoute(
     onMoreRankingClick: (RankingFilter) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshNotificationState()
+    }
 
     HomeScreen(
         uiState = uiState,
@@ -82,9 +85,10 @@ fun HomeScreen(
         topBar = {
             HomeTopAppBar(
                 userProfileUrl = uiState.userProfileUrl,
-                onSearchClick = singleClick { onSearchClick() },
-                onNotificationClick = singleClick { onNotificationClick() },
-                onProfileClick = singleClick { onProfileClick() }
+                hasUnreadNotifications = uiState.hasUnreadNotifications,
+                onSearchClick = onSearchClick,
+                onNotificationClick = onNotificationClick,
+                onProfileClick = onProfileClick
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -160,7 +164,7 @@ fun HomeScreenPreview() {
             uiState = HomeUiState(
                 isLoading = false,
                 userProfileUrl = null,
-                banner = com.subin.leafy.domain.model.HomeBanner(
+                banner = HomeBanner(
                     id = "1",
                     title = "이달의 차",
                     description = "제주 햇녹차의 싱그러움을 만나보세요",
@@ -168,7 +172,7 @@ fun HomeScreenPreview() {
                     linkUrl = "",
                     label = "Limited"
                 ),
-                quickGuide = com.subin.leafy.domain.model.QuickBrewingGuide(
+                quickGuide = QuickBrewingGuide(
                     id = "1",
                     temperature = 85,
                     steepingTimeSeconds = 180,

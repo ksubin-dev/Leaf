@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.CommunityTeaMasterCard
 import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.shared.R as SharedR
@@ -35,7 +36,7 @@ fun FollowListScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(
                             painter = painterResource(id = SharedR.drawable.ic_back),
                             contentDescription = "뒤로가기",
@@ -63,8 +64,8 @@ fun FollowListScreen(
                 CommunityTeaMasterCard(
                     master = user,
                     currentUserId = currentUserId,
-                    onClick = { onUserClick(user.userId) },
-                    onFollowToggle = { onFollowToggle(user.userId) }
+                    onClick = singleClick { onUserClick(user.userId) },
+                    onFollowToggle = singleClick { onFollowToggle(user.userId) }
                 )
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 4.dp),

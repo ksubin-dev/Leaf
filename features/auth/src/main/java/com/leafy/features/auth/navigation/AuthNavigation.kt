@@ -24,13 +24,13 @@ fun NavGraphBuilder.authNavGraph(
 ) {
     navigation<MainNavigationRoute.Auth>(startDestination = AuthRoute.Login) {
 
-        // 1. 로그인 화면
         composable<AuthRoute.Login> {
             val loginViewModel: SignInViewModel = viewModel(
                 factory = SignInViewModelFactory(
                     authUseCases = container.authUseCases,
                     noteUseCases = container.noteUseCases,
-                    manageLoginSettingUseCase = container.settingUseCases.manageLoginSetting
+                    settingUseCases = container.settingUseCases,
+                    userUseCases = container.userUseCases
                 )
             )
 
@@ -41,7 +41,6 @@ fun NavGraphBuilder.authNavGraph(
             )
         }
 
-        // 2. 회원가입 화면
         composable<AuthRoute.SignUp> {
             val context = LocalContext.current
             val imageCompressor = remember { ImageCompressor(context) }
@@ -58,9 +57,6 @@ fun NavGraphBuilder.authNavGraph(
                 onBackClick = { navController.popBackStack() },
                 onSignUpSuccess = {
                     navController.popBackStack()
-//                    navController.navigate(AuthRoute.Login) {
-//                        popUpTo(AuthRoute.SignUp) { inclusive = true }
-//                    }
                 }
             )
         }

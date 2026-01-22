@@ -1,4 +1,4 @@
-package com.leafy.shared.ui.utils
+package com.leafy.shared.utils
 
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -13,29 +13,22 @@ object LeafyTimeUtils {
 
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
 
-    // 캘린더용: 현재 날짜(LocalDate) 반환
     fun now(): LocalDate {
         return LocalDate.now()
     }
 
-    // 캘린더용: 해당 월의 시작 요일 오프셋 (일요일=0, 월요일=1, ...)
     fun getFirstDayOffset(yearMonth: YearMonth): Int {
-        // dayOfWeek.value: 월(1) ~ 일(7)
-        // % 7 연산 결과: 일(0), 월(1) ... 토(6) -> 달력 UI(S M T W...)와 일치
         return yearMonth.atDay(1).dayOfWeek.value % 7
     }
 
-    // 캘린더용: 해당 월의 총 일수
     fun getDaysInMonth(yearMonth: YearMonth): Int {
         return yearMonth.lengthOfMonth()
     }
 
-    // 1. 현재 날짜 문자열
     fun nowToString(): String {
         return LocalDate.now().format(formatter)
     }
 
-    // 2. Millis -> String
     fun millisToDateString(millis: Long): String {
         return Instant.ofEpochMilli(millis)
             .atZone(ZoneId.systemDefault())
@@ -43,7 +36,6 @@ object LeafyTimeUtils {
             .format(formatter)
     }
 
-    // 3. String -> Timestamp
     fun dateStringToTimestamp(dateString: String): Long {
         return try {
             LocalDate.parse(dateString, formatter)
@@ -55,7 +47,6 @@ object LeafyTimeUtils {
         }
     }
 
-    // 4. DatePicker 초기화
     fun parseToDate(dateString: String): LocalDate {
         return try {
             LocalDate.parse(dateString, formatter)
@@ -64,7 +55,6 @@ object LeafyTimeUtils {
         }
     }
 
-    // 5. 포맷팅
     fun formatToDisplay(dateString: String): String = dateString
 
     fun formatLongToString(timestamp: Long): String {
@@ -87,7 +77,6 @@ object LeafyTimeUtils {
         val now = System.currentTimeMillis()
         val diff = now - timestamp
 
-        // 상수 정의
         val minute = 60 * 1000L
         val hour = 60 * minute
         val day = 24 * hour

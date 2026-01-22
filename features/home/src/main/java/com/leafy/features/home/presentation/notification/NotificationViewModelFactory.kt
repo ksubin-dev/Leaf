@@ -1,4 +1,4 @@
-package com.leafy.features.home.notification
+package com.leafy.features.home.presentation.notification
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel

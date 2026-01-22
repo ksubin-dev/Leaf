@@ -1,4 +1,4 @@
-package com.leafy.features.home.viewmodel
+package com.leafy.features.home.presentation.ranking
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

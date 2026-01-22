@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.R as SharedR
 
 @Composable
@@ -46,7 +47,7 @@ fun CalendarDayItem(
                 color = if (isSelected && !isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
                 shape = RoundedCornerShape(12.dp)
             )
-            .clickable { onClick() },
+            .clickableSingle { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

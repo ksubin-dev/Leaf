@@ -1,4 +1,4 @@
-package com.leafy.features.home.ui.section
+package com.leafy.features.home.presentation.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.leafy.features.home.ui.components.BrewingInfoCard
+import com.leafy.features.home.presentation.home.components.BrewingInfoCard
 import com.leafy.shared.R
 import com.leafy.shared.ui.component.LeafySectionHeader
 import com.leafy.shared.ui.theme.LeafyTheme

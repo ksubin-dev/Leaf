@@ -31,7 +31,7 @@ import com.leafy.shared.ui.theme.LeafyTheme
 @Composable
 fun LeafySlider(
     label: String,
-    value: Float, // 0f ~ 5f
+    value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     valueRange: ClosedFloatingPointRange<Float> = 0f..5f
@@ -40,7 +40,7 @@ fun LeafySlider(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 1. 라벨 (고정 너비)
+
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
@@ -49,18 +49,18 @@ fun LeafySlider(
             modifier = Modifier.width(60.dp)
         )
 
-        // 2. 슬라이더 (손잡이 제거 & 점 제거)
+
         Slider(
             value = value,
             onValueChange = { newValue ->
                 onValueChange(kotlin.math.round(newValue))
             },
             valueRange = valueRange,
-            steps = 0, // 점(Tick) 제거
+            steps = 0,
             colors = SliderDefaults.colors(
-                thumbColor = Color.Transparent, // 썸 색상 투명하게
+                thumbColor = Color.Transparent,
                 activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant, // 빈 부분 (회색)
+                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
             thumb = {
                 Spacer(modifier = Modifier.size(0.dp))
@@ -68,7 +68,6 @@ fun LeafySlider(
             modifier = Modifier.weight(1f)
         )
 
-        // 3. 값 표시 (우측 끝)
         Text(
             text = value.toInt().toString(),
             style = MaterialTheme.typography.bodyMedium,
@@ -81,11 +80,6 @@ fun LeafySlider(
         )
     }
 }
-
-
-// ----------------------------------------------------------------------
-// 3. 프리뷰 컴포넌트 정의
-// ----------------------------------------------------------------------
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
@@ -103,8 +97,6 @@ fun LeafySliderPreview() {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 1. 단맛 (Sweetness) 테스트
-            // 프리뷰에서 움직여볼 수 있게 상태(State)를 만듭니다.
             var sweetValue by remember { mutableFloatStateOf(3f) }
             LeafySlider(
                 label = "단맛",
@@ -112,7 +104,6 @@ fun LeafySliderPreview() {
                 onValueChange = { sweetValue = it }
             )
 
-            // 2. 떫은맛 (Astringency) 테스트
             var astringencyValue by remember { mutableFloatStateOf(1f) }
             LeafySlider(
                 label = "떫은맛",
@@ -120,7 +111,6 @@ fun LeafySliderPreview() {
                 onValueChange = { astringencyValue = it }
             )
 
-            // 3. 바디감 (Body) 테스트 (값이 0일 때)
             var bodyValue by remember { mutableFloatStateOf(0f) }
             LeafySlider(
                 label = "바디감",

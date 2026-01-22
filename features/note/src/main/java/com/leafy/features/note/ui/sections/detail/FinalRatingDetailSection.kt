@@ -49,7 +49,6 @@ fun FinalRatingSection(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 1. 별점 아이콘 (5개)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -120,7 +119,6 @@ fun FinalRatingSection(
                         }
                     }
                 } else {
-                    // 선택 안 함
                     Text(
                         text = "-",
                         style = MaterialTheme.typography.bodyMedium,
@@ -132,20 +130,15 @@ fun FinalRatingSection(
     }
 }
 
-// ----------------------------------------------------------------------
-// Preview
-// ----------------------------------------------------------------------
 @Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
 @Composable
 fun FinalRatingSectionPreview() {
     LeafyTheme {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Case 1: 5점 + Yes
             FinalRatingSection(
                 rating = RatingInfo(stars = 5, purchaseAgain = true)
             )
 
-            // Case 2: 2점 + No
             FinalRatingSection(
                 rating = RatingInfo(stars = 2, purchaseAgain = false)
             )

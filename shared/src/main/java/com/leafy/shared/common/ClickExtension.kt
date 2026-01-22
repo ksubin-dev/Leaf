@@ -58,7 +58,6 @@ fun singleClick(
     return { multipleEventsCutter.processEvent { onClick() } }
 }
 
-// --- 내부 로직 처리 클래스 ---
 private class MultipleEventsCutter internal constructor(
     private val delay: Long
 ) {

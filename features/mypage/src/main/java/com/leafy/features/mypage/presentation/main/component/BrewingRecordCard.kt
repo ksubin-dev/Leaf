@@ -17,7 +17,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
+import com.leafy.shared.common.clickableSingle
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.RatingStars
 
 @Composable
@@ -35,7 +37,7 @@ fun BrewingRecordCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .clickable { onCardClick() }
+            .clickableSingle { onCardClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -85,7 +87,7 @@ fun BrewingRecordCard(
         Spacer(modifier = Modifier.width(8.dp))
 
         Surface(
-            onClick = onEditClick,
+            onClick = singleClick { onEditClick() },
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 1.dp,

@@ -199,9 +199,6 @@ fun ErrorRetryView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // 아이콘 (선택 사항)
-        // Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = Color.Gray)
-
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,

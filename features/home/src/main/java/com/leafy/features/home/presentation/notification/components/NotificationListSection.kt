@@ -1,9 +1,8 @@
-package com.leafy.features.home.notification.components
+package com.leafy.features.home.presentation.notification.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,9 +20,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.leafy.shared.ui.utils.LeafyTimeUtils.formatTimeAgo
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.leafy.shared.common.clickableSingle
+import com.leafy.shared.utils.LeafyTimeUtils.formatTimeAgo
 import com.subin.leafy.domain.model.Notification
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,16 +40,13 @@ fun NotificationListSection(
             key = { it.id }
         ) { notification ->
 
-            val dismissState = rememberSwipeToDismissBoxState(
-                confirmValueChange = {
-                    if (it == SwipeToDismissBoxValue.EndToStart) {
-                        onDelete(notification.id)
-                        true
-                    } else {
-                        false
-                    }
+            val dismissState = rememberSwipeToDismissBoxState()
+
+            LaunchedEffect(dismissState.currentValue) {
+                if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                    onDelete(notification.id)
                 }
-            )
+            }
 
             SwipeToDismissBox(
                 state = dismissState,
@@ -66,21 +64,21 @@ fun NotificationListSection(
 }
 
 @Composable
-private fun NotificationItem(
+fun NotificationItem(
     notification: Notification,
     onClick: () -> Unit
 ) {
     val backgroundColor = if (notification.isRead) {
         MaterialTheme.colorScheme.background
     } else {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(backgroundColor)
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -103,7 +101,7 @@ private fun NotificationItem(
             Text(
                 text = notification.message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = if (notification.isRead) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -118,11 +116,11 @@ private fun NotificationItem(
         }
 
         if (!notification.isRead) {
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .background(MaterialTheme.colorScheme.error, CircleShape)
             )
         }
     }
@@ -139,7 +137,7 @@ private fun DismissBackground(dismissState: SwipeToDismissBoxState) {
     )
 
     val scale by animateFloatAsState(
-        if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 1f else 0.75f,
+        if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 1.2f else 0.8f,
         label = "DismissScale"
     )
 
@@ -154,7 +152,7 @@ private fun DismissBackground(dismissState: SwipeToDismissBoxState) {
             imageVector = Icons.Default.Delete,
             contentDescription = "삭제",
             modifier = Modifier.scale(scale),
-            tint = MaterialTheme.colorScheme.onErrorContainer
+            tint = Color.White
         )
     }
 }

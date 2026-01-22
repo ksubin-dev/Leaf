@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.ui.component.DottedRoundedBox
 import com.leafy.shared.ui.theme.LeafyTheme
 
@@ -29,7 +30,7 @@ fun BrewingRecordEmptyCard(
             .padding(vertical = 8.dp)
             .height(140.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onAddClick() },
+            .clickableSingle { onAddClick() },
         cornerRadiusDp = 12f,
         borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
     ) {

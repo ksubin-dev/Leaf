@@ -16,13 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.clickableSingle
 
 @Composable
 fun AnalysisTeaserCard(
+    modifier: Modifier = Modifier,
     content: String,
     iconResId: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -36,7 +37,7 @@ fun AnalysisTeaserCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .clickable { onClick() },
+                .clickableSingle { onClick() },
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
@@ -84,7 +85,7 @@ fun AnalysisTeaserCard(
                 text = "상세 리포트 보기 →",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clickable { onClick() }
+                modifier = Modifier.clickableSingle { onClick() }
             )
         }
     }

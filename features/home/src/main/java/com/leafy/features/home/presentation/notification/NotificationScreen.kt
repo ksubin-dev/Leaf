@@ -1,4 +1,4 @@
-package com.leafy.features.home.notification
+package com.leafy.features.home.presentation.notification
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -11,7 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.leafy.features.home.notification.components.NotificationListSection
+import com.leafy.features.home.presentation.notification.components.NotificationListSection
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.navigation.MainNavigationRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +46,7 @@ fun NotificationScreen(
             CenterAlignedTopAppBar(
                 title = { Text("알림", style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "뒤로가기"

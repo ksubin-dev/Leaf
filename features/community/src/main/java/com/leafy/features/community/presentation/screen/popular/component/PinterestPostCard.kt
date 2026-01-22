@@ -12,10 +12,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.clickableSingle
-import com.leafy.shared.R as SharedR // [수정] 리소스 별칭 사용 권장
+import com.leafy.shared.R as SharedR
 
 @Composable
 fun PinterestPostCard(

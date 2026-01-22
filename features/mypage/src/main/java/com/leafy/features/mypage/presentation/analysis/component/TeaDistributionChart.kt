@@ -25,11 +25,11 @@ fun TeaDistributionChart(
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface.toArgb()
 
     val colors = listOf(
-        Color(0xFF81C784).toArgb(),
-        Color(0xFF4CAF50).toArgb(),
-        Color(0xFF388E3C).toArgb(),
-        Color(0xFFA5D6A7).toArgb(),
-        Color(0xFF1B5E20).toArgb()
+        MaterialTheme.colorScheme.primaryContainer.toArgb(),
+        MaterialTheme.colorScheme.secondary.toArgb(),
+        MaterialTheme.colorScheme.error.toArgb(),
+        MaterialTheme.colorScheme.tertiary.toArgb(),
+        MaterialTheme.colorScheme.primary.toArgb()
     )
 
     AndroidView(

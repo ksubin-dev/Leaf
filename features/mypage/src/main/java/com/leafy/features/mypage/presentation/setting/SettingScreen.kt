@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.mypage.presentation.setting.component.DeleteAccountDialog
 import com.leafy.features.mypage.presentation.setting.component.LogoutDialog
+import com.leafy.shared.common.singleClick
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,11 +47,11 @@ fun SettingScreen(
             CenterAlignedTopAppBar(
                 title = { Text("설정", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
             )

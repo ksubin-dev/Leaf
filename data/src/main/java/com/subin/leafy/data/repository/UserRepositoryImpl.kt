@@ -1,5 +1,6 @@
 package com.subin.leafy.data.repository
 
+import com.google.firebase.messaging.FirebaseMessaging
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.UserDataSource
 import com.subin.leafy.data.util.BadgeLibrary
@@ -10,6 +11,7 @@ import com.subin.leafy.domain.model.UserRelationState
 import com.subin.leafy.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 
 class UserRepositoryImpl(
     private val authDataSource: AuthDataSource,
@@ -187,6 +189,23 @@ class UserRepositoryImpl(
         }
 
         return remoteBadgesResult
+    }
+
+    override suspend fun syncFcmToken(isEnabled: Boolean): DataResourceResult<Unit> {
+        val myUid = authDataSource.getCurrentUserId()
+            ?: return DataResourceResult.Failure(Exception("Login required"))
+
+        return try {
+            if (isEnabled) {
+                val token = FirebaseMessaging.getInstance().token.await()
+                userDataSource.updateFcmToken(myUid, token)
+            } else {
+                userDataSource.updateFcmToken(myUid, null)
+            }
+            DataResourceResult.Success(Unit)
+        } catch (e: Exception) {
+            DataResourceResult.Failure(e)
+        }
     }
 
     override suspend fun searchUsers(

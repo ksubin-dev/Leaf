@@ -18,6 +18,7 @@ import com.leafy.features.mypage.presentation.analysis.component.AnalysisHabitSe
 import com.leafy.features.mypage.presentation.analysis.component.AnalysisStatCard
 import com.leafy.features.mypage.presentation.analysis.component.CaffeineTrendChart
 import com.leafy.features.mypage.presentation.analysis.component.TeaDistributionChart
+import com.leafy.shared.common.singleClick
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +42,7 @@ fun AnalysisReportScreen(
             TopAppBar(
                 title = { Text("나의 티 리포트") },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "뒤로가기"
@@ -159,7 +160,7 @@ fun AnalysisReportScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = onShareClick,
+                        onClick = singleClick { onShareClick() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),

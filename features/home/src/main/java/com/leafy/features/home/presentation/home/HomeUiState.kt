@@ -1,4 +1,4 @@
-package com.leafy.features.home.viewmodel
+package com.leafy.features.home.presentation.home
 
 import com.subin.leafy.domain.model.HomeBanner
 import com.subin.leafy.domain.model.QuickBrewingGuide
@@ -28,5 +28,6 @@ data class HomeUiState(
     val quickGuide: QuickBrewingGuide? = null,
     val selectedFilter: RankingFilter = RankingFilter.THIS_WEEK,
     val rankingList: List<RankingItem> = emptyList(),
-    val isRankingLoading: Boolean = false
+    val isRankingLoading: Boolean = false,
+    val hasUnreadNotifications: Boolean = false
 )

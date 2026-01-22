@@ -21,6 +21,7 @@ data class UserDto(
     val bookmarkedPostIds: List<String> = emptyList(),
 
     val fcmToken: String? = null,
+    val isNotificationAgreed: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )
 

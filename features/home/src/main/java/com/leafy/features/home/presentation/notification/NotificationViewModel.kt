@@ -1,4 +1,4 @@
-package com.leafy.features.home.notification
+package com.leafy.features.home.presentation.notification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -67,6 +67,13 @@ class NotificationViewModel(
     fun onNotificationClick(notification: Notification) {
         viewModelScope.launch {
             if (!notification.isRead) {
+                _uiState.update { currentState ->
+                    val updatedList = currentState.notifications.map { item ->
+                        if (item.id == notification.id) item.copy(isRead = true) else item
+                    }
+                    currentState.copy(notifications = updatedList)
+                }
+
                 notificationUseCases.markAsRead(notification.id)
             }
 

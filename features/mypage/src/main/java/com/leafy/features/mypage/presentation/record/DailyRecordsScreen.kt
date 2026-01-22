@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.leafy.features.mypage.presentation.main.component.BrewingRecordCard
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.R as SharedR
 import com.subin.leafy.domain.model.BrewingNote
 import java.time.LocalDate
@@ -48,7 +49,7 @@ fun DailyRecordsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(
                             painter = painterResource(id = SharedR.drawable.ic_back),
                             contentDescription = "Back",

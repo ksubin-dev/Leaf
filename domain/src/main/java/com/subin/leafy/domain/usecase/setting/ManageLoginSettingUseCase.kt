@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.map
 class ManageLoginSettingUseCase(
     private val settingRepository: SettingRepository
 ) {
-    // 자동 로그인 설정
+
     suspend fun setAutoLogin(enabled: Boolean): DataResourceResult<Unit> {
         return settingRepository.setAutoLogin(enabled)
     }
 
-    // 자동 로그인 설정 값 가져오기 (Get - Flow)
+
     fun getAutoLogin(): Flow<Boolean> {
         return settingRepository.getAppSettings()
             .map { settings ->
@@ -22,7 +22,7 @@ class ManageLoginSettingUseCase(
             }.distinctUntilChanged()
     }
 
-    // 마지막 로그인 이메일 저장 (유효성 체크)
+
     suspend fun saveEmail(email: String): DataResourceResult<Unit> {
         val trimmedEmail = email.trim()
 
@@ -36,7 +36,7 @@ class ManageLoginSettingUseCase(
         return settingRepository.saveLastLoginEmail(trimmedEmail)
     }
 
-    // 저장된 이메일 불러오기
+
     suspend fun getLastEmail(): DataResourceResult<String?> {
         return settingRepository.getLastLoginEmail()
     }

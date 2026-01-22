@@ -1,7 +1,7 @@
 package com.leafy.features.note.viewmodel
 
 import android.net.Uri
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.leafy.shared.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.FlavorTag
 import com.subin.leafy.domain.model.TeaType

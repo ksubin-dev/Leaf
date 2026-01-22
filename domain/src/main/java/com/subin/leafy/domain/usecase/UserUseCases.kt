@@ -13,5 +13,6 @@ data class UserUseCases(
     val getUserBadges: GetUserBadgesUseCase,
     val searchUsers: SearchUsersUseCase,
     val checkNickname: CheckProfileNicknameUseCase,
+    val updateFcmToken: UpdateFcmTokenUseCase
 
 )

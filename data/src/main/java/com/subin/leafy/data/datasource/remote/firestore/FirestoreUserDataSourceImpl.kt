@@ -318,6 +318,16 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
+    override suspend fun updateFcmToken(userId: String, token: String?) {
+        val updates = if (token == null) {
+            mapOf(FirestoreConstants.FIELD_FCM_TOKEN to FieldValue.delete())
+        } else {
+            mapOf(FirestoreConstants.FIELD_FCM_TOKEN to token)
+        }
+
+        usersCollection.document(userId).update(updates).await()
+    }
+
     private fun sendNotification(
         targetUserId: String,
         type: NotificationType,

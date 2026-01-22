@@ -1,4 +1,4 @@
-package com.leafy.features.home.ui.components
+package com.leafy.features.home.presentation.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.leafy.shared.R as SharedR
 import com.leafy.shared.ui.theme.LeafyTheme
 

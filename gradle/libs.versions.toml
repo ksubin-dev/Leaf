@@ -10,7 +10,7 @@ appcompat = "1.7.1"
 coreSplashscreen = "1.2.0"
 
 # Compose & UI Libraries
-material3 = "1.3.1"
+material3 = "1.4.0"
 composeBom = "2026.01.00"
 activityCompose = "1.12.2"
 navigationCompose = "2.9.6"
@@ -20,7 +20,7 @@ lifecycleViewmodelKtx = "2.10.0"
 foundation = "1.7.6"
 foundationLayout = "1.7.6"
 runtime = "1.7.6"
-coil = "2.7.0"
+coil3 = "3.3.0"
 
 # Google & Firebase
 firebaseBom = "34.7.0"
@@ -44,6 +44,7 @@ volley = "1.2.1"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
+firebaseMessagingKtx = "25.0.1"
 
 [libraries]
 # AndroidX & Appcompat
@@ -75,6 +76,7 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 # Local DB & Others
@@ -84,7 +86,9 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+#coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil3" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil3" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 mpAndroidChart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpAndroidChart" }
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
@@ -97,6 +101,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebaseMessagingKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -125,7 +130,8 @@ compose-libraries = [
 firebase-libraries = [
     "firebase-firestore",
     "firebase-auth",
-    "firebase-storage"
+    "firebase-storage",
+    "firebase-messaging"
 ]
 room-libraries = [
     "androidx-room-ktx",

@@ -24,6 +24,7 @@ fun UserDto.toUserDomain() = User(
     followingIds = followingIds,
     likedPostIds = likedPostIds,
     bookmarkedPostIds = bookmarkedPostIds,
+    isNotificationAgreed = this.isNotificationAgreed,
     createdAt = createdAt
 )
 

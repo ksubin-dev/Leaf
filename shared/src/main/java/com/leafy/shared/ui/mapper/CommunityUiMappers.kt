@@ -3,7 +3,7 @@ package com.leafy.shared.ui.mapper
 import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.ui.model.UserUiModel
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.leafy.shared.utils.LeafyTimeUtils
 import com.leafy.shared.utils.toKiloFormat
 import com.subin.leafy.domain.model.Comment
 import com.subin.leafy.domain.model.CommunityPost

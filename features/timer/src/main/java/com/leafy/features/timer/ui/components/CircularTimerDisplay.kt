@@ -18,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.utils.LeafyTimeUtils // 시간 포맷팅 유틸 가정
+import com.leafy.shared.utils.LeafyTimeUtils // 시간 포맷팅 유틸 가정
 
 @Composable
 fun CircularTimerDisplay(

@@ -1,8 +1,13 @@
 package com.subin.leafy
 
 import android.app.Application
-import coil.ImageLoader
-import coil.ImageLoaderFactory
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.disk.directory
+import coil3.memory.MemoryCache
+import coil3.request.crossfade
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.firestoreSettings
@@ -11,7 +16,7 @@ import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.di.ApplicationContainerProvider
 import com.subin.leafy.di.ApplicationContainerImpl
 
-class LeafyApplication : Application(), ApplicationContainerProvider, ImageLoaderFactory {
+class LeafyApplication : Application(), ApplicationContainerProvider, SingletonImageLoader.Factory {
 
     private lateinit var appContainer: ApplicationContainer
 
@@ -20,9 +25,6 @@ class LeafyApplication : Application(), ApplicationContainerProvider, ImageLoade
         leafyApplication = this
 
         setUpFirestoreCache()
-        // 2. ★ 핵심 수정: 여기서 'this' (Context)를 넘겨줍니다!
-        // 아까 AppContainerImpl 생성자에 Context를 추가했기 때문에 여기서 에러가 날 텐데,
-        // 이렇게 (this)를 넣어주면 해결됩니다.
         appContainer = ApplicationContainerImpl(this)
     }
 
@@ -30,15 +32,20 @@ class LeafyApplication : Application(), ApplicationContainerProvider, ImageLoade
         return appContainer
     }
 
-    // 3. Coil 전역 설정 구현 (newImageLoader)
-    // 이렇게 해두면 앱 어디서든 AsyncImage를 쓸 때 이 설정이 자동 적용됩니다.
-    // ★ [수정됨] Coil 전역 설정
-    override fun newImageLoader(): ImageLoader {
-        // ImageLoader.Builder(context) 패턴을 사용해야 합니다.
-        return ImageLoader.Builder(this)
-            .crossfade(true) // 페이드 인 애니메이션
-            // .placeholder(R.drawable.placeholder) // 필요하면 기본 이미지 설정 가능
-            // .error(R.drawable.error) // 필요하면 에러 이미지 설정 가능
+    override fun newImageLoader(context: PlatformContext): ImageLoader {
+        return ImageLoader.Builder(context)
+            .memoryCache {
+                MemoryCache.Builder()
+                    .maxSizePercent(context, COIL_MEMORY_CACHE_PERCENT)
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(context.cacheDir.resolve(COIL_CACHE_FOLDER_NAME))
+                    .maxSizeBytes(COIL_DISK_CACHE_SIZE)
+                    .build()
+            }
+            .crossfade(true)
             .build()
     }
 
@@ -46,19 +53,23 @@ class LeafyApplication : Application(), ApplicationContainerProvider, ImageLoade
         try {
             val settings = firestoreSettings {
                 setLocalCacheSettings(persistentCacheSettings {
-                    // 캐시 크기 100MB로 설정 (너무 크면 용량 차지하니까 적당히)
-                    setSizeBytes(100L * 1024 * 1024)
+                    setSizeBytes(FIRESTORE_CACHE_SIZE)
                 })
             }
             Firebase.firestore.firestoreSettings = settings
         } catch (e: Exception) {
-            // 이미 초기화되었거나 에러 발생 시 무시
+
         }
     }
 
-    //coil 30% 설정 =? 힐트 설정
     companion object {
         private lateinit var leafyApplication: LeafyApplication
         fun getAppContext() = leafyApplication
+
+
+        const val COIL_MEMORY_CACHE_PERCENT = 0.30
+        const val COIL_DISK_CACHE_SIZE = 100L * 1024 * 1024
+        const val COIL_CACHE_FOLDER_NAME = "image_cache"
+        const val FIRESTORE_CACHE_SIZE = 100L * 1024 * 1024
     }
 }

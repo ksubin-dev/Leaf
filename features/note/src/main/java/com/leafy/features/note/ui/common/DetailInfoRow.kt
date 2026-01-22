@@ -26,7 +26,6 @@ fun DetailInfoRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
-        // 라벨 (왼쪽, 연한 색)
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
@@ -34,7 +33,6 @@ fun DetailInfoRow(
             modifier = Modifier.weight(1f)
         )
 
-        // 값 (오른쪽, 진한 색, 굵게)
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,

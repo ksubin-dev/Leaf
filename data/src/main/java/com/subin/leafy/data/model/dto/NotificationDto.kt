@@ -1,5 +1,6 @@
 package com.subin.leafy.data.model.dto
 
+import com.google.firebase.firestore.PropertyName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -11,6 +12,8 @@ data class NotificationDto(
     val senderProfileUrl: String? = null,
     val targetPostId: String? = null,
     val message: String = "",
-    val isRead: Boolean = false,
+    @get:PropertyName("isRead")
+    @set:PropertyName("isRead")
+    var isRead: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )

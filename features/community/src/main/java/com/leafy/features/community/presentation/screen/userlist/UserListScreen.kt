@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.CommunityTeaMasterCard
 import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
@@ -63,7 +64,7 @@ fun UserListScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = singleClick { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -101,10 +102,8 @@ fun UserListScreen(
                         CommunityTeaMasterCard(
                             master = user,
                             currentUserId = uiState.currentUserId,
-                            onClick = {
-                                navController.navigate(
-                                    MainNavigationRoute.UserProfile(userId = user.userId)
-                                )
+                            onClick = singleClick {
+                                navController.navigate(MainNavigationRoute.UserProfile(userId = user.userId))
                             },
                             onFollowToggle = {
                                 viewModel.toggleFollow(user)

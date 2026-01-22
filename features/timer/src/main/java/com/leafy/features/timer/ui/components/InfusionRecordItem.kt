@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.leafy.shared.utils.LeafyTimeUtils
 
 @Composable
 fun InfusionRecordItem(

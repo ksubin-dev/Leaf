@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -99,7 +99,7 @@ fun HallOfFameTopCard(
                     if (post is CommunityPostUiModel.BrewingNote) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = post.teaType, // 스마트 캐스트 적용
+                            text = post.teaType,
                             color = colors.primaryContainer,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold

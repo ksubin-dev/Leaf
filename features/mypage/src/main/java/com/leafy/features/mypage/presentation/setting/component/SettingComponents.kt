@@ -1,6 +1,5 @@
 package com.leafy.features.mypage.presentation.setting.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -9,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.clickableSingle
+import com.leafy.shared.ui.component.LeafyDialog
 
 @Composable
 fun SettingsSectionTitle(text: String) {
@@ -30,7 +31,7 @@ fun SettingsSwitchItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
+            .clickableSingle { onCheckedChange(!checked) }
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -38,7 +39,7 @@ fun SettingsSwitchItem(
         Text(text = title, style = MaterialTheme.typography.bodyLarge)
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = { onCheckedChange(it) },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.background,
                 checkedTrackColor = MaterialTheme.colorScheme.primary
@@ -56,7 +57,7 @@ fun SettingsTextItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Text(text = title, style = MaterialTheme.typography.bodyLarge, color = color)
@@ -81,16 +82,13 @@ fun LogoutDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    LeafyDialog(
         onDismissRequest = onDismiss,
-        title = { Text("로그아웃") },
-        text = { Text("정말 로그아웃 하시겠습니까?") },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text("확인") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("취소") }
-        }
+        title = "로그아웃",
+        text = "정말 로그아웃 하시겠습니까?",
+        confirmText = "확인",
+        dismissText = "취소",
+        onConfirmClick = onConfirm
     )
 }
 
@@ -99,18 +97,12 @@ fun DeleteAccountDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    LeafyDialog(
         onDismissRequest = onDismiss,
-        title = { Text("회원 탈퇴") },
-        text = { Text("정말 탈퇴하시겠습니까?\n모든 기록이 삭제되며 복구할 수 없습니다.") },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-            ) { Text("탈퇴") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("취소") }
-        }
+        title = "회원 탈퇴",
+        text = "정말 탈퇴하시겠습니까?\n모든 기록이 삭제되며 복구할 수 없습니다.",
+        confirmText = "탈퇴",
+        dismissText = "취소",
+        onConfirmClick = onConfirm
     )
 }

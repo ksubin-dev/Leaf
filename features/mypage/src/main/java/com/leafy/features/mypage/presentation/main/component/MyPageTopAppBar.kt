@@ -10,6 +10,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.R as SharedR
 
 
@@ -31,7 +32,7 @@ fun MyPageTopAppBar(
             )
         },
         actions = {
-            IconButton(onClick = onSettingsClick) {
+            IconButton(onClick = singleClick { onSettingsClick() }) {
                 Icon(
                     painter = painterResource(id = SharedR.drawable.ic_settings),
                     contentDescription = "Settings",

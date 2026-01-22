@@ -74,6 +74,7 @@ class SettingViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isNotificationEnabled = isEnabled) }
             settingUseCases.updateNotificationSetting.setNotificationAgreed(isEnabled)
+            userUseCases.updateFcmToken(isEnabled)
         }
     }
 

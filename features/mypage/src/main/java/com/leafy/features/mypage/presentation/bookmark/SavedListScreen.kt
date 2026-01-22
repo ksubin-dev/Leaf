@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.leafy.shared.common.singleClick
 import com.subin.leafy.domain.model.CommunityPost
 import com.leafy.shared.R as SharedR
 
@@ -34,7 +35,7 @@ fun SavedListScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(
                             painter = painterResource(id = SharedR.drawable.ic_back),
                             contentDescription = "뒤로가기",

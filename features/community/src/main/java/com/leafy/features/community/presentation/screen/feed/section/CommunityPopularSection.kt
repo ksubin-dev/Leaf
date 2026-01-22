@@ -6,13 +6,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.features.community.presentation.screen.feed.CommunityLargeCard
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafySectionHeader
-import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun CommunityPopularSection(

@@ -47,21 +47,27 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
         val shouldHideBottomBar = currentDestination?.hierarchy?.any { destination ->
             val route = destination.route ?: return@any false
             listOf(
-                "Auth",             // 로그인/회원가입
+                "Auth",
                 "Search",
-                "TimerTab",         // 타이머 화면 (몰입)
-                "NoteTab",          // 노트 작성/수정 화면
-                "NoteDetail",       // 노트 상세
-                "CommunityWrite",   // 커뮤니티 글쓰기
-                "CommunityDetail",  // 게시글 상세
-                "PopularPostList",  // 인기글 더보기 리스트
-                "TeaMasterList",    // 다인 추천 더보기 리스트
-                "HallOfFameList",   // 명예의 전당 더보기 리스트
-                "DailyRecords",     // 캘린더 상세 기록
-                "AnalysisReport",   // 분석 리포트
-                "UserProfile",       // 타 유저 프로필
-                "DailyRecords",     // [확인] 마이페이지 상세 화면
+                "TimerTab",
+                "NoteTab",
+                "NoteDetail",
+                "CommunityWrite",
+                "CommunityDetail",
+                "PopularPostList",
+                "TeaMasterList",
+                "HallOfFameList",
+                "UserProfile",
+                "DailyRecords",
                 "AnalysisReport",
+                "TeaAddEdit",
+                "Notification",
+                "Settings",
+                "BookmarkedPosts",
+                "LikedPosts",
+                "MyTeaCabinet",
+                "FollowerList",
+                "FollowingList"
             ).any { route.contains(it) }
         } == true
 

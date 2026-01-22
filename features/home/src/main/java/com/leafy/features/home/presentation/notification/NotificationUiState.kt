@@ -1,4 +1,4 @@
-package com.leafy.features.home.notification
+package com.leafy.features.home.presentation.notification
 
 import com.subin.leafy.domain.model.Notification
 

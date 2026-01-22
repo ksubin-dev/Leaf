@@ -13,7 +13,7 @@ import com.leafy.features.note.ui.common.DetailInfoRow
 import com.leafy.features.note.ui.common.DetailSectionCard
 import com.leafy.shared.R
 import com.leafy.shared.ui.theme.LeafyTheme
-import com.leafy.shared.ui.utils.LeafyTimeUtils
+import com.leafy.shared.utils.LeafyTimeUtils
 import com.subin.leafy.domain.model.BrewingRecipe
 import com.subin.leafy.domain.model.TeawareType
 

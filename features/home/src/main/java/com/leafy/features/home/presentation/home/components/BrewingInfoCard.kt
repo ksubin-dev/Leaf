@@ -1,4 +1,4 @@
-package com.leafy.features.home.ui.components
+package com.leafy.features.home.presentation.home.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
