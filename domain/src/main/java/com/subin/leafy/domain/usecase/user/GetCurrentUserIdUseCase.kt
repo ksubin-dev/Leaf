@@ -1,17 +1,12 @@
 package com.subin.leafy.domain.usecase.user
 
-import com.subin.leafy.domain.common.DataResourceResult
-import com.subin.leafy.domain.repository.AuthRepository
+import com.subin.leafy.domain.model.id.UserId
+import com.subin.leafy.domain.repository.UserRepository
 
 class GetCurrentUserIdUseCase(
-    private val authRepository: AuthRepository
+    private val userRepository: UserRepository
 ) {
-    operator fun invoke(): DataResourceResult<String> {
-        val userId = authRepository.getCurrentUserId()
-        return if (userId != null) {
-            DataResourceResult.Success(userId)
-        } else {
-            DataResourceResult.Failure(Exception("로그인된 사용자가 없습니다."))
-        }
+    suspend operator fun invoke(): UserId {
+        return userRepository.getCurrentUserId()
     }
 }
