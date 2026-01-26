@@ -18,8 +18,9 @@ import com.subin.leafy.data.model.dto.BrewingNoteDto
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class FirestoreNoteDataSourceImpl(
+class FirestoreNoteDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : RemoteNoteDataSource {
 

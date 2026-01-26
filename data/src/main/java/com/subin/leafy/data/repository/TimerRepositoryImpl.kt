@@ -8,8 +8,9 @@ import com.subin.leafy.domain.model.TimerSettings
 import com.subin.leafy.domain.repository.TimerRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
+import javax.inject.Inject
 
-class TimerRepositoryImpl(
+class TimerRepositoryImpl @Inject constructor(
     private val timerDataSource: TimerDataSource
 ) : TimerRepository {
 

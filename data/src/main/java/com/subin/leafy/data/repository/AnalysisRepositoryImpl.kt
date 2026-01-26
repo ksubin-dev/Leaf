@@ -4,8 +4,9 @@ import com.subin.leafy.data.datasource.local.AnalysisDataSource
 import com.subin.leafy.domain.model.UserAnalysis
 import com.subin.leafy.domain.repository.AnalysisRepository
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class AnalysisRepositoryImpl(
+class AnalysisRepositoryImpl @Inject constructor(
     private val analysisDataSource: AnalysisDataSource
 ) : AnalysisRepository {
 

@@ -9,8 +9,9 @@ import com.subin.leafy.domain.model.BrewingNote
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
+import javax.inject.Inject
 
-class LocalNoteDataSourceImpl(
+class LocalNoteDataSourceImpl @Inject constructor(
     private val noteDao: NoteDao
 ) : LocalNoteDataSource {
 

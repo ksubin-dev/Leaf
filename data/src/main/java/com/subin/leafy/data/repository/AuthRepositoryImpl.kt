@@ -15,8 +15,9 @@ import com.subin.leafy.domain.model.UserSocialStatistics
 import com.subin.leafy.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
-class AuthRepositoryImpl(
+class AuthRepositoryImpl @Inject constructor(
     private val authDataSource: AuthDataSource,
     private val userDataSource: UserDataSource,
     private val storageDataSource: StorageDataSource,

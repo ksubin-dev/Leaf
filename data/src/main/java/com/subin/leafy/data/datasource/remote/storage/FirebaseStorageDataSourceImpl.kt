@@ -6,8 +6,9 @@ import com.subin.leafy.data.datasource.remote.StorageDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
+import javax.inject.Inject
 
-class FirebaseStorageDataSourceImpl(
+class FirebaseStorageDataSourceImpl @Inject constructor(
     private val firebaseStorage: FirebaseStorage
 ) : StorageDataSource {
     override suspend fun uploadImage(uriString: String, folderPath: String): DataResourceResult<String> {

@@ -14,8 +14,9 @@ import com.subin.leafy.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import javax.inject.Inject
 
-class NoteRepositoryImpl(
+class NoteRepositoryImpl @Inject constructor(
     private val localNoteDataSource: LocalNoteDataSource,
     private val remoteNoteDataSource: RemoteNoteDataSource,
     private val authDataSource: AuthDataSource,

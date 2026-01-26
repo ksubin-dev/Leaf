@@ -244,7 +244,7 @@ class CommunityFeedViewModel(
 
             if (result is DataResourceResult.Failure) {
                 if (newLiked) _myLikedIds.update { it - postId } else _myLikedIds.update { it + postId }
-                updatePostCountsAndState(postId, isLikeToggle = true, isAdd = !newLiked) // 반대로 다시 업데이트
+                updatePostCountsAndState(postId, isLikeToggle = true, isAdd = !newLiked)
                 _userMessage.emit("좋아요 반영에 실패했습니다. 다시 시도해주세요.")
             }
         }
@@ -369,33 +369,6 @@ class CommunityFeedViewModel(
             }
         }.launchIn(viewModelScope)
     }
-
-//    fun addComment() {
-//        val postId = _uiControlState.value.selectedPostIdForComments ?: return
-//        val content = _uiControlState.value.commentInput
-//        if (content.isBlank()) return
-//
-//        viewModelScope.launch {
-//            _uiControlState.update { it.copy(isCommentLoading = true) }
-//            when (val result = postUseCases.addComment(postId, content)) {
-//                is DataResourceResult.Success -> {
-//                    _uiControlState.update { it.copy(commentInput = "", isCommentLoading = false) }
-//                    _sideEffects.send(CommunityFeedSideEffect.HideKeyboard)
-//                }
-//                is DataResourceResult.Failure -> {
-//                    _uiControlState.update { it.copy(errorMessage = "댓글 등록 실패", isCommentLoading = false) }
-//                }
-//                else -> {}
-//            }
-//        }
-//    }
-//
-//    fun deleteComment(commentId: String) {
-//        val postId = _uiControlState.value.selectedPostIdForComments ?: return
-//        viewModelScope.launch {
-//            postUseCases.deleteComment(postId, commentId)
-//        }
-//    }
 
     fun onMessageShown() {
         _uiControlState.update { it.copy(errorMessage = null) }

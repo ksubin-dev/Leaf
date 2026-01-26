@@ -30,8 +30,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
+import javax.inject.Inject
 
-class FirestorePostDataSourceImpl(
+class FirestorePostDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : PostDataSource {
 
