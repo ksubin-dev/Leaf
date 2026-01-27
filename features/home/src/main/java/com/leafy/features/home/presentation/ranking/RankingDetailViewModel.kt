@@ -6,50 +6,71 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.leafy.features.home.presentation.home.RankingFilter
 import com.leafy.shared.navigation.MainNavigationRoute
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.RankingItem
 import com.subin.leafy.domain.usecase.PostUseCases
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RankingDetailViewModel(
+@HiltViewModel
+class RankingDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val postUseCases: PostUseCases
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<MainNavigationRoute.RankingDetail>()
 
-    private val _uiState = MutableStateFlow(RankingDetailUiState())
+    private val initialFilter = RankingFilter.entries.find { it.label == route.initialFilterLabel }
+        ?: RankingFilter.THIS_WEEK
+
+    private val _uiState = MutableStateFlow(RankingDetailUiState(selectedFilter = initialFilter))
     val uiState = _uiState.asStateFlow()
 
-    init {
-        val initialFilter = RankingFilter.entries.find { it.label == route.initialFilterLabel }
-            ?: RankingFilter.THIS_WEEK
+    private val _selectedFilter = MutableStateFlow(initialFilter)
 
-        onFilterSelected(initialFilter)
+    private val _sideEffect = Channel<RankingSideEffect>()
+    val sideEffect: Flow<RankingSideEffect> = _sideEffect.receiveAsFlow()
+
+    init {
+        observeRanking()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeRanking() {
+        _selectedFilter
+            .flatMapLatest { filter ->
+                flow {
+                    _uiState.update { it.copy(isLoading = true, selectedFilter = filter) }
+                    emitAll(postUseCases.getWeeklyRanking(filter.teaType))
+                }
+            }
+            .onEach { result ->
+                when (result) {
+                    is DataResourceResult.Success -> {
+                        _uiState.update {
+                            it.copy(rankingList = result.data, isLoading = false)
+                        }
+                    }
+                    is DataResourceResult.Failure -> {
+                        _uiState.update {
+                            it.copy(rankingList = emptyList(), isLoading = false)
+                        }
+                        _sideEffect.send(RankingSideEffect.ShowSnackbar(UiText.DynamicString("랭킹을 불러오지 못했습니다.")))
+                    }
+                    else -> {}
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun onFilterSelected(filter: RankingFilter) {
-        if (_uiState.value.selectedFilter == filter && _uiState.value.rankingList.isNotEmpty()) return
-
-        _uiState.update { it.copy(selectedFilter = filter, isLoading = true) }
-
-        viewModelScope.launch {
-            postUseCases.getWeeklyRanking(filter.teaType).collectLatest { result ->
-                if (result is DataResourceResult.Success) {
-                    _uiState.update {
-                        it.copy(rankingList = result.data, isLoading = false)
-                    }
-                } else {
-                    _uiState.update {
-                        it.copy(rankingList = emptyList(), isLoading = false)
-                    }
-                }
-            }
-        }
+        if (_selectedFilter.value == filter) return
+        _selectedFilter.value = filter
     }
 }
 
@@ -58,3 +79,7 @@ data class RankingDetailUiState(
     val selectedFilter: RankingFilter = RankingFilter.THIS_WEEK,
     val rankingList: List<RankingItem> = emptyList()
 )
+
+sealed interface RankingSideEffect {
+    data class ShowSnackbar(val message: UiText) : RankingSideEffect
+}

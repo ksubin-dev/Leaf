@@ -119,10 +119,9 @@ fun EntryPointScreen(
                             }
                         }
                     )
-//                    homeNavGraph(
-//                        navController = navController,
-//                        container = container
-//                    )
+                    homeNavGraph(
+                        navController = navController
+                    )
                     noteNavGraph(
                         navController = navController,
                     )
