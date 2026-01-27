@@ -39,7 +39,6 @@ class NoteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getNoteDetail(noteId: String): DataResourceResult<BrewingNote> {
-        // 1. 노트 데이터 가져오기 (로컬 우선 -> 없으면 리모트)
         var note = localNoteDataSource.getNote(noteId)
 
         if (note == null) {
@@ -47,7 +46,6 @@ class NoteRepositoryImpl @Inject constructor(
             if (remoteResult is DataResourceResult.Success) {
                 note = remoteResult.data
             } else {
-                // 리모트에서도 실패하면 에러 리턴
                 return remoteResult
             }
         }
@@ -90,7 +88,7 @@ class NoteRepositoryImpl @Inject constructor(
         val noteToUpdate = note.copy(ownerId = myUid)
 
         return try {
-            localNoteDataSource.insertNote(noteToUpdate)
+            localNoteDataSource.updateNote(noteToUpdate)
             remoteNoteDataSource.updateNote(noteToUpdate)
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {

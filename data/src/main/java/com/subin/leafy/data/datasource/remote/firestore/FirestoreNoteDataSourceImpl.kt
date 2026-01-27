@@ -27,7 +27,6 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
     private val notesCollection = firestore.collection(COLLECTION_NOTES)
     private val usersCollection = firestore.collection(COLLECTION_USERS)
 
-    // 1. 내 백업 노트 (비공개 포함 전부)
     override suspend fun getMyBackupNotes(userId: String): DataResourceResult<List<BrewingNote>> {
         return try {
             val snapshot = notesCollection
@@ -45,7 +44,6 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
         }
     }
 
-    // 2. 타인 공개 노트 -> 그 사람의 기록들(프로필+작성한글들)
     override suspend fun getUserPublicNotes(userId: String): DataResourceResult<List<BrewingNote>> {
         return try {
             val snapshot = notesCollection
@@ -64,7 +62,6 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
         }
     }
 
-    // 3. 상세 조회
     override suspend fun getNoteDetail(noteId: String): DataResourceResult<BrewingNote> {
         return try {
             val snapshot = notesCollection.document(noteId).get().await()
@@ -80,7 +77,6 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
         }
     }
 
-    // 4. 생성 (Create)
     override suspend fun createNote(note: BrewingNote): DataResourceResult<Unit> {
         return try {
             val dto = note.toDto()
@@ -96,11 +92,20 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
         }
     }
 
-    // 5. 수정 (Update)
     override suspend fun updateNote(note: BrewingNote): DataResourceResult<Unit> {
         return try {
-            val dto = note.toDto()
-            notesCollection.document(note.id).set(dto, SetOptions.merge()).await()
+            val updateMap = mapOf(
+                "teaInfo" to note.teaInfo,
+                "recipe" to note.recipe,
+                "evaluation" to note.evaluation,
+                "rating" to note.rating,
+                "metadata" to note.metadata,
+                "isPublic" to note.isPublic,
+                "date" to note.date
+            )
+
+            notesCollection.document(note.id).update(updateMap).await()
+
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
@@ -130,7 +135,7 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
 
                 if (postSnapshot.exists()) {
                     transaction.delete(postRef)
-                    transaction.update(userRef, FirestoreConstants.FIELD_POST_COUNT, FieldValue.increment(-1))
+                    transaction.update(userRef, FIELD_POST_COUNT, FieldValue.increment(-1))
                 }
 
             }.await()

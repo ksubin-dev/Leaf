@@ -130,10 +130,9 @@ fun EntryPointScreen(
 //                        navController = navController,
 //                        // container = container [삭제]
 //                    )
-//                    timerNavGraph(
-//                        navController = navController,
-//                        // container = container [삭제]
-//                    )
+                    timerNavGraph(
+                        navController = navController,
+                    )
 //
 //                    // [중요] Search는 UseCase를 개별적으로 넘기던 것도 다 삭제합니다.
 //                    // Hilt가 SearchViewModel 내부에서 알아서 주입받기 때문입니다.

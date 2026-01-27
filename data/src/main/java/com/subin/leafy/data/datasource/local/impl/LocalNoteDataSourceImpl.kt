@@ -46,9 +46,24 @@ class LocalNoteDataSourceImpl @Inject constructor(
         }
     }
 
-    // --- 쓰기 (Write) ---
     override suspend fun insertNote(note: BrewingNote) {
         noteDao.insertNote(note.toEntity())
+    }
+
+    override suspend fun updateNote(note: BrewingNote) {
+        val oldEntity = noteDao.getNoteById(note.id)
+
+        if (oldEntity != null) {
+            val newEntity = note.toEntity().copy(
+                likeCount = oldEntity.likeCount,
+                bookmarkCount = oldEntity.bookmarkCount,
+                commentCount = oldEntity.commentCount,
+                viewCount = oldEntity.viewCount
+            )
+            noteDao.insertNote(newEntity)
+        } else {
+            noteDao.insertNote(note.toEntity())
+        }
     }
 
     override suspend fun insertNotes(notes: List<BrewingNote>) {
