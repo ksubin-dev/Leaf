@@ -8,7 +8,4 @@ data class DetailUiState(
     val isAuthor: Boolean = false,
     val isLiked: Boolean = false,
     val isBookmarked: Boolean = false,
-    val errorMessage: String? = null,
-    val isDeleteSuccess: Boolean = false,
-
 )

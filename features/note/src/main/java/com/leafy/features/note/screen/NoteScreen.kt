@@ -1,10 +1,21 @@
 package com.leafy.features.note.screen
 
+import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -15,62 +26,55 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.R
-import com.leafy.shared.ui.component.LoadingOverlay
-import com.leafy.shared.ui.theme.LeafyTheme
-import com.subin.leafy.domain.model.BodyType
-import com.subin.leafy.domain.model.FlavorTag
-import com.subin.leafy.domain.model.TeaType
-import com.subin.leafy.domain.model.WeatherType
-import android.net.Uri
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.note.ui.sections.create.BasicInfoSection
 import com.leafy.features.note.ui.sections.create.BrewingRecipeSection
 import com.leafy.features.note.ui.sections.create.FinalRatingSection
 import com.leafy.features.note.ui.sections.create.PhotosSection
 import com.leafy.features.note.ui.sections.create.SensoryEvalSection
 import com.leafy.features.note.ui.sections.create.TastingContextSection
+import com.leafy.features.note.viewmodel.NoteSideEffect
 import com.leafy.features.note.viewmodel.NoteUiState
 import com.leafy.features.note.viewmodel.NoteViewModel
+import com.leafy.shared.R
 import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.component.LoadingOverlay
+import com.leafy.shared.ui.theme.LeafyTheme
+import com.subin.leafy.domain.model.BodyType
+import com.subin.leafy.domain.model.FlavorTag
+import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.TeawareType
+import com.subin.leafy.domain.model.WeatherType
 
 @Composable
 fun NoteScreen(
     viewModel: NoteViewModel,
     onNavigateBack: () -> Unit,
-    onSaveSuccess: () -> Unit,
     onNavigateToTimer: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
-    LaunchedEffect(uiState.isSaveSuccess) {
-        if (uiState.isSaveSuccess) onSaveSuccess()
-    }
-
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { msg ->
-            snackbarHostState.showSnackbar(msg)
-            viewModel.userMessageShown()
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is NoteSideEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                is NoteSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
         }
     }
 
