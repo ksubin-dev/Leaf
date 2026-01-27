@@ -3,8 +3,11 @@ package com.subin.leafy.domain.usecase.user
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.repository.UserRepository
+import javax.inject.Inject
 
-class SearchUsersUseCase(private val userRepository: UserRepository) {
+class SearchUsersUseCase @Inject constructor(
+    private val userRepository: UserRepository
+) {
     suspend operator fun invoke(
         query: String,
         lastUserId: String? = null,

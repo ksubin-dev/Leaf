@@ -1,8 +1,9 @@
 package com.subin.leafy.domain.usecase
 
 import com.subin.leafy.domain.usecase.user.*
+import javax.inject.Inject
 
-data class UserUseCases(
+data class UserUseCases @Inject constructor(
     val getCurrentUserId: GetCurrentUserIdUseCase,
     val getMyProfile: GetMyProfileUseCase,
     val getUserProfile: GetUserProfileUseCase,

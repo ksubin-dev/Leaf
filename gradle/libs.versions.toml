@@ -50,6 +50,8 @@ firebaseMessagingKtx = "25.0.1"
 # Hilt
 hilt = "2.51.1"
 
+javaxInject = "1"
+
 [libraries]
 # AndroidX & Appcompat
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -110,6 +112,8 @@ firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messa
 # Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+
+javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

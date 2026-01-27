@@ -4,8 +4,9 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TeaMaster
 import com.subin.leafy.domain.repository.PostRepository
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class GetRecommendedMastersUseCase(
+class GetRecommendedMastersUseCase @Inject constructor(
     private val postRepository: PostRepository
 ) {
     operator fun invoke(limit: Int = 10): Flow<DataResourceResult<List<TeaMaster>>> {

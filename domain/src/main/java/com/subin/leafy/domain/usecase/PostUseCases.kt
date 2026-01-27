@@ -3,9 +3,9 @@ package com.subin.leafy.domain.usecase
 import com.subin.leafy.domain.repository.PostChangeEvent
 import com.subin.leafy.domain.usecase.post.*
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-data class PostUseCases(
-    // 1. 조회
+data class PostUseCases @Inject constructor(
     val getWeeklyRanking: GetWeeklyRankingUseCase,
     val getPopularPosts: GetPopularPostsUseCase,
     val getMostBookmarkedPosts: GetMostBookmarkedPostsUseCase,
@@ -17,25 +17,21 @@ data class PostUseCases(
     val getLikedPosts: GetLikedPostsUseCase,
     val getBookmarkedPosts: GetBookmarkedPostsUseCase,
 
-    // 2. CRUD
     val createPost: CreatePostUseCase,
     val updatePost: UpdatePostUseCase,
     val deletePost: DeletePostUseCase,
 
     val shareNoteAsPost: ShareNoteAsPostUseCase,
 
-    // 3. 반응
     val toggleLike: ToggleLikeUseCase,
     val toggleBookmark: ToggleBookmarkUseCase,
     val incrementViewCount: IncrementViewCountUseCase,
 
-    // 4. 댓글
     val getComments: GetCommentsUseCase,
     val addComment: AddCommentUseCase,
     val deleteComment: DeleteCommentUseCase,
 
-    val postChangeFlow: Flow<PostChangeEvent>
+    val observePostChanges: ObservePostChangesUseCase
 
-    //나중에 추가
-    //신고 기능
+    //나중에 추가 신고 기능
 )

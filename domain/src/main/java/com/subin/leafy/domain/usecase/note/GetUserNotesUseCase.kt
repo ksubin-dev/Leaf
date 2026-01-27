@@ -3,9 +3,9 @@ package com.subin.leafy.domain.usecase.note
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.repository.NoteRepository
+import javax.inject.Inject
 
-//타인의 노트 조회
-class GetUserNotesUseCase(
+class GetUserNotesUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
     suspend operator fun invoke(userId: String): DataResourceResult<List<BrewingNote>> {

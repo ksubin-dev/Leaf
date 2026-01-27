@@ -8,12 +8,11 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
-    }
+    jvmToolchain(21)
 }
 dependencies{
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.javax.inject)
 }
 

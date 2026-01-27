@@ -166,7 +166,7 @@ class CommunityPostDetailViewModel(
     }
 
     private fun observePostChanges() {
-        postUseCases.postChangeFlow
+        postUseCases.observePostChanges()
             .filter { it.postId == this.postId }
             .onEach { event ->
                 val currentPost = uiState.value.post ?: return@onEach

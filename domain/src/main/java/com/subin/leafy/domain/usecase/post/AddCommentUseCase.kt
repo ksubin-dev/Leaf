@@ -3,8 +3,9 @@ package com.subin.leafy.domain.usecase.post
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.Comment
 import com.subin.leafy.domain.repository.PostRepository
+import javax.inject.Inject
 
-class AddCommentUseCase(
+class AddCommentUseCase @Inject constructor(
     private val postRepository: PostRepository
 ) {
     suspend operator fun invoke(postId: String, content: String): DataResourceResult<Unit> {

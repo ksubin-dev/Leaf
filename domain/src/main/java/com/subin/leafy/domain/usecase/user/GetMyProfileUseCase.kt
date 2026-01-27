@@ -4,8 +4,9 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class GetMyProfileUseCase(
+class GetMyProfileUseCase @Inject constructor(
     private val userRepository: UserRepository
 ) {
     operator fun invoke(): Flow<DataResourceResult<User>> {

@@ -2,8 +2,9 @@ package com.subin.leafy.domain.usecase.image
 
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.ImageRepository
+import javax.inject.Inject
 
-class UploadImageUseCase(
+class UploadImageUseCase @Inject constructor(
     private val imageRepository: ImageRepository
 ) {
     suspend operator fun invoke(uri: String, folder: String): DataResourceResult<String> {

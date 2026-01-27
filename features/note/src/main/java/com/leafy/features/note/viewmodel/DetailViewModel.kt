@@ -127,7 +127,7 @@ class DetailViewModel(
 
 
     private fun observePostChanges() {
-        postUseCases.postChangeFlow
+        postUseCases.observePostChanges()
             .filter { it.postId == uiState.value.note?.id }
             .onEach { event ->
                 val currentNote = uiState.value.note ?: return@onEach

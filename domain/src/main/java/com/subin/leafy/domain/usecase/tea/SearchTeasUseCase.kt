@@ -4,8 +4,9 @@ import com.subin.leafy.domain.model.TeaItem
 import com.subin.leafy.domain.repository.TeaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import javax.inject.Inject
 
-class SearchTeasUseCase(
+class SearchTeasUseCase @Inject constructor(
     private val teaRepository: TeaRepository
 ) {
     operator fun invoke(query: String): Flow<List<TeaItem>> {

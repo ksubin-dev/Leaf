@@ -315,7 +315,7 @@ class CommunityFeedViewModel(
     }
 
     private fun observePostChanges() {
-        postUseCases.postChangeFlow
+        postUseCases.observePostChanges()
             .onEach { event ->
                 when (event) {
                     is PostChangeEvent.Like -> {

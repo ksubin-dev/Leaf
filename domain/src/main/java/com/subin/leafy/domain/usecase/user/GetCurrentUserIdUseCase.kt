@@ -2,8 +2,9 @@ package com.subin.leafy.domain.usecase.user
 
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.AuthRepository
+import javax.inject.Inject
 
-class GetCurrentUserIdUseCase(
+class GetCurrentUserIdUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
     operator fun invoke(): DataResourceResult<String> {

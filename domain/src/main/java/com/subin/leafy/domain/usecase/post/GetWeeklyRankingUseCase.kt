@@ -5,9 +5,9 @@ import com.subin.leafy.domain.model.RankingItem
 import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.repository.PostRepository
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-//랭킹조회
-class GetWeeklyRankingUseCase(
+class GetWeeklyRankingUseCase @Inject constructor(
     private val postRepository: PostRepository
 ) {
     operator fun invoke(teaType: TeaType?): Flow<DataResourceResult<List<RankingItem>>> {
