@@ -12,24 +12,15 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.firestoreSettings
 import com.google.firebase.firestore.persistentCacheSettings
-import com.leafy.shared.di.ApplicationContainer
-import com.leafy.shared.di.ApplicationContainerProvider
-import com.subin.leafy.di.ApplicationContainerImpl
+import dagger.hilt.android.HiltAndroidApp
 
-class LeafyApplication : Application(), ApplicationContainerProvider, SingletonImageLoader.Factory {
-
-    private lateinit var appContainer: ApplicationContainer
+@HiltAndroidApp
+class LeafyApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
-        leafyApplication = this
-
         setUpFirestoreCache()
-        appContainer = ApplicationContainerImpl(this)
-    }
 
-    override fun provideAppContainer(): ApplicationContainer {
-        return appContainer
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
@@ -58,15 +49,11 @@ class LeafyApplication : Application(), ApplicationContainerProvider, SingletonI
             }
             Firebase.firestore.firestoreSettings = settings
         } catch (e: Exception) {
-
+            e.printStackTrace()
         }
     }
 
     companion object {
-        private lateinit var leafyApplication: LeafyApplication
-        fun getAppContext() = leafyApplication
-
-
         const val COIL_MEMORY_CACHE_PERCENT = 0.30
         const val COIL_DISK_CACHE_SIZE = 100L * 1024 * 1024
         const val COIL_CACHE_FOLDER_NAME = "image_cache"

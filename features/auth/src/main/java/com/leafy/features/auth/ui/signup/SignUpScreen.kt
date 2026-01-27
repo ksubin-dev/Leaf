@@ -21,9 +21,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,9 +33,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.auth.ui.common.AuthButton
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.component.LeafyDialog
 import com.leafy.shared.ui.component.LeafyEditableProfileImage
 import com.leafy.shared.ui.component.LeafyTextField
 import com.leafy.shared.ui.component.LoadingOverlay
@@ -46,10 +49,11 @@ fun SignUpScreen(
     onBackClick: () -> Unit,
     onSignUpSuccess: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorDialogMessage by remember { mutableStateOf("") }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -57,18 +61,34 @@ fun SignUpScreen(
         viewModel.onProfileImageSelected(uri)
     }
 
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            viewModel.userMessageShown()
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is SignUpSideEffect.NavigateToHome -> {
+                    onSignUpSuccess()
+                }
+                is SignUpSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is SignUpSideEffect.ShowErrorDialog -> {
+                    errorDialogMessage = effect.message
+                    showErrorDialog = true
+                }
+            }
         }
     }
 
-    // 회원가입 성공 처리
-    LaunchedEffect(uiState.isSignUpSuccess) {
-        if (uiState.isSignUpSuccess) {
-            onSignUpSuccess()
-        }
+    if (showErrorDialog) {
+        LeafyDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = "회원가입 오류",
+            text = errorDialogMessage,
+            confirmText = "다시 시도",
+            dismissText = "취소",
+            onConfirmClick = {
+                showErrorDialog = false
+            }
+        )
     }
 
     Scaffold(
@@ -98,7 +118,6 @@ fun SignUpScreen(
         }
     }
 }
-
 @Composable
 fun SignUpContent(
     uiState: SignUpUiState,
@@ -127,7 +146,6 @@ fun SignUpContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 닉네임
         LeafyTextField(
             value = uiState.username,
             onValueChange = onUsernameChange,
@@ -137,7 +155,6 @@ fun SignUpContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 이메일
         LeafyTextField(
             value = uiState.email,
             onValueChange = onEmailChange,
@@ -150,7 +167,6 @@ fun SignUpContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 비밀번호
         LeafyTextField(
             value = uiState.password,
             onValueChange = onPasswordChange,
@@ -163,7 +179,6 @@ fun SignUpContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 비밀번호 확인
         val showPasswordMismatch = uiState.confirmPassword.isNotEmpty() && !uiState.isPasswordMatching
 
         LeafyTextField(
@@ -180,12 +195,10 @@ fun SignUpContent(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // 가입 버튼
         AuthButton(
             text = "회원가입 완료",
             onClick = singleClick { onSignUpClick() },
             enabled = !uiState.isLoading &&
-                    !uiState.isSignUpSuccess &&
                     uiState.username.isNotBlank() &&
                     uiState.email.isNotBlank() &&
                     uiState.password.isNotBlank() &&
@@ -194,7 +207,6 @@ fun SignUpContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 로그인 이동 텍스트
         Text(
             text = "이미 계정이 있나요? 로그인하기",
             style = MaterialTheme.typography.bodyMedium,

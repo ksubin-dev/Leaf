@@ -262,8 +262,11 @@ class ApplicationContainerImpl(
         getComments = GetCommentsUseCase(postRepository),
         addComment = AddCommentUseCase(postRepository),
         deleteComment = DeleteCommentUseCase(postRepository),
-        shareNoteAsPost = ShareNoteAsPostUseCase(noteRepository = noteRepository, postRepository = postRepository),
-        postChangeFlow = postRepository.postChangeFlow
+        shareNoteAsPost = ShareNoteAsPostUseCase(
+            noteRepository = noteRepository,
+            postRepository = postRepository
+        ),
+        observePostChanges = ObservePostChangesUseCase(postRepository)
     )
 
     // [F] Image UseCases

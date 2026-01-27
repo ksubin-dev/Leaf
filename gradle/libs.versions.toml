@@ -1,7 +1,7 @@
 [versions]
 # Build Tools & Language
 agp = "8.13.0"
-kotlin = "2.2.0"
+kotlin = "2.1.21"
 jetbrainsKotlinJvm = "2.3.0"
 
 # AndroidX Core
@@ -37,7 +37,7 @@ gson = "2.10.1"
 # Others
 kotlinxCoroutinesCore = "1.10.2"
 kotlinxSerializationJson = "1.9.0"
-ksp = "2.2.0-2.0.2"
+ksp = "2.1.21-2.0.1"
 mpAndroidChart = "v3.1.0"
 volley = "1.2.1"
 
@@ -48,9 +48,10 @@ espressoCore = "3.7.0"
 firebaseMessagingKtx = "25.0.1"
 
 # Hilt
-hilt = "2.51.1"
-
+hilt = "2.56.2"
+hiltNavigationCompose = "1.2.0"
 javaxInject = "1"
+
 
 [libraries]
 # AndroidX & Appcompat
@@ -112,8 +113,9 @@ firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messa
 # Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
-
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

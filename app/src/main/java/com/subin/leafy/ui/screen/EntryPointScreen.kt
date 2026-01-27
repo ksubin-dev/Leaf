@@ -23,9 +23,7 @@ import com.leafy.features.home.navigation.homeNavGraph
 import com.leafy.features.mypage.navigation.mypageNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
 import com.leafy.features.search.searchNavGraph
-
 import com.leafy.features.timer.navigation.timerNavGraph
-import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.ui.component.BottomBar
@@ -34,7 +32,9 @@ import com.subin.leafy.ui.component.WriteSelectionBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
+fun EntryPointScreen(
+    startDestination: Any
+) {
     LeafyTheme {
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -109,34 +109,45 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
                         bottom = if (shouldHideBottomBar) 0.dp else paddingValues.calculateBottomPadding()
                     )
                 ) {
+                    // 각 NavGraph 호출부에서 container 파라미터 제거 fetures 모듈 단 해결하고나면 에러 사라질 예정
+
                     authNavGraph(
                         navController = navController,
-                        container = container,
                         onAuthSuccess = {
                             navController.navigate(MainNavigationRoute.HomeTab) {
                                 popUpTo<MainNavigationRoute.Auth> { inclusive = true }
                             }
                         }
                     )
-                    homeNavGraph(
-                        navController = navController,
-                        container = container
-                    )
-                    noteNavGraph(
-                        navController = navController,
-                        container = container
-                    )
-                    communityNavGraph(navController = navController, container = container)
-                    timerNavGraph(navController = navController, container = container)
-                    searchNavGraph(
-                        navController = navController,
-                        postUseCases = container.postUseCases,
-                        userUseCases = container.userUseCases
-                    )
-                    mypageNavGraph(
-                        container = container,
-                        navController = navController
-                    )
+//                    homeNavGraph(
+//                        navController = navController,
+//                        container = container
+//                    )
+//                    noteNavGraph(
+//                        navController = navController,
+//                        // container = container [삭제]
+//                    )
+//                    communityNavGraph(
+//                        navController = navController,
+//                        // container = container [삭제]
+//                    )
+//                    timerNavGraph(
+//                        navController = navController,
+//                        // container = container [삭제]
+//                    )
+//
+//                    // [중요] Search는 UseCase를 개별적으로 넘기던 것도 다 삭제합니다.
+//                    // Hilt가 SearchViewModel 내부에서 알아서 주입받기 때문입니다.
+//                    searchNavGraph(
+//                        navController = navController,
+//                        // postUseCases = container.postUseCases, [삭제]
+//                        // userUseCases = container.userUseCases  [삭제]
+//                    )
+//
+//                    mypageNavGraph(
+//                        navController = navController,
+//                        // container = container [삭제]
+//                    )
                 }
             }
 
