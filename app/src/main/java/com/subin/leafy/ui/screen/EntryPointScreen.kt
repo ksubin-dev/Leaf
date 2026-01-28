@@ -125,10 +125,9 @@ fun EntryPointScreen(
                     noteNavGraph(
                         navController = navController,
                     )
-//                    communityNavGraph(
-//                        navController = navController,
-//                        // container = container [삭제]
-//                    )
+                    communityNavGraph(
+                        navController = navController,
+                    )
                     timerNavGraph(
                         navController = navController,
                     )

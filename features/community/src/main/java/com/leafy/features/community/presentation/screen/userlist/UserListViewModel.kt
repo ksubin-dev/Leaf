@@ -1,35 +1,53 @@
 package com.leafy.features.community.presentation.screen.userlist
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.leafy.shared.navigation.MainNavigationRoute
+import com.leafy.shared.navigation.UserListType
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.UserUiModel
-import com.leafy.shared.navigation.UserListType
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.UserUseCases
 import com.subin.leafy.domain.usecase.user.FollowType
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+sealed interface UserListSideEffect {
+    data class ShowSnackbar(val message: UiText) : UserListSideEffect
+}
 
 data class UserListUiState(
     val isLoading: Boolean = true,
     val users: List<UserUiModel> = emptyList(),
-    val errorMessage: String? = null,
-    val currentUserId: String? = null
+    val currentUserId: String? = null,
+    val listType: UserListType = UserListType.FOLLOWER
 )
 
-class UserListViewModel(
+@HiltViewModel
+class UserListViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val userUseCases: UserUseCases
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(UserListUiState())
-    val uiState: StateFlow<UserListUiState> = _uiState.asStateFlow()
+    private val route = savedStateHandle.toRoute<MainNavigationRoute.UserList>()
+    private val targetUserId = route.userId
+    private val listType = route.type
+
+    private val _uiState = MutableStateFlow(UserListUiState(listType = listType))
+    val uiState = _uiState.asStateFlow()
+
+    private val _sideEffect = Channel<UserListSideEffect>()
+    val sideEffect: Flow<UserListSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         loadCurrentUserId()
+        loadUserList()
     }
 
     private fun loadCurrentUserId() {
@@ -41,11 +59,11 @@ class UserListViewModel(
         }
     }
 
-    fun loadUserList(targetUserId: String, type: UserListType) {
+    private fun loadUserList() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            val domainType = when (type) {
+            val domainType = when (listType) {
                 UserListType.FOLLOWER -> FollowType.FOLLOWER
                 UserListType.FOLLOWING -> FollowType.FOLLOWING
             }
@@ -60,9 +78,8 @@ class UserListViewModel(
                     }
                 }
                 is DataResourceResult.Failure -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, errorMessage = "리스트를 불러오지 못했습니다.")
-                    }
+                    _uiState.update { it.copy(isLoading = false) }
+                    sendEffect(UserListSideEffect.ShowSnackbar(UiText.DynamicString("리스트를 불러오지 못했습니다.")))
                 }
                 else -> {}
             }
@@ -71,6 +88,7 @@ class UserListViewModel(
 
     fun toggleFollow(targetUser: UserUiModel) {
         val nextState = !targetUser.isFollowing
+
         updateFollowStateLocal(targetUser.userId, nextState)
 
         viewModelScope.launch {
@@ -78,6 +96,7 @@ class UserListViewModel(
 
             if (result is DataResourceResult.Failure) {
                 updateFollowStateLocal(targetUser.userId, !nextState)
+                sendEffect(UserListSideEffect.ShowSnackbar(UiText.DynamicString("팔로우 변경 실패")))
             }
         }
     }
@@ -89,5 +108,9 @@ class UserListViewModel(
             }
             state.copy(users = updatedList)
         }
+    }
+
+    private fun sendEffect(effect: UserListSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 }

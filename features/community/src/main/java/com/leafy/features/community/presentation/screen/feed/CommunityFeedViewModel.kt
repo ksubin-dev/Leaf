@@ -1,78 +1,62 @@
 package com.leafy.features.community.presentation.screen.feed
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.features.community.presentation.components.bar.CommunityTab
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.ui.model.UserUiModel
-import com.leafy.features.community.presentation.components.bar.CommunityTab
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.PostChangeEvent
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed interface CommunityFeedSideEffect {
-    object HideKeyboard : CommunityFeedSideEffect
+    data object HideKeyboard : CommunityFeedSideEffect
+    data class ShowSnackbar(val message: UiText) : CommunityFeedSideEffect
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-class CommunityFeedViewModel(
+@HiltViewModel
+class CommunityFeedViewModel @Inject constructor(
     private val postUseCases: PostUseCases,
     private val userUseCases: UserUseCases
 ) : ViewModel() {
 
-    private val _sideEffects = Channel<CommunityFeedSideEffect>()
-    val sideEffects = _sideEffects.receiveAsFlow()
+    private val _sideEffect = Channel<CommunityFeedSideEffect>()
+    val sideEffect: Flow<CommunityFeedSideEffect> = _sideEffect.receiveAsFlow()
 
-    private val _userMessage = MutableSharedFlow<String>()
-    val userMessage = _userMessage.asSharedFlow()
-
-    // 탭 상태
     private val _selectedTab = MutableStateFlow(CommunityTab.TRENDING)
-
     private val _trendingPosts = MutableStateFlow<List<CommunityPostUiModel>>(emptyList())
     private val _bookmarkedPosts = MutableStateFlow<List<CommunityPostUiModel>>(emptyList())
     private val _followingPosts = MutableStateFlow<List<CommunityPostUiModel>>(emptyList())
     private val _teaMasters = MutableStateFlow<List<UserUiModel>>(emptyList())
 
+    // User Data (Internal)
     private val _myLikedIds = MutableStateFlow<Set<String>>(emptySet())
     private val _myBookmarkedIds = MutableStateFlow<Set<String>>(emptySet())
-
-    private val _uiControlState = MutableStateFlow(UiControlState())
-
+    private val _currentUserId = MutableStateFlow<String?>(null)
     private val _currentUserProfileUrl = MutableStateFlow<String?>(null)
 
+    // UI Control State
     private data class UiControlState(
+        val isInitialLoading: Boolean = true,
+        val errorMessage: String? = null,
         val showCommentSheet: Boolean = false,
         val selectedPostIdForComments: String? = null,
         val comments: List<CommentUiModel> = emptyList(),
         val commentInput: String = "",
-        val isCommentLoading: Boolean = false,
-        val errorMessage: String? = null,
-        val isInitialLoading: Boolean = true
+        val isCommentLoading: Boolean = false
     )
-    private val _currentUserId = MutableStateFlow<String?>(null)
+    private val _uiControlState = MutableStateFlow(UiControlState())
 
     init {
         loadMyUserData()
@@ -81,65 +65,60 @@ class CommunityFeedViewModel(
     }
 
     private fun loadMyUserData() {
-        val sessionResult = userUseCases.getCurrentUserId()
-        if (sessionResult is DataResourceResult.Success) {
-            _currentUserId.value = sessionResult.data
+        viewModelScope.launch {
+            val sessionResult = userUseCases.getCurrentUserId()
+            if (sessionResult is DataResourceResult.Success) {
+                _currentUserId.value = sessionResult.data
+            }
+
+            userUseCases.getMyProfile().collect { result ->
+                if (result is DataResourceResult.Success) {
+                    _myLikedIds.value = result.data.likedPostIds.toSet()
+                    _myBookmarkedIds.value = result.data.bookmarkedPostIds.toSet()
+                    _currentUserProfileUrl.value = result.data.profileImageUrl
+                    if (result.data.id.isNotEmpty()) _currentUserId.value = result.data.id
+                    refreshAllLists()
+                }
+            }
         }
-
-        userUseCases.getMyProfile().onEach { result ->
-            if (result is DataResourceResult.Success) {
-                _myLikedIds.value = result.data.likedPostIds.toSet()
-                _myBookmarkedIds.value = result.data.bookmarkedPostIds.toSet()
-                _currentUserProfileUrl.value = result.data.profileImageUrl
-
-                if (result.data.id.isNotEmpty()) {
-                    _currentUserId.value = result.data.id
-                }
-
-                refreshAllLists()
-            }
-        }.launchIn(viewModelScope)
     }
+
     private fun loadInitialData() {
-        postUseCases.getPopularPosts().onEach { result ->
-            when (result) {
-                is DataResourceResult.Success -> {
-                    _trendingPosts.value = mapWithMyState(result.data.map { it.toUiModel() })
-                    checkLoadingFinished()
+        viewModelScope.launch {
+            launch {
+                postUseCases.getPopularPosts().collect { result ->
+                    if (result is DataResourceResult.Success) {
+                        _trendingPosts.value = mapWithMyState(result.data.map { it.toUiModel() })
+                        checkLoadingFinished()
+                    }
                 }
-                is DataResourceResult.Failure -> {
-                    result.exception.printStackTrace()
+            }
+            launch {
+                postUseCases.getMostBookmarkedPosts().collect { result ->
+                    if (result is DataResourceResult.Success) {
+                        _bookmarkedPosts.value = mapWithMyState(result.data.map { it.toUiModel() })
+                    }
                 }
-                else -> {}
             }
-        }.launchIn(viewModelScope)
-
-        postUseCases.getMostBookmarkedPosts().onEach { result ->
-            if (result is DataResourceResult.Success) {
-                _bookmarkedPosts.value = mapWithMyState(result.data.map { it.toUiModel() })
-            } else if (result is DataResourceResult.Failure) {
-                Log.e("CommunityError", "명예의 전당 로드 실패: ${result.exception.message}")
+            launch {
+                postUseCases.getRecommendedMasters().collect { result ->
+                    if (result is DataResourceResult.Success) {
+                        _teaMasters.value = result.data.map { it.toUiModel() }
+                    }
+                }
             }
-        }.launchIn(viewModelScope)
-
-        postUseCases.getRecommendedMasters().onEach { result ->
-            if (result is DataResourceResult.Success) {
-                _teaMasters.value = result.data.map { it.toUiModel() }
-            } else if (result is DataResourceResult.Failure) {
-                Log.e("CommunityError", "티 마스터 로드 실패: ${result.exception.message}")
-            }
-        }.launchIn(viewModelScope)
-
-        observeFollowingFeed()
+            observeFollowingFeed()
+        }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeFollowingFeed() {
         val idResult = userUseCases.getCurrentUserId()
         val myId = if (idResult is DataResourceResult.Success) idResult.data else ""
 
         if (myId.isNotEmpty()) {
             userUseCases.getFollowingIdsFlow(myId)
-                .map { result -> if (result is DataResourceResult.Success) result.data else emptyList() }
+                .map { if (it is DataResourceResult.Success) it.data else emptyList() }
                 .distinctUntilChanged()
                 .flatMapLatest { ids -> postUseCases.getFollowingFeed(ids) }
                 .onEach { result ->
@@ -156,11 +135,9 @@ class CommunityFeedViewModel(
     private fun mapWithMyState(posts: List<CommunityPostUiModel>): List<CommunityPostUiModel> {
         val likes = _myLikedIds.value
         val bookmarks = _myBookmarkedIds.value
-
         return posts.map { post ->
             val isLiked = likes.contains(post.postId)
             val isBookmarked = bookmarks.contains(post.postId)
-
             post.updateLike(isLiked, post.likeCount)
                 .updateBookmark(isBookmarked, post.bookmarkCount)
         }
@@ -177,16 +154,9 @@ class CommunityFeedViewModel(
     }
 
     val uiState: StateFlow<CommunityUiState> = combine(
-        _selectedTab,
-        _uiControlState,
-        _trendingPosts,
-        _bookmarkedPosts,
-        _followingPosts,
-        _teaMasters,
-        _currentUserProfileUrl,
-        _currentUserId
+        _selectedTab, _uiControlState, _trendingPosts, _bookmarkedPosts,
+        _followingPosts, _teaMasters, _currentUserProfileUrl, _currentUserId
     ) { tab, uiControl, trending, bookmarked, following, masters, myProfileUrl, myId ->
-
 
         val hasDataToShow = when(tab) {
             CommunityTab.TRENDING -> trending.isNotEmpty() || bookmarked.isNotEmpty()
@@ -197,15 +167,12 @@ class CommunityFeedViewModel(
             selectedTab = tab,
             isLoading = uiControl.isInitialLoading && !hasDataToShow,
             errorMessage = uiControl.errorMessage,
-
             currentUserId = myId,
             popularPosts = trending,
             mostBookmarkedPosts = bookmarked,
             teaMasters = masters,
-
             followingPosts = following,
             isFollowingEmpty = following.isEmpty() && !uiControl.isInitialLoading,
-
             currentUserProfileUrl = myProfileUrl,
             commentInput = uiControl.commentInput,
             showCommentSheet = uiControl.showCommentSheet,
@@ -219,10 +186,7 @@ class CommunityFeedViewModel(
         initialValue = CommunityUiState(isLoading = true)
     )
 
-
-    fun onTabSelected(tab: CommunityTab) {
-        _selectedTab.value = tab
-    }
+    fun onTabSelected(tab: CommunityTab) { _selectedTab.value = tab }
 
     fun refresh() {
         _uiControlState.update { it.copy(errorMessage = null, isInitialLoading = true) }
@@ -233,19 +197,17 @@ class CommunityFeedViewModel(
         val isCurrentlyLiked = _myLikedIds.value.contains(postId)
         val newLiked = !isCurrentlyLiked
 
-        if (newLiked) _myLikedIds.update { it + postId }
-        else _myLikedIds.update { it - postId }
-
+        if (newLiked) _myLikedIds.update { it + postId } else _myLikedIds.update { it - postId }
         updatePostCountsAndState(postId, isLikeToggle = true, isAdd = newLiked)
 
         viewModelScope.launch {
-
             val result = postUseCases.toggleLike(postId)
-
             if (result is DataResourceResult.Failure) {
                 if (newLiked) _myLikedIds.update { it - postId } else _myLikedIds.update { it + postId }
                 updatePostCountsAndState(postId, isLikeToggle = true, isAdd = !newLiked)
-                _userMessage.emit("좋아요 반영에 실패했습니다. 다시 시도해주세요.")
+                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
+                    UiText.DynamicString("좋아요 반영에 실패했습니다.")
+                ))
             }
         }
     }
@@ -254,62 +216,44 @@ class CommunityFeedViewModel(
         val isCurrentlyBookmarked = _myBookmarkedIds.value.contains(postId)
         val newBookmarked = !isCurrentlyBookmarked
 
-        if (newBookmarked) _myBookmarkedIds.update { it + postId }
-        else _myBookmarkedIds.update { it - postId }
-
+        if (newBookmarked) _myBookmarkedIds.update { it + postId } else _myBookmarkedIds.update { it - postId }
         updatePostCountsAndState(postId, isLikeToggle = false, isAdd = newBookmarked)
 
         viewModelScope.launch {
             val result = postUseCases.toggleBookmark(postId)
-
             if (result is DataResourceResult.Failure) {
                 if (newBookmarked) _myBookmarkedIds.update { it - postId } else _myBookmarkedIds.update { it + postId }
                 updatePostCountsAndState(postId, isLikeToggle = false, isAdd = !newBookmarked)
-                _userMessage.emit("북마크 저장에 실패했습니다.")
+                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
+                    UiText.DynamicString("북마크 저장에 실패했습니다.")
+                ))
             } else {
-                if (newBookmarked) {
-                    _userMessage.emit("북마크 저장되었습니다.")
-                }
+                if (newBookmarked)sendEffect(CommunityFeedSideEffect.ShowSnackbar(
+                    UiText.DynamicString("북마크 저장")
+                ))
             }
         }
     }
 
-    private fun updatePostCountsAndState(postId: String, isLikeToggle: Boolean, isAdd: Boolean) {
-        val transform: (CommunityPostUiModel) -> CommunityPostUiModel = { post ->
-            if (isLikeToggle) {
-                val current = post.likeCount.toIntOrNull() ?: 0
-                val newCount = (if (isAdd) current + 1 else maxOf(0, current - 1)).toString()
-                post.updateLike(isAdd, newCount)
-            } else {
-                val current = post.bookmarkCount.toIntOrNull() ?: 0
-                val newCount = (if (isAdd) current + 1 else maxOf(0, current - 1)).toString()
-                post.updateBookmark(isAdd, newCount)
-            }
-        }
-
-        _trendingPosts.update { list -> list.map { if (it.postId == postId) transform(it) else it } }
-        _bookmarkedPosts.update { list -> list.map { if (it.postId == postId) transform(it) else it } }
-        _followingPosts.update { list -> list.map { if (it.postId == postId) transform(it) else it } }
-    }
     fun toggleFollow(targetUserId: String) {
         val currentList = _teaMasters.value
         val targetUser = currentList.find { it.userId == targetUserId } ?: return
         val nextState = !targetUser.isFollowing
 
-        _teaMasters.update { list ->
-            list.map { if (it.userId == targetUserId) it.copy(isFollowing = nextState) else it }
-        }
+        _teaMasters.update { list -> list.map { if (it.userId == targetUserId) it.copy(isFollowing = nextState) else it } }
 
         viewModelScope.launch {
             val result = userUseCases.followUser(targetUserId, nextState)
             if (result is DataResourceResult.Failure) {
-                _teaMasters.update { list ->
-                    list.map { if (it.userId == targetUserId) it.copy(isFollowing = !nextState) else it }
-                }
-                _userMessage.emit("요청 처리에 실패했습니다.")
+                _teaMasters.update { list -> list.map { if (it.userId == targetUserId) it.copy(isFollowing = !nextState) else it } }
+                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
+                    UiText.DynamicString("팔로우 실패")
+                ))
             } else {
-                if (nextState) _userMessage.emit("팔로우했습니다.")
-                else _userMessage.emit("팔로우를 취소했습니다.")
+                val msg = if (nextState) "팔로우했습니다." else "팔로우를 취소했습니다."
+                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
+                    UiText.DynamicString(msg)
+                ))
             }
         }
     }
@@ -319,23 +263,14 @@ class CommunityFeedViewModel(
             .onEach { event ->
                 when (event) {
                     is PostChangeEvent.Like -> {
-                        updatePostCountsAndState(
-                            postId = event.postId,
-                            isLikeToggle = true,
-                            isAdd = event.isLiked
-                        )
+                        updatePostCountsAndState(event.postId, isLikeToggle = true, isAdd = event.isLiked)
                     }
                     is PostChangeEvent.Bookmark -> {
-                        updatePostCountsAndState(
-                            postId = event.postId,
-                            isLikeToggle = false,
-                            isAdd = event.isBookmarked
-                        )
+                        updatePostCountsAndState(event.postId, isLikeToggle = false, isAdd = event.isBookmarked)
                     }
                 }
             }.launchIn(viewModelScope)
     }
-
 
     private var commentJob: Job? = null
 
@@ -372,6 +307,27 @@ class CommunityFeedViewModel(
 
     fun onMessageShown() {
         _uiControlState.update { it.copy(errorMessage = null) }
+    }
+
+    private fun sendEffect(effect: CommunityFeedSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
+    }
+
+    private fun updatePostCountsAndState(postId: String, isLikeToggle: Boolean, isAdd: Boolean) {
+        val transform: (CommunityPostUiModel) -> CommunityPostUiModel = { post ->
+            if (isLikeToggle) {
+                val current = post.likeCount.toIntOrNull() ?: 0
+                val newCount = (if (isAdd) current + 1 else maxOf(0, current - 1)).toString()
+                post.updateLike(isAdd, newCount)
+            } else {
+                val current = post.bookmarkCount.toIntOrNull() ?: 0
+                val newCount = (if (isAdd) current + 1 else maxOf(0, current - 1)).toString()
+                post.updateBookmark(isAdd, newCount)
+            }
+        }
+        _trendingPosts.update { list -> list.map { if (it.postId == postId) transform(it) else it } }
+        _bookmarkedPosts.update { list -> list.map { if (it.postId == postId) transform(it) else it } }
+        _followingPosts.update { list -> list.map { if (it.postId == postId) transform(it) else it } }
     }
 }
 

@@ -12,9 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileGallery
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileHeader
 import com.leafy.features.community.presentation.screen.profile.section.UserProfileList
@@ -27,15 +30,28 @@ enum class ProfileTab(val icon: ImageVector) {
 
 @Composable
 fun UserProfileScreen(
-    viewModel: UserProfileViewModel,
     onBackClick: () -> Unit,
     onPostClick: (String) -> Unit,
-    onNavigateToUserList: (userId: String, nickname: String, type: UserListType) -> Unit
+    onNavigateToUserList: (userId: String, nickname: String, type: UserListType) -> Unit,
+    viewModel: UserProfileViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is UserProfileSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
+        }
+    }
 
     UserProfileContent(
         uiState = uiState,
+        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onPostClick = onPostClick,
         onFollowClick = viewModel::toggleFollow,
@@ -47,16 +63,17 @@ fun UserProfileScreen(
 @Composable
 fun UserProfileContent(
     uiState: UserProfileUiState,
+    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onPostClick: (String) -> Unit,
     onFollowClick: () -> Unit,
     onNavigateToUserList: (userId: String, nickname: String, type: UserListType) -> Unit
 ) {
     val user = uiState.userProfile
-
     var selectedTab by remember { mutableStateOf(ProfileTab.GRID) }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -138,6 +155,13 @@ fun UserProfileContent(
                         }
                     }
                 }
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = uiState.errorMessage?.asString() ?: "유저 정보를 불러올 수 없습니다.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

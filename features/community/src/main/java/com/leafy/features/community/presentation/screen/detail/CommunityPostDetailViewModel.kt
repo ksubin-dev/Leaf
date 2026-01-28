@@ -6,29 +6,46 @@ import androidx.lifecycle.viewModelScope
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.PostChangeEvent
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class CommunityPostDetailViewModel(
+sealed interface PostDetailSideEffect {
+    data class ShowSnackbar(val message: UiText) : PostDetailSideEffect
+    data object NavigateBack : PostDetailSideEffect
+}
+
+data class CommunityPostDetailUiState(
+    val isLoading: Boolean = true,
+    val post: CommunityPostUiModel? = null,
+    val comments: List<CommentUiModel> = emptyList(),
+    val commentInput: String = "",
+    val isSendingComment: Boolean = false,
+    val currentUserProfileUrl: String? = null,
+    val errorMessage: UiText? = null
+)
+
+@HiltViewModel
+class CommunityPostDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val postUseCases: PostUseCases,
     private val userUseCases: UserUseCases
 ) : ViewModel() {
 
-    private val postId: String = savedStateHandle.get<String>("postId")
-        ?: throw IllegalArgumentException("Post ID is required")
+    private val postId: String = checkNotNull(savedStateHandle["postId"]) { "Post ID is required" }
 
     private val _uiState = MutableStateFlow(CommunityPostDetailUiState())
     val uiState = _uiState.asStateFlow()
+
+    private val _sideEffect = Channel<PostDetailSideEffect>()
+    val sideEffect: Flow<PostDetailSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         incrementViewCount()
@@ -44,50 +61,44 @@ class CommunityPostDetailViewModel(
 
     private fun loadData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            launch { fetchCurrentUserProfile() }
             fetchPostDetail()
-            fetchCurrentUserProfile()
-            _uiState.update { it.copy(isLoading = false) }
-        }
-
-        viewModelScope.launch {
-            fetchComments()
+            observeComments()
         }
     }
 
     fun refresh() {
         viewModelScope.launch {
-            val result = postUseCases.getPostDetail(postId)
-            when (result) {
-                is DataResourceResult.Success -> {
-                    _uiState.update { it.copy(post = result.data.toUiModel()) }
-                    fetchComments()
-                }
-                is DataResourceResult.Failure -> {
-                    _uiState.update {
-                        it.copy(post = null, errorMessage = "삭제된 게시글입니다.")
-                    }
-                }
-                else -> {}
-            }
+            fetchPostDetail()
         }
     }
 
     private suspend fun fetchPostDetail() {
-        val result = postUseCases.getPostDetail(postId)
-        if (result is DataResourceResult.Success) {
-            _uiState.update { it.copy(post = result.data.toUiModel()) }
-        } else if (result is DataResourceResult.Failure) {
-            _uiState.update { it.copy(errorMessage = "게시글을 불러올 수 없습니다.") }
+        _uiState.update { it.copy(isLoading = true) }
+
+        when (val result = postUseCases.getPostDetail(postId)) {
+            is DataResourceResult.Success -> {
+                _uiState.update {
+                    it.copy(post = result.data.toUiModel(), isLoading = false)
+                }
+            }
+            is DataResourceResult.Failure -> {
+                _uiState.update {
+                    it.copy(isLoading = false, errorMessage = UiText.DynamicString("게시글을 불러올 수 없습니다."))
+                }
+                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("삭제된 게시글입니다.")))
+                sendEffect(PostDetailSideEffect.NavigateBack)
+            }
+            else -> { _uiState.update { it.copy(isLoading = false) } }
         }
     }
 
-    private suspend fun fetchComments() {
+    private suspend fun observeComments() {
         postUseCases.getComments(postId).collect { result ->
             if (result is DataResourceResult.Success) {
                 _uiState.update { state ->
                     state.copy(
-                        comments = result.data.map { comment -> comment.toUiModel() }
+                        comments = result.data.map { it.toUiModel() }
                     )
                 }
             }
@@ -118,9 +129,12 @@ class CommunityPostDetailViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isSendingComment = true) }
             val result = postUseCases.addComment(postId, content)
+
             if (result is DataResourceResult.Success) {
                 _uiState.update { it.copy(commentInput = "") }
                 fetchPostDetail()
+            } else {
+                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("댓글 작성 실패")))
             }
             _uiState.update { it.copy(isSendingComment = false) }
         }
@@ -130,7 +144,10 @@ class CommunityPostDetailViewModel(
         viewModelScope.launch {
             val result = postUseCases.deleteComment(postId, commentId)
             if (result is DataResourceResult.Success) {
+                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("댓글이 삭제되었습니다.")))
                 fetchPostDetail()
+            } else {
+                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("삭제 실패")))
             }
         }
     }
@@ -138,14 +155,15 @@ class CommunityPostDetailViewModel(
     fun toggleLike() {
         val currentPost = uiState.value.post ?: return
         val newLiked = !currentPost.isLiked
-        val updatedPost = currentPost.updateLikeState(newLiked)
 
+        val updatedPost = currentPost.updateLikeState(newLiked)
         _uiState.update { it.copy(post = updatedPost) }
 
         viewModelScope.launch {
             val result = postUseCases.toggleLike(postId)
             if (result is DataResourceResult.Failure) {
                 _uiState.update { it.copy(post = currentPost) }
+                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("좋아요 실패")))
             }
         }
     }
@@ -153,14 +171,18 @@ class CommunityPostDetailViewModel(
     fun toggleBookmark() {
         val currentPost = uiState.value.post ?: return
         val newBookmarked = !currentPost.isBookmarked
-        val updatedPost = currentPost.updateBookmarkState(newBookmarked)
 
+        val updatedPost = currentPost.updateBookmarkState(newBookmarked)
         _uiState.update { it.copy(post = updatedPost) }
 
         viewModelScope.launch {
             val result = postUseCases.toggleBookmark(postId)
             if (result is DataResourceResult.Failure) {
+                // Rollback
                 _uiState.update { it.copy(post = currentPost) }
+                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("북마크 실패")))
+            } else if (newBookmarked) {
+                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("북마크 저장됨")))
             }
         }
     }
@@ -178,12 +200,15 @@ class CommunityPostDetailViewModel(
             }
             .launchIn(viewModelScope)
     }
+
+    private fun sendEffect(effect: PostDetailSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
+    }
 }
 
 private fun CommunityPostUiModel.updateLikeState(isLiked: Boolean): CommunityPostUiModel {
     val currentCount = this.likeCount.toIntOrNull() ?: 0
     val newCount = (if (isLiked) currentCount + 1 else maxOf(0, currentCount - 1)).toString()
-
     return when (this) {
         is CommunityPostUiModel.General -> this.copy(isLiked = isLiked, likeCount = newCount)
         is CommunityPostUiModel.BrewingNote -> this.copy(isLiked = isLiked, likeCount = newCount)
@@ -193,7 +218,6 @@ private fun CommunityPostUiModel.updateLikeState(isLiked: Boolean): CommunityPos
 private fun CommunityPostUiModel.updateBookmarkState(isBookmarked: Boolean): CommunityPostUiModel {
     val currentCount = this.bookmarkCount.toIntOrNull() ?: 0
     val newCount = (if (isBookmarked) currentCount + 1 else maxOf(0, currentCount - 1)).toString()
-
     return when (this) {
         is CommunityPostUiModel.General -> this.copy(isBookmarked = isBookmarked, bookmarkCount = newCount)
         is CommunityPostUiModel.BrewingNote -> this.copy(isBookmarked = isBookmarked, bookmarkCount = newCount)
@@ -209,13 +233,3 @@ private fun CommunityPostUiModel.syncBookmarkState(targetState: Boolean): Commun
     if (this.isBookmarked == targetState) return this
     return this.updateBookmarkState(targetState)
 }
-
-data class CommunityPostDetailUiState(
-    val isLoading: Boolean = false,
-    val post: CommunityPostUiModel? = null,
-    val comments: List<CommentUiModel> = emptyList(),
-    val commentInput: String = "",
-    val isSendingComment: Boolean = false,
-    val currentUserProfileUrl: String? = null,
-    val errorMessage: String? = null
-)
