@@ -2,17 +2,24 @@ package com.leafy.features.mypage.presentation.setting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TimerSettings
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.TimerUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+sealed interface SettingSideEffect {
+    data class ShowSnackbar(val message: UiText) : SettingSideEffect
+    data object LogoutSuccess : SettingSideEffect
+    data object DeleteAccountSuccess : SettingSideEffect
+}
 
 data class SettingUiState(
     val isNotificationEnabled: Boolean = false,
@@ -22,13 +29,11 @@ data class SettingUiState(
     val isTimerSoundOn: Boolean = true,
     val isTimerScreenOn: Boolean = true,
     val appVersion: String = "1.0.0",
-    val isLoading: Boolean = false,
-    val logoutSuccess: Boolean = false,
-    val deleteSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val isLoading: Boolean = false
 )
 
-class SettingViewModel(
+@HiltViewModel
+class SettingViewModel @Inject constructor(
     private val settingUseCases: SettingUseCases,
     private val authUseCases: AuthUseCases,
     private val userUseCases: UserUseCases,
@@ -37,6 +42,9 @@ class SettingViewModel(
 
     private val _uiState = MutableStateFlow(SettingUiState())
     val uiState = _uiState.asStateFlow()
+
+    private val _sideEffect = Channel<SettingSideEffect>()
+    val sideEffect: Flow<SettingSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         loadSettings()
@@ -119,7 +127,7 @@ class SettingViewModel(
             val result = timerUseCases.updateTimerSettings(newSettings)
 
             if (result is DataResourceResult.Failure) {
-                _uiState.update { it.copy(errorMessage = "설정 저장 실패: ${result.exception.message}") }
+                sendEffect(SettingSideEffect.ShowSnackbar(UiText.DynamicString("설정 저장 실패: ${result.exception.message}")))
             }
         }
     }
@@ -130,10 +138,12 @@ class SettingViewModel(
 
             val result = authUseCases.logout()
 
+            _uiState.update { it.copy(isLoading = false) }
+
             if (result is DataResourceResult.Success) {
-                _uiState.update { it.copy(isLoading = false, logoutSuccess = true) }
+                sendEffect(SettingSideEffect.LogoutSuccess)
             } else {
-                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(SettingSideEffect.ShowSnackbar(UiText.DynamicString("로그아웃 실패")))
             }
         }
     }
@@ -144,15 +154,17 @@ class SettingViewModel(
 
             val result = authUseCases.deleteAccount()
 
+            _uiState.update { it.copy(isLoading = false) }
+
             if (result is DataResourceResult.Success) {
-                _uiState.update { it.copy(isLoading = false, deleteSuccess = true) }
+                sendEffect(SettingSideEffect.DeleteAccountSuccess)
             } else {
-                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(SettingSideEffect.ShowSnackbar(UiText.DynamicString("회원 탈퇴 실패")))
             }
         }
     }
 
-    fun messageShown() {
-        _uiState.update { it.copy(errorMessage = null) }
+    private fun sendEffect(effect: SettingSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 }

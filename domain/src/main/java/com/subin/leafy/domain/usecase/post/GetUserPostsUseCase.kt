@@ -5,9 +5,9 @@ import com.subin.leafy.domain.model.CommunityPost
 import com.subin.leafy.domain.repository.PostRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import javax.inject.Inject
 
-// 프로필 (특정 유저 글 모아보기)
-class GetUserPostsUseCase(
+class GetUserPostsUseCase @Inject constructor(
     private val postRepository: PostRepository
 ) {
     operator fun invoke(userId: String): Flow<DataResourceResult<List<CommunityPost>>> {

@@ -8,8 +8,9 @@ import com.subin.leafy.data.mapper.toDomain
 import com.subin.leafy.domain.model.TeaItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
-class LocalTeaDataSourceImpl(
+class LocalTeaDataSourceImpl @Inject constructor(
     private val teaDao: TeaDao
 ) : LocalTeaDataSource {
 

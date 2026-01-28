@@ -12,8 +12,9 @@ import com.subin.leafy.data.model.dto.TeaItemDto
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TeaItem
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class FirestoreTeaDataSourceImpl(
+class FirestoreTeaDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : RemoteTeaDataSource {
 

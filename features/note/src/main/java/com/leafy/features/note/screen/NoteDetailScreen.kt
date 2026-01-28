@@ -18,21 +18,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.note.ui.components.NoteActionButtons
 import com.leafy.features.note.ui.components.NoteDetailHeader
 import com.leafy.features.note.viewmodel.DetailViewModel
 import com.leafy.features.note.viewmodel.DetailUiState
+import com.leafy.features.note.viewmodel.DetailSideEffect
 import com.leafy.features.note.ui.sections.detail.BrewingRecipeSection
 import com.leafy.features.note.ui.sections.detail.FinalRatingSection
 import com.leafy.features.note.ui.sections.detail.PhotoDetailSection
@@ -51,32 +53,25 @@ fun NoteDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-
+    val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.loadNote(noteId)
     }
 
-    LaunchedEffect(uiState.isDeleteSuccess) {
-        if (uiState.isDeleteSuccess) {
-            onNavigateBack()
-        }
-    }
-
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.userMessageShown()
-        }
-    }
-
     LaunchedEffect(Unit) {
-        viewModel.userMessage.collect { message ->
-            snackbarHostState.currentSnackbarData?.dismiss()
-            snackbarHostState.showSnackbar(message)
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is DetailSideEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                is DetailSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
         }
     }
 
@@ -128,7 +123,7 @@ fun NoteDetailContent(
                 .padding(bottom = paddingValues.calculateBottomPadding())
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (uiState.note == null && uiState.errorMessage != null && !uiState.isLoading) {
+            if (uiState.note == null && !uiState.isLoading) {
                 Column(
                     modifier = Modifier.align(Alignment.Center),
                     horizontalAlignment = Alignment.CenterHorizontally,

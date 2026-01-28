@@ -2,8 +2,9 @@ package com.subin.leafy.domain.usecase.notification
 
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.NotificationRepository
+import javax.inject.Inject
 
-class DeleteNotificationUseCase(
+class DeleteNotificationUseCase @Inject constructor(
     private val notificationRepository: NotificationRepository
 ) {
     suspend operator fun invoke(notificationId: String): DataResourceResult<Unit> {

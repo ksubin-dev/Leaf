@@ -3,8 +3,9 @@ package com.subin.leafy.domain.usecase.auth
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.repository.AuthRepository
+import javax.inject.Inject
 
-class LoginUseCase(
+class LoginUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
     suspend operator fun invoke(email: String, password: String): DataResourceResult<User> {

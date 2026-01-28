@@ -2,23 +2,38 @@ package com.leafy.features.mypage.presentation.analysis
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.model.UserAnalysis
 import com.subin.leafy.domain.usecase.AnalysisUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AnalysisViewModel(
+sealed interface AnalysisSideEffect {
+    data class ShowSnackbar(val message: UiText) : AnalysisSideEffect
+}
+
+data class AnalysisUiState(
+    val isLoading: Boolean = false,
+    val analysisData: UserAnalysis? = null,
+    val isChartVisible: Boolean = false
+)
+
+@HiltViewModel
+class AnalysisViewModel @Inject constructor(
     private val analysisUseCases: AnalysisUseCases,
     private val userUseCases: UserUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AnalysisUiState())
     val uiState = _uiState.asStateFlow()
+
+    private val _sideEffect = Channel<AnalysisSideEffect>()
+    val sideEffect: Flow<AnalysisSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         loadAnalysisData()
@@ -35,14 +50,10 @@ class AnalysisViewModel(
 
                 analysisUseCases.getUserAnalysis(userId)
                     .catch { e ->
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage = e.message ?: "데이터를 불러오는 중 오류가 발생했습니다."
-                            )
-                        }
+                        _uiState.update { it.copy(isLoading = false) }
+                        sendEffect(AnalysisSideEffect.ShowSnackbar(UiText.DynamicString(e.message ?: "오류 발생")))
                     }
-                    .collectLatest { analysis ->
+                    .onEach { analysis ->
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
@@ -51,18 +62,15 @@ class AnalysisViewModel(
                             )
                         }
                     }
+                    .launchIn(viewModelScope)
             } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "로그인이 필요합니다."
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(AnalysisSideEffect.ShowSnackbar(UiText.DynamicString("로그인이 필요합니다.")))
             }
         }
     }
 
-    fun onMessageShown() {
-        _uiState.update { it.copy(errorMessage = null) }
+    private fun sendEffect(effect: AnalysisSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 }

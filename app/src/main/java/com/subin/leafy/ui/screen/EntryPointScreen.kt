@@ -23,9 +23,7 @@ import com.leafy.features.home.navigation.homeNavGraph
 import com.leafy.features.mypage.navigation.mypageNavGraph
 import com.leafy.features.note.navigation.noteNavGraph
 import com.leafy.features.search.searchNavGraph
-
 import com.leafy.features.timer.navigation.timerNavGraph
-import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.ui.component.BottomBar
@@ -34,7 +32,9 @@ import com.subin.leafy.ui.component.WriteSelectionBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
+fun EntryPointScreen(
+    startDestination: Any
+) {
     LeafyTheme {
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -111,7 +111,6 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
                 ) {
                     authNavGraph(
                         navController = navController,
-                        container = container,
                         onAuthSuccess = {
                             navController.navigate(MainNavigationRoute.HomeTab) {
                                 popUpTo<MainNavigationRoute.Auth> { inclusive = true }
@@ -119,23 +118,22 @@ fun EntryPointScreen(container: ApplicationContainer, startDestination: Any) {
                         }
                     )
                     homeNavGraph(
-                        navController = navController,
-                        container = container
+                        navController = navController
                     )
                     noteNavGraph(
                         navController = navController,
-                        container = container
                     )
-                    communityNavGraph(navController = navController, container = container)
-                    timerNavGraph(navController = navController, container = container)
+                    communityNavGraph(
+                        navController = navController,
+                    )
+                    timerNavGraph(
+                        navController = navController,
+                    )
                     searchNavGraph(
                         navController = navController,
-                        postUseCases = container.postUseCases,
-                        userUseCases = container.userUseCases
                     )
                     mypageNavGraph(
-                        container = container,
-                        navController = navController
+                        navController = navController,
                     )
                 }
             }

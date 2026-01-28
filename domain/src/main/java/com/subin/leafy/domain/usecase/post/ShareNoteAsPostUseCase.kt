@@ -4,8 +4,9 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.NoteRepository
 import com.subin.leafy.domain.repository.PostRepository
 import java.util.UUID
+import javax.inject.Inject
 
-class ShareNoteAsPostUseCase(
+class ShareNoteAsPostUseCase @Inject constructor(
     private val noteRepository: NoteRepository,
     private val postRepository: PostRepository,
 ) {

@@ -23,8 +23,6 @@ data class CommunityWriteUiState(
     val myNotes: List<NoteSelectionUiModel> = emptyList(),
 
     val isLoading: Boolean = false,
-    val isPostSuccess: Boolean = false,
-    val errorMessage: String? = null
 ) {
     val isPostValid: Boolean
         get() = title.isNotBlank() && title.length <= 50 &&

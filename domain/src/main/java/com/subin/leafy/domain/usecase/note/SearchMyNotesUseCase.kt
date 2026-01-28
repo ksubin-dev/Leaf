@@ -4,8 +4,9 @@ import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import javax.inject.Inject
 
-class SearchMyNotesUseCase(
+class SearchMyNotesUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
     operator fun invoke(query: String): Flow<List<BrewingNote>> {

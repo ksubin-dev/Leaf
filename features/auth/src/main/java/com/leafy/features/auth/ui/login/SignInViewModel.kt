@@ -8,16 +8,21 @@ import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import com.subin.leafy.domain.usecase.setting.ManageLoginSettingUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class SignInViewModel(
+@HiltViewModel
+class SignInViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
     private val noteUseCases: NoteUseCases,
     private val userUseCases: UserUseCases,
@@ -26,6 +31,9 @@ class SignInViewModel(
 
     private val _uiState = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
+
+    private val _sideEffect = Channel<SignInSideEffect>()
+    val sideEffect: Flow<SignInSideEffect> = _sideEffect.receiveAsFlow()
 
     fun loadInitialSettings() {
         viewModelScope.launch {
@@ -43,75 +51,70 @@ class SignInViewModel(
         }
     }
 
-
     fun onEmailChanged(email: String) {
-        _uiState.update { it.copy(email = email, errorMessage = null) }
+        _uiState.update { it.copy(email = email) }
     }
 
     fun onPasswordChanged(password: String) {
-        _uiState.update { it.copy(password = password, errorMessage = null) }
+        _uiState.update { it.copy(password = password) }
     }
 
     fun onAutoLoginChecked(checked: Boolean) {
         _uiState.update { it.copy(isAutoLogin = checked) }
     }
 
-    fun userMessageShown() {
-        _uiState.update { it.copy(errorMessage = null) }
-    }
-
     fun signIn() {
         val state = uiState.value
-
-        if (state.email.isBlank() || state.password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "이메일과 비밀번호를 모두 입력해주세요.") }
-            return
-        }
-
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
             when (val result = authUseCases.login(state.email, state.password)) {
                 is DataResourceResult.Success -> {
-                    Log.d("SYNC_LOG", "로그인 성공! 동기화 요청")
-
-                    // 1. 노트 동기화 (기다림)
-                    launch(Dispatchers.IO) {
-                        try {
-                            noteUseCases.syncNotes()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }.join()
-
-                    settingUseCases.manageLoginSetting.setAutoLogin(state.isAutoLogin)
-                    settingUseCases.manageLoginSetting.saveEmail(state.email)
-
-                    try {
-                        val myProfileResult = userUseCases.getMyProfile().first()
-
-                        if (myProfileResult is DataResourceResult.Success) {
-                            val user = myProfileResult.data
-                            val isServerAgreed = user.isNotificationAgreed
-                            settingUseCases.updateNotificationSetting.setNotificationAgreed(isServerAgreed)
-                            userUseCases.updateFcmToken(isServerAgreed)
-
-                            Log.d("FCM", "서버 설정($isServerAgreed)에 따라 로컬 설정 및 토큰 동기화 완료")
-                        }
-                    } catch (e: Exception) {
-                        Log.e("FCM", "동기화 중 오류 발생: ${e.message}")
-                    }
-
-                    _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
+                    Log.d("SignIn", "로그인 성공! 데이터 동기화 시작")
+                    handleLoginSuccess(state)
                 }
                 is DataResourceResult.Failure -> {
+                    _uiState.update { it.copy(isLoading = false) }
+
                     val msg = result.exception.message ?: "로그인에 실패했습니다."
-                    _uiState.update {
-                        it.copy(isLoading = false, errorMessage = msg)
-                    }
+                    sendEffect(SignInSideEffect.ShowSnackbar(msg))
                 }
                 else -> {}
             }
+        }
+    }
+
+    private suspend fun handleLoginSuccess(state: SignInUiState) {
+        try {
+            viewModelScope.launch(Dispatchers.IO) {
+                noteUseCases.syncNotes()
+            }.join()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        settingUseCases.manageLoginSetting.setAutoLogin(state.isAutoLogin)
+        settingUseCases.manageLoginSetting.saveEmail(state.email)
+
+        try {
+            val myProfileResult = userUseCases.getMyProfile().first()
+            if (myProfileResult is DataResourceResult.Success) {
+                val user = myProfileResult.data
+                val isServerAgreed = user.isNotificationAgreed
+                settingUseCases.updateNotificationSetting.setNotificationAgreed(isServerAgreed)
+                userUseCases.updateFcmToken(isServerAgreed)
+            }
+        } catch (e: Exception) {
+            Log.e("SignIn", "FCM 동기화 오류: ${e.message}")
+        }
+
+        _uiState.update { it.copy(isLoading = false) }
+        sendEffect(SignInSideEffect.NavigateToHome)
+    }
+
+    private fun sendEffect(effect: SignInSideEffect) {
+        viewModelScope.launch {
+            _sideEffect.send(effect)
         }
     }
 }

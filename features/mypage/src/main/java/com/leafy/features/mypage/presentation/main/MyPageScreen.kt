@@ -8,7 +8,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.mypage.presentation.main.component.AnalysisTeaserCard
 import com.leafy.features.mypage.presentation.main.component.MyPageTopAppBar
@@ -20,7 +22,6 @@ import java.time.LocalDate
 
 @Composable
 fun MyPageScreen(
-    viewModel: MyPageViewModel,
     onSettingsClick: () -> Unit,
     onAddRecordClick: (LocalDate) -> Unit,
     onEditRecordClick: (String) -> Unit,
@@ -32,21 +33,20 @@ fun MyPageScreen(
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onMyTeaCabinetClick: () -> Unit,
-    onAnalysisClick: () -> Unit
+    onAnalysisClick: () -> Unit,
+    viewModel: MyPageViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-        }
-    }
-
-    LaunchedEffect(uiState.profileEditMessage) {
-        uiState.profileEditMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            viewModel.onProfileMessageShown()
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is MyPageSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
         }
     }
 
@@ -152,7 +152,6 @@ private fun MyPageContent(
                 onBioChange = onBioChange,
                 onFollowerClick = onFollowerClick,
                 onFollowingClick = onFollowingClick,
-
             )
         }
 

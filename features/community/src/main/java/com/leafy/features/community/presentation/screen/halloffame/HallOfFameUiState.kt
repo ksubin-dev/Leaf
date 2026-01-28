@@ -6,6 +6,5 @@ import com.subin.leafy.domain.model.RankingPeriod
 data class HallOfFameUiState(
     val isLoading: Boolean = false,
     val selectedPeriod: RankingPeriod = RankingPeriod.WEEKLY,
-    val posts: List<CommunityPostUiModel> = emptyList(),
-    val errorMessage: String? = null
+    val posts: List<CommunityPostUiModel> = emptyList()
 )

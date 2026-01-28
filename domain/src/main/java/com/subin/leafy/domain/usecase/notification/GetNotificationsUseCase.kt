@@ -4,8 +4,9 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.Notification
 import com.subin.leafy.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class GetNotificationsUseCase(
+class GetNotificationsUseCase @Inject constructor(
     private val notificationRepository: NotificationRepository
 ) {
     operator fun invoke(): Flow<DataResourceResult<List<Notification>>> {

@@ -1,38 +1,24 @@
 package com.leafy.features.auth.navigation
 
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.leafy.features.auth.ui.login.SignInScreen
 import com.leafy.features.auth.ui.login.SignInViewModel
-import com.leafy.features.auth.ui.login.SignInViewModelFactory
 import com.leafy.features.auth.ui.signup.SignUpScreen
 import com.leafy.features.auth.ui.signup.SignUpViewModel
-import com.leafy.features.auth.ui.signup.SignUpViewModelFactory
-import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
-import com.leafy.shared.utils.ImageCompressor
 
 fun NavGraphBuilder.authNavGraph(
     navController: NavController,
-    container: ApplicationContainer,
     onAuthSuccess: () -> Unit
 ) {
     navigation<MainNavigationRoute.Auth>(startDestination = AuthRoute.Login) {
 
         composable<AuthRoute.Login> {
-            val loginViewModel: SignInViewModel = viewModel(
-                factory = SignInViewModelFactory(
-                    authUseCases = container.authUseCases,
-                    noteUseCases = container.noteUseCases,
-                    settingUseCases = container.settingUseCases,
-                    userUseCases = container.userUseCases
-                )
-            )
+            val loginViewModel: SignInViewModel = hiltViewModel()
 
             SignInScreen(
                 viewModel = loginViewModel,
@@ -42,15 +28,7 @@ fun NavGraphBuilder.authNavGraph(
         }
 
         composable<AuthRoute.SignUp> {
-            val context = LocalContext.current
-            val imageCompressor = remember { ImageCompressor(context) }
-
-            val signUpViewModel: SignUpViewModel = viewModel(
-                factory = SignUpViewModelFactory(
-                    authUseCases = container.authUseCases,
-                    imageCompressor = imageCompressor
-                )
-            )
+            val signUpViewModel: SignUpViewModel = hiltViewModel()
 
             SignUpScreen(
                 viewModel = signUpViewModel,
@@ -60,6 +38,5 @@ fun NavGraphBuilder.authNavGraph(
                 }
             )
         }
-
     }
 }

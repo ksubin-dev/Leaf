@@ -8,7 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.leafy.features.home.presentation.notification.components.NotificationListSection
@@ -18,24 +20,25 @@ import com.leafy.shared.navigation.MainNavigationRoute
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationScreen(
-    viewModel: NotificationViewModel,
     navController: NavController,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when (event) {
-                is NotificationUiEvent.NavigateToPost -> {
-                    navController.navigate(MainNavigationRoute.CommunityDetail(event.postId))
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is NotificationSideEffect.NavigateToPost -> {
+                    navController.navigate(MainNavigationRoute.CommunityDetail(effect.postId))
                 }
-                is NotificationUiEvent.NavigateToProfile -> {
-                    navController.navigate(MainNavigationRoute.UserProfile(event.userId))
+                is NotificationSideEffect.NavigateToProfile -> {
+                    navController.navigate(MainNavigationRoute.UserProfile(effect.userId))
                 }
-                is NotificationUiEvent.ShowMessage -> {
-                    snackbarHostState.showSnackbar(event.message)
+                is NotificationSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -54,15 +57,18 @@ fun NotificationScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
 
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-            if (uiState.isLoading) {
+            if (uiState.isLoading && uiState.notifications.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (uiState.notifications.isEmpty()) {
                 EmptyNotificationView()

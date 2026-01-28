@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.auth.ui.common.AuthButton
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
@@ -57,7 +57,8 @@ fun SignInScreen(
     onNavigateToSignUp: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showNotImplementedDialog by remember { mutableStateOf(false) }
@@ -66,16 +67,16 @@ fun SignInScreen(
         viewModel.loadInitialSettings()
     }
 
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            viewModel.userMessageShown()
-        }
-    }
-
-    LaunchedEffect(uiState.isLoginSuccess) {
-        if (uiState.isLoginSuccess) {
-            onLoginSuccess()
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is SignInSideEffect.NavigateToHome -> {
+                    onLoginSuccess()
+                }
+                is SignInSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+            }
         }
     }
 
@@ -144,7 +145,6 @@ fun SignInContent(
         )
 
         Spacer(modifier = Modifier.height(48.dp))
-
 
         LeafyTextField(
             value = uiState.email,

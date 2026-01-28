@@ -2,18 +2,25 @@ package com.leafy.features.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.ui.mapper.toUiModel
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import com.leafy.shared.ui.mapper.toUiModel
+import javax.inject.Inject
 
-class SearchViewModel(
+sealed interface SearchSideEffect {
+    data class ShowSnackbar(val message: UiText) : SearchSideEffect
+}
+
+@HiltViewModel
+class SearchViewModel @Inject constructor(
     private val postUseCases: PostUseCases,
     private val userUseCases: UserUseCases
 ) : ViewModel() {
@@ -21,28 +28,40 @@ class SearchViewModel(
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState = _uiState.asStateFlow()
 
-    private var searchJob: Job? = null
+    private val _sideEffect = Channel<SearchSideEffect>()
+    val sideEffect: Flow<SearchSideEffect> = _sideEffect.receiveAsFlow()
+
+    private val _queryFlow = MutableStateFlow("")
+
+    init {
+        observeQueryChanges()
+    }
+
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    private fun observeQueryChanges() {
+        _queryFlow
+            .debounce(5000L)
+            .distinctUntilChanged()
+            .filter { it.isNotBlank() }
+            .onEach { query ->
+                performSearch(query)
+            }
+            .launchIn(viewModelScope)
+    }
 
     fun onQueryChange(newQuery: String) {
         _uiState.update { it.copy(query = newQuery) }
 
-        searchJob?.cancel()
+        _queryFlow.value = newQuery
 
         if (newQuery.isBlank()) {
             _uiState.update {
                 it.copy(
                     postResults = emptyList(),
                     userResults = emptyList(),
-                    isLoading = false,
-                    errorMessage = null
+                    isLoading = false
                 )
             }
-            return
-        }
-
-        searchJob = viewModelScope.launch {
-            delay(500L)
-            performSearch()
         }
     }
 
@@ -50,59 +69,62 @@ class SearchViewModel(
         if (_uiState.value.selectedTab == tab) return
         _uiState.update { it.copy(selectedTab = tab) }
 
-        // 탭 변경 시 검색어가 있다면 바로 검색 (기다릴 필요 없음)
-        if (_uiState.value.query.isNotBlank()) {
-            performSearch()
+        val currentQuery = _uiState.value.query
+        if (currentQuery.isNotBlank()) {
+            performSearch(currentQuery)
         }
     }
 
-    fun performSearch() {
+    fun onSearchAction() {
         val query = _uiState.value.query
-        if (query.isBlank()) return
+        if (query.isNotBlank()) {
+            performSearch(query)
+        }
+    }
 
-        searchJob?.cancel()
-
-        searchJob = viewModelScope.launch {
+    private fun performSearch(query: String) {
+        viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     isLoading = true,
-                    errorMessage = null,
                     postResults = if (it.selectedTab == SearchTab.POSTS) emptyList() else it.postResults,
                     userResults = if (it.selectedTab == SearchTab.USERS) emptyList() else it.userResults
                 )
             }
 
             if (_uiState.value.selectedTab == SearchTab.POSTS) {
-                when (val result = postUseCases.searchPosts(query)) {
-                    is DataResourceResult.Success -> {
-                        val uiModels = result.data.map { it.toUiModel() }
-                        _uiState.update {
-                            it.copy(postResults = uiModels, isLoading = false)
-                        }
-                    }
-                    is DataResourceResult.Failure -> {
-                        _uiState.update {
-                            it.copy(isLoading = false, errorMessage = "검색에 실패했습니다.")
-                        }
-                    }
-                    else -> {}
-                }
+                searchPosts(query)
             } else {
-                when (val result = userUseCases.searchUsers(query)) {
-                    is DataResourceResult.Success -> {
-                        val uiModels = result.data.map { it.toUiModel() }
-                        _uiState.update {
-                            it.copy(userResults = uiModels, isLoading = false)
-                        }
-                    }
-                    is DataResourceResult.Failure -> {
-                        _uiState.update {
-                            it.copy(isLoading = false, errorMessage = "검색에 실패했습니다.")
-                        }
-                    }
-                    else -> {}
-                }
+                searchUsers(query)
             }
+        }
+    }
+
+    private suspend fun searchPosts(query: String) {
+        when (val result = postUseCases.searchPosts(query)) {
+            is DataResourceResult.Success -> {
+                val uiModels = result.data.map { it.toUiModel() }
+                _uiState.update { it.copy(postResults = uiModels, isLoading = false) }
+            }
+            is DataResourceResult.Failure -> {
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(SearchSideEffect.ShowSnackbar(UiText.DynamicString("검색 실패")))
+            }
+            else -> { _uiState.update { it.copy(isLoading = false) } }
+        }
+    }
+
+    private suspend fun searchUsers(query: String) {
+        when (val result = userUseCases.searchUsers(query)) {
+            is DataResourceResult.Success -> {
+                val uiModels = result.data.map { it.toUiModel() }
+                _uiState.update { it.copy(userResults = uiModels, isLoading = false) }
+            }
+            is DataResourceResult.Failure -> {
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(SearchSideEffect.ShowSnackbar(UiText.DynamicString("검색 실패")))
+            }
+            else -> { _uiState.update { it.copy(isLoading = false) } }
         }
     }
 
@@ -117,14 +139,9 @@ class SearchViewModel(
             val limit = 20
 
             if (state.selectedTab == SearchTab.POSTS) {
-                val lastId = state.postResults.lastOrNull()?.postId
-
-                if (lastId == null) {
-                    _uiState.update { it.copy(isLoadingMore = false) }
-                    return@launch
-                }
-
+                val lastId = state.postResults.lastOrNull()?.postId ?: return@launch
                 val result = postUseCases.searchPosts(query, lastId, limit)
+
                 if (result is DataResourceResult.Success) {
                     val newItems = result.data.map { it.toUiModel() }
                     _uiState.update { prev ->
@@ -138,13 +155,9 @@ class SearchViewModel(
                     _uiState.update { it.copy(isLoadingMore = false) }
                 }
             } else {
-                val lastId = state.userResults.lastOrNull()?.userId
-                if (lastId == null) {
-                    _uiState.update { it.copy(isLoadingMore = false) }
-                    return@launch
-                }
-
+                val lastId = state.userResults.lastOrNull()?.userId ?: return@launch
                 val result = userUseCases.searchUsers(query, lastId, limit)
+
                 if (result is DataResourceResult.Success) {
                     val newItems = result.data.map { it.toUiModel() }
                     _uiState.update { prev ->
@@ -159,5 +172,9 @@ class SearchViewModel(
                 }
             }
         }
+    }
+
+    private fun sendEffect(effect: SearchSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 }

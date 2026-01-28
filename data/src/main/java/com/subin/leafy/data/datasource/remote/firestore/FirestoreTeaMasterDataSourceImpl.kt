@@ -11,8 +11,9 @@ import com.subin.leafy.domain.model.TeaMaster
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import javax.inject.Inject
 
-class FirestoreTeaMasterDataSourceImpl(
+class FirestoreTeaMasterDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : TeaMasterDataSource {
 

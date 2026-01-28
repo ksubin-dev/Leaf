@@ -11,44 +11,48 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.community.presentation.components.bar.CommentInputBar
 import com.leafy.features.community.presentation.components.item.CommentItem
-import com.leafy.shared.ui.model.CommentUiModel
-import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyDialog
 
 @Composable
 fun CommunityPostDetailRoute(
-    viewModel: CommunityPostDetailViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToNoteDetail: (String) -> Unit,
-    onNavigateToUserProfile: (String) -> Unit
+    onNavigateToUserProfile: (String) -> Unit,
+    viewModel: CommunityPostDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is PostDetailSideEffect.NavigateBack -> onNavigateBack()
+                is PostDetailSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
+        }
+    }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refresh()
     }
 
-    LaunchedEffect(uiState.post, uiState.isLoading, uiState.errorMessage) {
-        if (!uiState.isLoading && uiState.post == null && uiState.errorMessage != null) {
-            onNavigateBack()
-        }
-    }
-
     CommunityPostDetailScreen(
-        post = uiState.post,
-        comments = uiState.comments,
-        commentInput = uiState.commentInput,
-        currentUserProfileUrl = uiState.currentUserProfileUrl,
-        isLoading = uiState.isLoading,
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
         onInputChange = viewModel::updateCommentInput,
         onSendComment = viewModel::sendComment,
@@ -63,11 +67,8 @@ fun CommunityPostDetailRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityPostDetailScreen(
-    post: CommunityPostUiModel?,
-    comments: List<CommentUiModel>,
-    commentInput: String,
-    currentUserProfileUrl: String?,
-    isLoading: Boolean,
+    uiState: CommunityPostDetailUiState,
+    snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onInputChange: (String) -> Unit,
     onSendComment: () -> Unit,
@@ -98,6 +99,7 @@ fun CommunityPostDetailScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("게시글", fontWeight = FontWeight.Bold) },
@@ -111,26 +113,34 @@ fun CommunityPostDetailScreen(
                         Icon(Icons.Rounded.MoreVert, contentDescription = "더보기")
                     }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         bottomBar = {
             CommentInputBar(
-                input = commentInput,
+                input = uiState.commentInput,
                 onInputChange = onInputChange,
                 onSend = {
                     onSendComment()
                     keyboardController?.hide()
                 },
-                currentUserProfileUrl = currentUserProfileUrl,
-                isLoading = isLoading
+                currentUserProfileUrl = uiState.currentUserProfileUrl,
+                isLoading = uiState.isSendingComment
             )
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
-        if (post == null) {
+        if (uiState.isLoading && uiState.post == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
+            }
+        } else if (uiState.post == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("게시글을 찾을 수 없습니다.")
             }
         } else {
             LazyColumn(
@@ -141,7 +151,7 @@ fun CommunityPostDetailScreen(
             ) {
                 item {
                     PostDetailContent(
-                        post = post,
+                        post = uiState.post,
                         onLikeClick = onLikeClick,
                         onBookmarkClick = onBookmarkClick,
                         onOriginNoteClick = onOriginNoteClick,
@@ -152,13 +162,13 @@ fun CommunityPostDetailScreen(
                 item {
                     HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                     Text(
-                        text = "댓글 ${comments.size}",
+                        text = "댓글 ${uiState.comments.size}",
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
                     )
                 }
 
-                if (comments.isEmpty()) {
+                if (uiState.comments.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier
@@ -171,7 +181,7 @@ fun CommunityPostDetailScreen(
                     }
                 } else {
                     items(
-                        items = comments,
+                        items = uiState.comments,
                         key = { it.commentId }
                     ) { comment ->
                         CommentItem(

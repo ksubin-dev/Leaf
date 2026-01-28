@@ -18,9 +18,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class PostRepositoryImpl(
+class PostRepositoryImpl @Inject constructor(
     private val authDataSource: AuthDataSource,
     private val postDataSource: PostDataSource,
     private val userDataSource: UserDataSource,

@@ -3,8 +3,11 @@ package com.subin.leafy.domain.usecase.post
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.CommunityPost
 import com.subin.leafy.domain.repository.PostRepository
+import javax.inject.Inject
 
-class SearchPostsUseCase(private val postRepository: PostRepository) {
+class SearchPostsUseCase @Inject constructor(
+    private val postRepository: PostRepository
+) {
     suspend operator fun invoke(
         query: String,
         lastPostId: String? = null,

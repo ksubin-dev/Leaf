@@ -7,57 +7,50 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.leafy.features.community.presentation.components.bar.CommunityTab
 import com.leafy.features.community.presentation.components.bar.CustomExploreTabRow
 import com.leafy.features.community.presentation.screen.feed.section.CommunityFollowingFeedSection
 import com.leafy.features.community.presentation.screen.feed.section.CommunityMostBookmarkedSection
 import com.leafy.features.community.presentation.screen.feed.section.CommunityPopularSection
 import com.leafy.features.community.presentation.screen.feed.section.CommunityTeaMasterSection
+import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.ui.model.UserUiModel
-import com.leafy.features.community.presentation.components.bar.CommunityTab
-import com.leafy.shared.common.singleClick
-import com.subin.leafy.domain.usecase.PostUseCases
-import com.subin.leafy.domain.usecase.UserUseCases
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityScreen(
-    postUseCases: PostUseCases,
-    userUseCases: UserUseCases,
     onPostClick: (String) -> Unit,
     onMasterClick: (String) -> Unit,
     onMorePopularClick: () -> Unit = {},
     onMoreBookmarkClick: () -> Unit = {},
-    onMoreMasterClick: () -> Unit = {}
+    onMoreMasterClick: () -> Unit = {},
+    viewModel: CommunityFeedViewModel = hiltViewModel()
 ) {
-
-    val viewModel: CommunityFeedViewModel = viewModel(
-        factory = CommunityFeedViewModelFactory.provide(postUseCases, userUseCases)
-    )
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.sideEffects.collect { effect ->
+        viewModel.sideEffect.collect { effect ->
             when (effect) {
                 is CommunityFeedSideEffect.HideKeyboard -> {
                     keyboardController?.hide()
                 }
-            }
-        }
-    }
+                is CommunityFeedSideEffect.ShowSnackbar -> {
+                    val message = effect.message.asString(context)
 
-    LaunchedEffect(Unit) {
-        viewModel.userMessage.collect { message ->
-            snackbarHostState.currentSnackbarData?.dismiss()
-            snackbarHostState.showSnackbar(message)
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
         }
     }
 
@@ -124,20 +117,6 @@ fun CommunityScreen(
             }
         }
     }
-
-//    if (uiState.showCommentSheet) {
-//        NoteCommentBottomSheet(
-//            onDismissRequest = viewModel::hideComments,
-//            comments = uiState.comments,
-//            currentUserProfileUrl = uiState.currentUserProfileUrl,
-//            isLoading = uiState.isCommentLoading,
-//            commentInput = uiState.commentInput,
-//            onInputChange = viewModel::updateCommentInput,
-//            onSendComment = viewModel::addComment,
-//            onDeleteComment = viewModel::deleteComment,
-//            onUserProfileClick = onMasterClick
-//        )
-//    }
 }
 
 @Composable

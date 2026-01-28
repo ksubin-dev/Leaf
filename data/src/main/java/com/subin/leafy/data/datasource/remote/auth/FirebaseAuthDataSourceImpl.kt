@@ -4,8 +4,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class FirebaseAuthDataSourceImpl(
+class FirebaseAuthDataSourceImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth
 ) : AuthDataSource {
 

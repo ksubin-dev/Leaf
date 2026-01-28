@@ -3,8 +3,9 @@ package com.subin.leafy.domain.usecase.auth
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.repository.AuthRepository
+import javax.inject.Inject
 
-class SignUpUseCase(
+class SignUpUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
     suspend operator fun invoke(
@@ -14,7 +15,6 @@ class SignUpUseCase(
         profileImageUri: String? = null
     ): DataResourceResult<User> {
 
-        // 1. 비즈니스 로직 (유효성 검사)
         if (email.isBlank() || !email.contains("@")) {
             return DataResourceResult.Failure(Exception("올바른 이메일 형식을 입력해주세요."))
         }
@@ -24,7 +24,6 @@ class SignUpUseCase(
         if (nickname.isBlank()) {
             return DataResourceResult.Failure(Exception("닉네임을 입력해주세요."))
         }
-        // 2. 검사 통과 시 레포지토리 호출
         return authRepository.signUp(
             email = email,
             password = password,

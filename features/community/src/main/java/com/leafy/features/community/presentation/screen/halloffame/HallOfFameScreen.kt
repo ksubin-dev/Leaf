@@ -11,9 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.community.presentation.components.card.CommunityCompactCard
 import com.leafy.features.community.presentation.screen.halloffame.component.HallOfFameTopCard
 import com.leafy.shared.ui.model.CommunityPostUiModel
@@ -22,14 +25,27 @@ import com.subin.leafy.domain.model.RankingPeriod
 
 @Composable
 fun HallOfFameScreen(
-    viewModel: HallOfFameViewModel,
     onBackClick: () -> Unit,
-    onPostClick: (String) -> Unit
+    onPostClick: (String) -> Unit,
+    viewModel: HallOfFameViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is HallOfFameSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
+        }
+    }
 
     HallOfFameContent(
         uiState = uiState,
+        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onTabSelected = viewModel::updatePeriod,
         onPostClick = onPostClick,
@@ -41,6 +57,7 @@ fun HallOfFameScreen(
 @Composable
 fun HallOfFameContent(
     uiState: HallOfFameUiState,
+    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onTabSelected: (RankingPeriod) -> Unit,
     onPostClick: (String) -> Unit,
@@ -68,7 +85,8 @@ fun HallOfFameContent(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) } // [연결]
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
 

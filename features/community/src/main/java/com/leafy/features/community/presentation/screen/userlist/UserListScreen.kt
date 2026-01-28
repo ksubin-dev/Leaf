@@ -8,48 +8,60 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.shared.common.singleClick
-import com.leafy.shared.ui.component.CommunityTeaMasterCard
-import com.leafy.shared.di.ApplicationContainer
-import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.navigation.UserListType
+import com.leafy.shared.ui.component.CommunityTeaMasterCard
+import com.leafy.shared.ui.model.UserUiModel
+
+@Composable
+fun UserListRoute(
+    onBackClick: () -> Unit,
+    onUserClick: (String) -> Unit,
+    viewModel: UserListViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is UserListSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
+        }
+    }
+
+    UserListScreen(
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
+        onBackClick = onBackClick,
+        onUserClick = onUserClick,
+        onFollowToggle = viewModel::toggleFollow
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserListScreen(
-    navController: NavController,
-    container: ApplicationContainer,
-    userId: String,
-    type: UserListType
+    uiState: UserListUiState,
+    snackbarHostState: SnackbarHostState,
+    onBackClick: () -> Unit,
+    onUserClick: (String) -> Unit,
+    onFollowToggle: (UserUiModel) -> Unit
 ) {
-    val viewModel: UserListViewModel = viewModel(
-        factory = UserListViewModelFactory(container.userUseCases)
-    )
-
-    val uiState by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(userId, type) {
-        viewModel.loadUserList(userId, type)
-    }
-
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-        }
-    }
-
-    val title = when (type) {
+    val title = when (uiState.listType) {
         UserListType.FOLLOWER -> "팔로워"
         UserListType.FOLLOWING -> "팔로잉"
     }
@@ -64,7 +76,7 @@ fun UserListScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = singleClick { navController.popBackStack() }) {
+                    IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -82,8 +94,7 @@ fun UserListScreen(
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            else if (uiState.users.isEmpty()) {
+            } else if (uiState.users.isEmpty()) {
                 Text(
                     text = "아직 ${title}가 없습니다.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -91,8 +102,7 @@ fun UserListScreen(
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center
                 )
-            }
-            else {
+            } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
@@ -102,12 +112,8 @@ fun UserListScreen(
                         CommunityTeaMasterCard(
                             master = user,
                             currentUserId = uiState.currentUserId,
-                            onClick = singleClick {
-                                navController.navigate(MainNavigationRoute.UserProfile(userId = user.userId))
-                            },
-                            onFollowToggle = {
-                                viewModel.toggleFollow(user)
-                            }
+                            onClick = singleClick { onUserClick(user.userId) },
+                            onFollowToggle = { onFollowToggle(user) }
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(top = 16.dp),

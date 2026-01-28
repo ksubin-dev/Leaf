@@ -1,4 +1,4 @@
-package com.leafy.features.mypage.presentation.tea
+package com.leafy.features.mypage.presentation.tea.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.leafy.shared.common.clickableSingle
@@ -28,18 +30,22 @@ import com.subin.leafy.domain.model.TeaItem
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyTeaListScreen(
-    viewModel: MyTeaListViewModel,
     onBackClick: () -> Unit,
     onAddTeaClick: () -> Unit,
-    onTeaClick: (String) -> Unit
+    onTeaClick: (String) -> Unit,
+    viewModel: MyTeaListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.onMessageShown()
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is MyTeaListSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
         }
     }
 
@@ -170,7 +176,6 @@ fun TeaListItem(
                         color = MaterialTheme.colorScheme.tertiaryContainer,
                         shape = RoundedCornerShape(4.dp)
                     ) {
-                        // [수정] tea.type.name -> tea.type.label (한글 표시)
                         Text(
                             text = tea.type.label,
                             style = MaterialTheme.typography.labelSmall,

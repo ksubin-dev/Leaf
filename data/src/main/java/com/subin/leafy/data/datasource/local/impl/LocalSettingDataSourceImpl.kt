@@ -13,9 +13,11 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Named
 
-class LocalSettingDataSourceImpl(
-    private val dataStore: DataStore<Preferences>
+class LocalSettingDataSourceImpl @Inject constructor(
+    @Named("settings") private val dataStore: DataStore<Preferences>
 ) : LocalSettingDataSource {
 
     companion object {

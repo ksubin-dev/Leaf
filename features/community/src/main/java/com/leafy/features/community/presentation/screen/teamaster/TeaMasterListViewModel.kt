@@ -4,21 +4,37 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.UserUiModel
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class TeaMasterListViewModel(
+sealed interface TeaMasterListSideEffect {
+    data class ShowSnackbar(val message: UiText) : TeaMasterListSideEffect
+}
+
+data class TeaMasterListUiState(
+    val isLoading: Boolean = true,
+    val masters: List<UserUiModel> = emptyList(),
+    val currentUserId: String? = null
+)
+
+@HiltViewModel
+class TeaMasterListViewModel @Inject constructor(
     private val postUseCases: PostUseCases,
     private val userUseCases: UserUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TeaMasterListUiState())
     val uiState = _uiState.asStateFlow()
+
+    private val _sideEffect = Channel<TeaMasterListSideEffect>()
+    val sideEffect: Flow<TeaMasterListSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         loadData()
@@ -42,9 +58,8 @@ class TeaMasterListViewModel(
                         )
                     }
                 } else {
-                    _uiState.update {
-                        it.copy(isLoading = false, errorMessage = "데이터를 불러오지 못했습니다.")
-                    }
+                    _uiState.update { it.copy(isLoading = false) }
+                    sendEffect(TeaMasterListSideEffect.ShowSnackbar(UiText.DynamicString("데이터를 불러오지 못했습니다.")))
                 }
             }
         }
@@ -66,10 +81,13 @@ class TeaMasterListViewModel(
         viewModelScope.launch {
             val result = userUseCases.followUser(targetUser.userId, nextState)
             if (result is DataResourceResult.Failure) {
-                _uiState.update { state ->
-                    state.copy(masters = currentList)
-                }
+                _uiState.update { state -> state.copy(masters = currentList) }
+                sendEffect(TeaMasterListSideEffect.ShowSnackbar(UiText.DynamicString("팔로우 변경 실패")))
             }
         }
+    }
+
+    private fun sendEffect(effect: TeaMasterListSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 }

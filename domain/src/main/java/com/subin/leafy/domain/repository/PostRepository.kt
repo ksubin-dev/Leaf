@@ -25,10 +25,6 @@ sealed class PostChangeEvent {
 
 interface PostRepository {
 
-    // =================================================================
-    // 1. 피드 조회 (Read)
-    // =================================================================
-
     fun getWeeklyRanking(teaType: TeaType?): Flow<DataResourceResult<List<RankingItem>>>
 
     fun getPopularPosts(limit: Int = 20): Flow<DataResourceResult<List<CommunityPost>>>
@@ -47,17 +43,7 @@ interface PostRepository {
         limit: Int = 20
     ): DataResourceResult<List<CommunityPost>>
 
-
-    // =================================================================
-    // 2. 티 마스터
-    // =================================================================
-
     fun getRecommendedMasters(limit: Int = 10): Flow<DataResourceResult<List<TeaMaster>>>
-
-
-    // =================================================================
-    // 3. CRUD
-    // =================================================================
 
     suspend fun createPost(
         postId: String,
@@ -75,23 +61,12 @@ interface PostRepository {
 
     suspend fun deletePost(postId: String): DataResourceResult<Unit>
 
-
-    // =================================================================
-    // 4. 댓글
-    // =================================================================
-
     fun getComments(postId: String): Flow<DataResourceResult<List<Comment>>>
 
     suspend fun addComment(postId: String, content: String): DataResourceResult<Unit>
 
     suspend fun deleteComment(postId: String, commentId: String): DataResourceResult<Unit>
 
-
-    // =================================================================
-    // 5. 소셜 액션 (Action)
-    // =================================================================
-
-    // [이벤트 방송용 Flow]
     val postChangeFlow: Flow<PostChangeEvent>
 
     suspend fun toggleLike(postId: String): DataResourceResult<Unit>
@@ -99,10 +74,6 @@ interface PostRepository {
     suspend fun toggleBookmark(postId: String): DataResourceResult<Unit>
 
     suspend fun incrementViewCount(postId: String): DataResourceResult<Unit>
-
-    // =================================================================
-    // 6. 마이페이지용 목록
-    // =================================================================
 
     fun getMyLikedPosts(): Flow<DataResourceResult<List<CommunityPost>>>
 
