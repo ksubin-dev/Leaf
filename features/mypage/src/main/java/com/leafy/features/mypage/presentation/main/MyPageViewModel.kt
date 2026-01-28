@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.leafy.shared.R
 import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.shared.utils.ImageCompressor
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.User
@@ -17,18 +18,22 @@ import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.TeaUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import com.subin.leafy.domain.usecase.user.FollowType
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import javax.inject.Inject
 
-class MyPageViewModel(
+sealed interface MyPageSideEffect {
+    data class ShowSnackbar(val message: UiText) : MyPageSideEffect
+}
+
+@HiltViewModel
+class MyPageViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val noteUseCases: NoteUseCases,
     private val postUseCases: PostUseCases,
@@ -41,8 +46,14 @@ class MyPageViewModel(
     private val _uiState = MutableStateFlow(MyPageUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _sideEffect = Channel<MyPageSideEffect>()
+    val sideEffect: Flow<MyPageSideEffect> = _sideEffect.receiveAsFlow()
+
+    private val _currentCalendarDate = MutableStateFlow(LocalDate.now())
+
     init {
         loadInitialData()
+        observeCalendarData()
     }
 
     private fun loadInitialData() {
@@ -53,128 +64,46 @@ class MyPageViewModel(
             launch { teaUseCases.syncTeas() }
 
             loadMyProfile()
+
             val result = userUseCases.getCurrentUserId()
             val userId = if (result is DataResourceResult.Success) result.data else null
+
             if (userId != null) {
                 loadAnalysisData(userId)
-                loadCalendarData(userId, LocalDate.now())
                 loadSavedLists()
                 loadFollowLists(userId)
-
                 loadTeaStats()
             }
+
             _uiState.update { it.copy(isLoading = false) }
         }
     }
 
-    private fun loadTeaStats() {
-        viewModelScope.launch {
-            teaUseCases.getTeaCount().collectLatest { count ->
-                _uiState.update { it.copy(myTeaCabinetCount = count) }
-            }
-        }
-    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeCalendarData() {
+        _currentCalendarDate
+            .map { it.year to it.monthValue }
+            .distinctUntilChanged()
+            .flatMapLatest { (year, month) ->
+                val userIdResult = userUseCases.getCurrentUserId()
+                val userId = if (userIdResult is DataResourceResult.Success) userIdResult.data else ""
 
-    private fun loadMyProfile() {
-        userUseCases.getMyProfile().onEach { result ->
-            if (result is DataResourceResult.Success) {
-                _uiState.update {
-                    it.copy(
-                        myProfile = result.data,
-                        followerCount = result.data.socialStats.followerCount,
-                        followingCount = result.data.socialStats.followingCount
+                if (userId.isNotEmpty()) {
+                    noteUseCases.getNotesByMonth(userId, year, month)
+                } else {
+                    flowOf(emptyList())
+                }
+            }
+            .onEach { notes ->
+                _uiState.update { state ->
+                    val selectedNotes = filterNotesByDate(notes, state.selectedDate)
+                    state.copy(
+                        calendarNotes = notes,
+                        selectedDateNotes = selectedNotes
                     )
                 }
             }
-        }.launchIn(viewModelScope)
-    }
-
-    private fun loadAnalysisData(userId: String) {
-        viewModelScope.launch {
-            analysisUseCases.getUserAnalysis(userId).collectLatest { analysis ->
-                val (content, icon) = generateRandomInsight(analysis)
-
-                _uiState.update {
-                    it.copy(
-                        userAnalysis = analysis,
-                        analysisTeaserContent = content,
-                        analysisTeaserIconRes = icon
-                    )
-                }
-            }
-        }
-    }
-
-    private fun generateRandomInsight(data: UserAnalysis): Pair<String?, Int?> {
-        if (data.totalBrewingCount == 0) {
-            return "아직 분석할 데이터가 없어요. 차를 마셔보세요!" to R.drawable.ic_leaf
-        }
-
-        val insights = mutableListOf<Pair<String, Int>>()
-
-        if (data.preferredTimeSlot.isNotBlank()) {
-            insights.add("주로 ${data.preferredTimeSlot} 시간대에 차를 즐깁니다." to R.drawable.ic_clock)
-        }
-
-        if (data.averageBrewingTime.isNotBlank()) {
-            insights.add("평균 브루잉 시간은 ${data.averageBrewingTime} 입니다." to R.drawable.ic_timer)
-        }
-
-        if (data.preferredTemperature > 0) {
-            insights.add("가장 선호하는 물 온도는 ${data.preferredTemperature}°C 입니다." to R.drawable.ic_temp)
-        }
-
-        if (!data.favoriteTeaType.isNullOrBlank() && data.favoriteTeaType != "-") {
-            insights.add("요즘은 '${data.favoriteTeaType}'를 가장 많이 드셨네요." to R.drawable.ic_note_photo_teaware)
-        }
-
-        if (data.currentStreakDays > 2) {
-            insights.add("${data.currentStreakDays}일째 연속으로 차를 마시고 계시네요!" to R.drawable.ic_weather_clear)
-        }
-
-        if (insights.isEmpty()) return null to null
-
-        return insights.random()
-    }
-
-    private fun loadCalendarData(userId: String, date: LocalDate) {
-        viewModelScope.launch {
-            noteUseCases.getNotesByMonth(userId, date.year, date.monthValue)
-                .collectLatest { notes ->
-                    val selectedNotes = filterNotesByDate(notes, _uiState.value.selectedDate)
-                    _uiState.update {
-                        it.copy(
-                            calendarNotes = notes,
-                            selectedDateNotes = selectedNotes
-                        )
-                    }
-                }
-        }
-    }
-
-    private fun loadSavedLists() {
-        viewModelScope.launch {
-            postUseCases.getBookmarkedPosts().collectLatest { result ->
-                if (result is DataResourceResult.Success) {
-                    _uiState.update { it.copy(bookmarkedPosts = result.data) }
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            postUseCases.getLikedPosts().collectLatest { result ->
-                if (result is DataResourceResult.Success) {
-                    _uiState.update { it.copy(likedPosts = result.data) }
-                }
-            }
-        }
-    }
-
-    fun onDateSelected(date: LocalDate) {
-        val filtered = filterNotesByDate(_uiState.value.calendarNotes, date)
-        _uiState.update {
-            it.copy(selectedDate = date, selectedDateNotes = filtered)
-        }
+            .launchIn(viewModelScope)
     }
 
     fun onMonthChanged(newDate: LocalDate) {
@@ -185,17 +114,65 @@ class MyPageViewModel(
                 selectedDate = newDate
             )
         }
-        val userId = _uiState.value.myProfile?.id ?: return
-        loadCalendarData(userId, newDate)
+        _currentCalendarDate.value = newDate
     }
 
-    private fun filterNotesByDate(notes: List<BrewingNote>, date: LocalDate): List<BrewingNote> {
-        return notes.filter { note ->
-            val noteDate = Instant.ofEpochMilli(note.date)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
-            noteDate == date
-        }
+
+    private fun loadTeaStats() {
+        teaUseCases.getTeaCount()
+            .onEach { count ->
+                _uiState.update { it.copy(myTeaCabinetCount = count) }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadMyProfile() {
+        userUseCases.getMyProfile()
+            .onEach { result ->
+                if (result is DataResourceResult.Success) {
+                    _uiState.update {
+                        it.copy(
+                            myProfile = result.data,
+                            followerCount = result.data.socialStats.followerCount,
+                            followingCount = result.data.socialStats.followingCount
+                        )
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadAnalysisData(userId: String) {
+        analysisUseCases.getUserAnalysis(userId)
+            .onEach { analysis ->
+                val (content, icon) = generateRandomInsight(analysis)
+                _uiState.update {
+                    it.copy(
+                        userAnalysis = analysis,
+                        analysisTeaserContent = content,
+                        analysisTeaserIconRes = icon
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadSavedLists() {
+        postUseCases.getBookmarkedPosts()
+            .onEach { result ->
+                if (result is DataResourceResult.Success) {
+                    _uiState.update { it.copy(bookmarkedPosts = result.data) }
+                }
+            }
+            .launchIn(viewModelScope)
+
+        postUseCases.getLikedPosts()
+            .onEach { result ->
+                if (result is DataResourceResult.Success) {
+                    _uiState.update { it.copy(likedPosts = result.data) }
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun loadFollowLists(userIdParam: String? = null) {
@@ -207,9 +184,7 @@ class MyPageViewModel(
                 val uiModels = followerResult.data.map { it.toUiModel() }
                 _uiState.update { it.copy(followerList = uiModels) }
             }
-        }
 
-        viewModelScope.launch {
             val followingResult = userUseCases.getFollowList(userId, FollowType.FOLLOWING)
             if (followingResult is DataResourceResult.Success) {
                 val uiModels = followingResult.data.map { it.toUiModel() }
@@ -218,13 +193,17 @@ class MyPageViewModel(
         }
     }
 
+    fun onDateSelected(date: LocalDate) {
+        val filtered = filterNotesByDate(_uiState.value.calendarNotes, date)
+        _uiState.update { it.copy(selectedDate = date, selectedDateNotes = filtered) }
+    }
+
     fun toggleFollow(targetUserId: String) {
         viewModelScope.launch {
             val targetUser = _uiState.value.followingList.find { it.userId == targetUserId }
                 ?: _uiState.value.followerList.find { it.userId == targetUserId }
 
             val isCurrentlyFollowing = targetUser?.isFollowing ?: false
-
             val newStatus = !isCurrentlyFollowing
 
             val result = userUseCases.followUser(targetUserId, newStatus)
@@ -232,21 +211,21 @@ class MyPageViewModel(
             if (result is DataResourceResult.Success) {
                 loadFollowLists()
                 loadMyProfile()
+            } else {
+                sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("팔로우 요청 실패")))
             }
         }
     }
 
     fun toggleEditProfileMode() {
         _uiState.update { currentState ->
-            val isEditing = !currentState.isEditingProfile
-            if (isEditing) {
+            if (!currentState.isEditingProfile) {
                 currentState.copy(
                     isEditingProfile = true,
                     editNickname = currentState.myProfile?.nickname ?: "",
                     editBio = currentState.myProfile?.bio ?: "",
                     editProfileImageUri = null,
-                    isNicknameValid = true,
-                    profileEditMessage = null
+                    isNicknameValid = true
                 )
             } else {
                 currentState.copy(isEditingProfile = false)
@@ -279,7 +258,7 @@ class MyPageViewModel(
         val currentState = _uiState.value
 
         if (!currentState.isNicknameValid) {
-            _uiState.update { it.copy(profileEditMessage = "닉네임을 확인해주세요.") }
+            sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("닉네임을 확인해주세요.")))
             return
         }
 
@@ -291,25 +270,19 @@ class MyPageViewModel(
             if (currentState.editProfileImageUri != null) {
                 try {
                     val compressedUriString = imageCompressor.compressImage(currentState.editProfileImageUri.toString())
-
-                    val uploadResult = imageUseCases.uploadImage(
-                        compressedUriString,
-                        "profile_images"
-                    )
+                    val uploadResult = imageUseCases.uploadImage(compressedUriString, "profile_images")
 
                     if (uploadResult is DataResourceResult.Success) {
                         profileImageUrl = uploadResult.data
                     } else {
-                        val errorMsg = (uploadResult as DataResourceResult.Failure).exception.message
-                        _uiState.update {
-                            it.copy(isLoading = false, profileEditMessage = "이미지 업로드 실패: $errorMsg")
-                        }
+                        val errorMsg = (uploadResult as DataResourceResult.Failure).exception.message ?: "이미지 업로드 실패"
+                        sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString(errorMsg)))
+                        _uiState.update { it.copy(isLoading = false) }
                         return@launch
                     }
                 } catch (e: Exception) {
-                    _uiState.update {
-                        it.copy(isLoading = false, profileEditMessage = "이미지 처리 중 오류 발생: ${e.message}")
-                    }
+                    sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("이미지 처리 오류: ${e.message}")))
+                    _uiState.update { it.copy(isLoading = false) }
                     return@launch
                 }
             }
@@ -320,31 +293,37 @@ class MyPageViewModel(
                 profileUrl = profileImageUrl
             )
 
-            if (updateResult is DataResourceResult.Failure) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        profileEditMessage = updateResult.exception.message ?: "프로필 수정 실패"
-                    )
-                }
-                return@launch
-            }
-
             if (updateResult is DataResourceResult.Success) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        isEditingProfile = false,
-                        profileEditMessage = "프로필이 수정되었습니다."
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, isEditingProfile = false) }
+                sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("프로필이 수정되었습니다.")))
                 loadMyProfile()
+            } else {
+                val errorMsg = (updateResult as DataResourceResult.Failure).exception.message ?: "프로필 수정 실패"
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString(errorMsg)))
             }
         }
     }
 
-    fun onProfileMessageShown() {
-        _uiState.update { it.copy(profileEditMessage = null) }
+    private fun generateRandomInsight(data: UserAnalysis): Pair<String?, Int?> {
+        if (data.totalBrewingCount == 0) return "아직 분석할 데이터가 없어요. 차를 마셔보세요!" to R.drawable.ic_leaf
+        val insights = mutableListOf<Pair<String, Int>>()
+        if (data.preferredTimeSlot.isNotBlank()) insights.add("주로 ${data.preferredTimeSlot} 시간대에 차를 즐깁니다." to R.drawable.ic_clock)
+        if (data.averageBrewingTime.isNotBlank()) insights.add("평균 브루잉 시간은 ${data.averageBrewingTime} 입니다." to R.drawable.ic_timer)
+        if (data.preferredTemperature > 0) insights.add("가장 선호하는 물 온도는 ${data.preferredTemperature}°C 입니다." to R.drawable.ic_temp)
+        if (!data.favoriteTeaType.isNullOrBlank() && data.favoriteTeaType != "-") insights.add("요즘은 '${data.favoriteTeaType}'를 가장 많이 드셨네요." to R.drawable.ic_note_photo_teaware)
+        if (data.currentStreakDays > 2) insights.add("${data.currentStreakDays}일째 연속으로 차를 마시고 계시네요!" to R.drawable.ic_weather_clear)
+        return if (insights.isEmpty()) null to null else insights.random()
+    }
+
+    private fun filterNotesByDate(notes: List<BrewingNote>, date: LocalDate): List<BrewingNote> {
+        return notes.filter { note ->
+            Instant.ofEpochMilli(note.date).atZone(ZoneId.systemDefault()).toLocalDate() == date
+        }
+    }
+
+    private fun sendEffect(effect: MyPageSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 
     private fun User.toUiModel(): UserUiModel {

@@ -2,9 +2,9 @@ package com.leafy.features.note.navigation
 
 
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -37,7 +37,8 @@ fun NavGraphBuilder.noteNavGraph(
         }
 
         val savedStateHandle = backStackEntry.savedStateHandle
-        val brewingResult by savedStateHandle.getStateFlow<String?>("brewing_result", null).collectAsState()
+        val brewingResult by savedStateHandle.getStateFlow<String?>("brewing_result", null)
+            .collectAsStateWithLifecycle()
 
         LaunchedEffect(brewingResult) {
             brewingResult?.let { json ->

@@ -1,26 +1,31 @@
-package com.leafy.features.mypage.presentation.tea
+package com.leafy.features.mypage.presentation.tea.edit
 
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.utils.ImageCompressor
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TeaItem
 import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.TeaUseCases
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
+import javax.inject.Inject
+
+sealed interface TeaAddEditSideEffect {
+    data class ShowSnackbar(val message: UiText) : TeaAddEditSideEffect
+    data object SaveSuccess : TeaAddEditSideEffect
+    data object DeleteSuccess : TeaAddEditSideEffect
+}
 
 data class TeaAddEditUiState(
     val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val isTeaSaved: Boolean = false,
-
     val teaId: String? = null,
     val selectedImageUri: Uri? = null,
     val currentImageUrl: String? = null,
@@ -31,22 +36,25 @@ data class TeaAddEditUiState(
     val stockQuantity: String = "",
     val memo: String = ""
 ) {
-
     val isFormValid: Boolean
         get() = brand.isNotBlank() && name.isNotBlank()
 }
 
-class TeaAddEditViewModel(
+@HiltViewModel
+class TeaAddEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val teaUseCases: TeaUseCases,
     private val imageUseCases: ImageUseCases,
     private val imageCompressor: ImageCompressor
 ) : ViewModel() {
 
+    private val teaIdArg: String? = savedStateHandle["teaId"]
+
     private val _uiState = MutableStateFlow(TeaAddEditUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val teaIdArg: String? = savedStateHandle["teaId"]
+    private val _sideEffect = Channel<TeaAddEditSideEffect>()
+    val sideEffect: Flow<TeaAddEditSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         if (!teaIdArg.isNullOrBlank() && teaIdArg != "null") {
@@ -62,7 +70,6 @@ class TeaAddEditViewModel(
 
             if (result is DataResourceResult.Success) {
                 val tea = result.data
-
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -77,12 +84,8 @@ class TeaAddEditViewModel(
                     )
                 }
             } else {
-                val errorMsg = (result as? DataResourceResult.Failure)?.exception?.message
-                    ?: "차 정보를 불러올 수 없습니다."
-
-                _uiState.update {
-                    it.copy(isLoading = false, errorMessage = errorMsg)
-                }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString("차 정보를 불러올 수 없습니다.")))
             }
         }
     }
@@ -96,7 +99,6 @@ class TeaAddEditViewModel(
     fun onOriginChange(text: String) { _uiState.update { it.copy(origin = text) } }
     fun onStockChange(text: String) { _uiState.update { it.copy(stockQuantity = text) } }
     fun onMemoChange(text: String) { _uiState.update { it.copy(memo = text) } }
-
 
     fun saveTea() {
         if (!_uiState.value.isFormValid) return
@@ -116,7 +118,8 @@ class TeaAddEditViewModel(
                         throw Exception("이미지 업로드 실패")
                     }
                 } catch (e: Exception) {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "이미지 처리 오류") }
+                    _uiState.update { it.copy(isLoading = false) }
+                    sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString(e.message ?: "이미지 처리 오류")))
                     return@launch
                 }
             }
@@ -135,10 +138,12 @@ class TeaAddEditViewModel(
 
             val result = teaUseCases.saveTea(teaToSave)
             if (result is DataResourceResult.Success) {
-                _uiState.update { it.copy(isLoading = false, isTeaSaved = true) }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(TeaAddEditSideEffect.SaveSuccess)
             } else {
                 val errorMsg = (result as DataResourceResult.Failure).exception.message
-                _uiState.update { it.copy(isLoading = false, errorMessage = errorMsg ?: "저장 실패") }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString(errorMsg ?: "저장 실패")))
             }
         }
     }
@@ -149,14 +154,16 @@ class TeaAddEditViewModel(
             _uiState.update { it.copy(isLoading = true) }
             val result = teaUseCases.deleteTea(teaId)
             if (result is DataResourceResult.Success) {
-                _uiState.update { it.copy(isLoading = false, isTeaSaved = true) }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(TeaAddEditSideEffect.DeleteSuccess)
             } else {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "삭제 실패") }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString("삭제 실패")))
             }
         }
     }
 
-    fun onMessageShown() {
-        _uiState.update { it.copy(errorMessage = null) }
+    private fun sendEffect(effect: TeaAddEditSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 }

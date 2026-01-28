@@ -16,5 +16,4 @@ data class SearchUiState(
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isLastPage: Boolean = false,
-    val errorMessage: String? = null
 )

@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.bundles.firebase.libraries)
 
     implementation(libs.bundles.room.libraries)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.gson)
     implementation(libs.androidx.datastore.preferences)
 

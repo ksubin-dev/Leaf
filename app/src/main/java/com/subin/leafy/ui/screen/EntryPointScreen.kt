@@ -109,8 +109,6 @@ fun EntryPointScreen(
                         bottom = if (shouldHideBottomBar) 0.dp else paddingValues.calculateBottomPadding()
                     )
                 ) {
-                    // 각 NavGraph 호출부에서 container 파라미터 제거 fetures 모듈 단 해결하고나면 에러 사라질 예정
-
                     authNavGraph(
                         navController = navController,
                         onAuthSuccess = {
@@ -131,19 +129,12 @@ fun EntryPointScreen(
                     timerNavGraph(
                         navController = navController,
                     )
-//
-//                    // [중요] Search는 UseCase를 개별적으로 넘기던 것도 다 삭제합니다.
-//                    // Hilt가 SearchViewModel 내부에서 알아서 주입받기 때문입니다.
-//                    searchNavGraph(
-//                        navController = navController,
-//                        // postUseCases = container.postUseCases, [삭제]
-//                        // userUseCases = container.userUseCases  [삭제]
-//                    )
-//
-//                    mypageNavGraph(
-//                        navController = navController,
-//                        // container = container [삭제]
-//                    )
+                    searchNavGraph(
+                        navController = navController,
+                    )
+                    mypageNavGraph(
+                        navController = navController,
+                    )
                 }
             }
 

@@ -1,11 +1,10 @@
-package com.leafy.features.mypage.presentation.tea
+package com.leafy.features.mypage.presentation.tea.edit
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,8 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.leafy.shared.common.clickableSingle
@@ -35,23 +36,25 @@ import com.subin.leafy.domain.model.TeaType
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeaAddEditScreen(
-    viewModel: TeaAddEditViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: TeaAddEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
-    LaunchedEffect(uiState.isTeaSaved) {
-        if (uiState.isTeaSaved) {
-            onBackClick()
-        }
-    }
-
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.onMessageShown()
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is TeaAddEditSideEffect.SaveSuccess,
+                is TeaAddEditSideEffect.DeleteSuccess -> {
+                    onBackClick()
+                }
+                is TeaAddEditSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
         }
     }
 
