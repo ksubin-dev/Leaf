@@ -6,26 +6,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.features.community.presentation.common.model.NoteSelectionUiModel
 import com.leafy.shared.utils.ImageCompressor
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import javax.inject.Inject
 
-class CommunityWriteViewModel(
+sealed interface CommunityWriteSideEffect {
+    data object PostSuccess : CommunityWriteSideEffect
+    data class ShowSnackbar(val message: UiText) : CommunityWriteSideEffect
+}
+
+@HiltViewModel
+class CommunityWriteViewModel @Inject constructor(
     private val postUseCases: PostUseCases,
     private val noteUseCases: NoteUseCases,
     private val userUseCases: UserUseCases,
@@ -36,6 +43,9 @@ class CommunityWriteViewModel(
     private val _uiState = MutableStateFlow(CommunityWriteUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _sideEffect = Channel<CommunityWriteSideEffect>()
+    val sideEffect: Flow<CommunityWriteSideEffect> = _sideEffect.receiveAsFlow()
+
     init {
         fetchMyNotes()
     }
@@ -44,9 +54,7 @@ class CommunityWriteViewModel(
         viewModelScope.launch {
             noteUseCases.getMyNotes().collectLatest { notes ->
                 _uiState.update { state ->
-                    state.copy(
-                        myNotes = notes.map { it.toUiModel() }
-                    )
+                    state.copy(myNotes = notes.map { it.toUiModel() })
                 }
             }
         }
@@ -87,10 +95,6 @@ class CommunityWriteViewModel(
         _uiState.update { it.copy(tags = it.tags - tag) }
     }
 
-    fun userMessageShown() {
-        _uiState.update { it.copy(errorMessage = null) }
-    }
-
     fun onNoteSelected(noteId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -110,22 +114,20 @@ class CommunityWriteViewModel(
                     state.copy(
                         isLoading = false,
                         linkedNoteId = note.id,
-
                         linkedNoteTitle = note.teaInfo.name,
                         linkedTeaType = note.teaInfo.type.name,
                         linkedDate = dateFormat.format(Date(note.date)),
                         linkedRating = note.rating.stars,
                         linkedThumbnailUri = note.metadata.imageUrls.firstOrNull()?.toUri(),
-
                         brewingSummary = summaryText,
-
                         title = "${note.teaInfo.brand} ${note.teaInfo.name}",
                         selectedImageUris = note.metadata.imageUrls.map { it.toUri() },
                         tags = note.evaluation.flavorTags.map { "#${it.name}" }
                     )
                 }
             } else {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "노트를 불러오지 못했습니다.") }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(CommunityWriteSideEffect.ShowSnackbar(UiText.DynamicString("노트를 불러오지 못했습니다.")))
             }
         }
     }
@@ -151,7 +153,6 @@ class CommunityWriteViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-
                 val finalImageUrls = processImages(state.selectedImageUris)
 
                 val result = if (state.linkedNoteId != null) {
@@ -166,13 +167,15 @@ class CommunityWriteViewModel(
                 }
 
                 if (result is DataResourceResult.Success) {
-                    _uiState.update { it.copy(isLoading = false, isPostSuccess = true) }
+                    _uiState.update { it.copy(isLoading = false) }
+                    sendEffect(CommunityWriteSideEffect.PostSuccess)
                 } else {
                     throw Exception("게시글 업로드에 실패했습니다.")
                 }
 
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "알 수 없는 오류") }
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(CommunityWriteSideEffect.ShowSnackbar(UiText.DynamicString(e.message ?: "알 수 없는 오류")))
             }
         }
     }
@@ -190,11 +193,9 @@ class CommunityWriteViewModel(
                 val uriString = uri.toString()
                 if (scheme == "http" || scheme == "https") {
                     uriString
-                }
-                else {
+                } else {
                     try {
                         val compressedPath = imageCompressor.compressImage(uriString)
-
                         val uploadResult = imageUseCases.uploadImage(
                             uri = compressedPath,
                             folder = "posts/$userId/$imageFolderId"
@@ -230,6 +231,10 @@ class CommunityWriteViewModel(
             brewingSummary = null,
             originNoteId = null
         )
+    }
+
+    private fun sendEffect(effect: CommunityWriteSideEffect) {
+        viewModelScope.launch { _sideEffect.send(effect) }
     }
 }
 

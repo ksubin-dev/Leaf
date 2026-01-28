@@ -7,4 +7,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.parcelize) apply false
     alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.hilt.android) apply false
+    alias(libs.plugins.google.gms.google.services) apply false
+    alias(libs.plugins.google.ksp) apply false
 }

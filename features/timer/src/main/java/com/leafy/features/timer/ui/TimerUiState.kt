@@ -7,10 +7,10 @@ import com.subin.leafy.domain.model.TimerPreset
 import com.subin.leafy.domain.model.TimerSettings
 
 enum class TimerStatus {
-    IDLE,       // 대기 (설정 가능)
-    RUNNING,    // 카운트다운 중
-    PAUSED,     // 일시 정지
-    COMPLETED   // 완료 (알람 울림)
+    IDLE,
+    RUNNING,
+    PAUSED,
+    COMPLETED
 }
 
 data class TimerUiState(
@@ -35,5 +35,4 @@ data class TimerUiState(
 
     val infusionRecords: List<InfusionRecord> = emptyList(),
     val isAlarmFired: Boolean = false,
-    val userMessage: String? = null
 )

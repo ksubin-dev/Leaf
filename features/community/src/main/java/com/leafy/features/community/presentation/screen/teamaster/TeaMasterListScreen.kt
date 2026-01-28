@@ -9,9 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.shared.ui.component.CommunityTeaMasterCard
 import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.shared.common.singleClick
@@ -19,14 +22,27 @@ import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun TeaMasterListScreen(
-    viewModel: TeaMasterListViewModel,
     onBackClick: () -> Unit,
-    onMasterClick: (String) -> Unit
+    onMasterClick: (String) -> Unit,
+    viewModel: TeaMasterListViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is TeaMasterListSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+            }
+        }
+    }
 
     TeaMasterListContent(
         uiState = uiState,
+        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onMasterClick = onMasterClick,
         onFollowToggle = viewModel::toggleFollow
@@ -37,11 +53,13 @@ fun TeaMasterListScreen(
 @Composable
 fun TeaMasterListContent(
     uiState: TeaMasterListUiState,
+    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onMasterClick: (String) -> Unit,
     onFollowToggle: (UserUiModel) -> Unit
 ) {
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -64,7 +82,12 @@ fun TeaMasterListContent(
                 CircularProgressIndicator()
             }
         } else if (uiState.masters.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
                 Text("추천할 티 마스터가 없습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
@@ -117,6 +140,7 @@ private fun TeaMasterListScreenPreview() {
                 masters = dummyMasters,
                 currentUserId = "999"
             ),
+            snackbarHostState = remember { SnackbarHostState() },
             onBackClick = {},
             onMasterClick = {},
             onFollowToggle = {}

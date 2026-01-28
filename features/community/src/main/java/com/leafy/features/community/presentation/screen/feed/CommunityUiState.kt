@@ -26,7 +26,4 @@ data class CommunityUiState(
     val comments: List<CommentUiModel> = emptyList(),
     val isCommentLoading: Boolean = false
 
-) {
-    val hasError: Boolean get() = errorMessage != null
-    val isTrendingTab: Boolean get() = selectedTab == CommunityTab.TRENDING
-}
+)

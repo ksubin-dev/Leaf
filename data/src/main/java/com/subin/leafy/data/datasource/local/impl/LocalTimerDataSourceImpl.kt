@@ -12,10 +12,12 @@ import com.subin.leafy.domain.model.TimerSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Named
 
-class LocalTimerDataSourceImpl(
+class LocalTimerDataSourceImpl @Inject constructor(
     private val timerDao: TimerDao,
-    private val dataStore: DataStore<Preferences>
+    @Named("timer") private val dataStore: DataStore<Preferences>
 ) : TimerDataSource {
 
     companion object {

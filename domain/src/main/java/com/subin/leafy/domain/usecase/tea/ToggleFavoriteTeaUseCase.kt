@@ -2,8 +2,9 @@ package com.subin.leafy.domain.usecase.tea
 
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.TeaRepository
+import javax.inject.Inject
 
-class ToggleFavoriteTeaUseCase(
+class ToggleFavoriteTeaUseCase @Inject constructor(
     private val teaRepository: TeaRepository
 ) {
     suspend operator fun invoke(teaId: String): DataResourceResult<Unit> {

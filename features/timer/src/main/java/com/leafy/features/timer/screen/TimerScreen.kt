@@ -15,6 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.leafy.features.timer.ui.TimerSideEffect
 import com.leafy.features.timer.ui.TimerStatus
 import com.leafy.features.timer.ui.TimerUiState
 import com.leafy.features.timer.ui.TimerViewModel
@@ -24,9 +26,9 @@ import com.leafy.shared.ui.component.LeafyDialog
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.leafy.shared.utils.DeviceFeedbackUtils.triggerNotificationSound
 import com.leafy.shared.utils.DeviceFeedbackUtils.triggerVibration
+import com.leafy.shared.utils.KeepScreenOn
 import com.subin.leafy.domain.model.InfusionRecord
 import com.subin.leafy.domain.model.TeaType
-import com.leafy.shared.utils.KeepScreenOn
 
 @Composable
 fun TimerScreen(
@@ -35,11 +37,26 @@ fun TimerScreen(
     onNavigateToNote: (String) -> Unit,
     onNavigateToPresetList: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-
     var showExitDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { effect ->
+            when (effect) {
+                is TimerSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                }
+                is TimerSideEffect.NavigateToNote -> {
+                    onNavigateToNote(effect.navArgsJson)
+                }
+                is TimerSideEffect.NavigateBack -> {
+                    onBackClick()
+                }
+            }
+        }
+    }
 
     BackHandler(enabled = uiState.status == TimerStatus.RUNNING) {
         showExitDialog = true
@@ -49,27 +66,11 @@ fun TimerScreen(
         KeepScreenOn()
     }
 
-    // 알람 트리거 (진동/소리)
     LaunchedEffect(uiState.status, uiState.isAlarmFired) {
         if (uiState.status == TimerStatus.COMPLETED && !uiState.isAlarmFired) {
-
-            // [설정값 반영] ViewModel에서 넘어온 settings 확인 후 실행
-            if (uiState.settings.isVibrationOn) {
-                triggerVibration(context)
-            }
-
-            if (uiState.settings.isSoundOn) {
-                triggerNotificationSound(context) // 파일명이 있다면 여기서 처리 가능
-            }
-
+            if (uiState.settings.isVibrationOn) triggerVibration(context)
+            if (uiState.settings.isSoundOn) triggerNotificationSound(context)
             viewModel.markAlarmAsFired()
-        }
-    }
-
-    LaunchedEffect(uiState.userMessage) {
-        uiState.userMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            viewModel.messageShown()
         }
     }
 
@@ -92,16 +93,10 @@ fun TimerScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onBackClick = {
-            if (uiState.status == TimerStatus.RUNNING) {
-                showExitDialog = true
-            } else {
-                onBackClick()
-            }
+            if (uiState.status == TimerStatus.RUNNING) showExitDialog = true
+            else onBackClick()
         },
-        onNavigateToNoteClick = {
-            val navArgs = viewModel.getBrewingDataJson()
-            onNavigateToNote(navArgs)
-        },
+        onNavigateToNoteClick = { viewModel.navigateToNote() },
         onNavigateToPresetList = onNavigateToPresetList,
         onToggleTimer = {
             if (uiState.status == TimerStatus.RUNNING) viewModel.pauseTimer()
@@ -143,7 +138,7 @@ fun TimerScreenContent(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurface

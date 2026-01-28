@@ -8,15 +8,15 @@ import com.subin.leafy.domain.usecase.HomeUseCases
 import com.subin.leafy.domain.usecase.NotificationUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HomeViewModel(
+@HiltViewModel
+class HomeViewModel @Inject constructor(
     private val homeUseCases: HomeUseCases,
     private val postUseCases: PostUseCases,
     private val userUseCases: UserUseCases,
@@ -26,95 +26,48 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
-    private var rankingJob: Job? = null
+    private val _selectedFilter = MutableStateFlow(RankingFilter.THIS_WEEK)
+
+    private val _sideEffect = Channel<HomeSideEffect>()
+    val sideEffect: Flow<HomeSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
-        loadAllData()
+        loadUserProfile()
+        loadStaticContents()
         observeNotifications()
+        observeRanking()
     }
 
-    private fun loadAllData() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-
-            loadUserProfile()
-            fetchRanking(RankingFilter.THIS_WEEK)
-            loadStaticContents()
-            _uiState.update { it.copy(isLoading = false) }
-        }
-    }
-
-    private fun observeNotifications() {
-        notificationUseCases.getNotifications().onEach { result ->
-            if (result is DataResourceResult.Success) {
-                val hasUnread = result.data.any { !it.isRead }
-
-                _uiState.update {
-                    it.copy(hasUnreadNotifications = hasUnread)
-                }
-            }
-        }.launchIn(viewModelScope)
-    }
-
-    fun refreshNotificationState() {
-        notificationUseCases.getNotifications().onEach { result ->
-            if (result is DataResourceResult.Success) {
-                val hasUnread = result.data.any { !it.isRead }
-                _uiState.update {
-                    it.copy(hasUnreadNotifications = hasUnread)
-                }
-            }
-        }.launchIn(viewModelScope)
-    }
 
     private fun loadUserProfile() {
-        val myIdResult = userUseCases.getCurrentUserId()
-        if (myIdResult is DataResourceResult.Success) {
-            val myId = myIdResult.data
-            _uiState.update { it.copy(currentUserId = myId) }
+        viewModelScope.launch {
+            val myIdResult = userUseCases.getCurrentUserId()
+            if (myIdResult is DataResourceResult.Success) {
+                _uiState.update { it.copy(currentUserId = myIdResult.data) }
+            }
         }
 
         userUseCases.getMyProfile().onEach { result ->
             if (result is DataResourceResult.Success) {
-                _uiState.update {
-                    it.copy(
+                _uiState.update { state ->
+                    state.copy(
                         userProfileUrl = result.data.profileImageUrl,
-                        currentUserId = result.data.id.ifBlank { it.currentUserId }
+                        currentUserId = result.data.id.ifBlank { state.currentUserId }
                     )
                 }
             }
         }.launchIn(viewModelScope)
     }
-    private suspend fun loadStaticContents() {
-        when (val result = homeUseCases.getHomeContent()) {
-            is DataResourceResult.Success -> {
-                val content = result.data
-                _uiState.update {
-                    it.copy(
-                        banner = content.banners.firstOrNull(),
-                        quickGuide = content.quickGuide
-                    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeRanking() {
+        _selectedFilter
+            .flatMapLatest { filter ->
+                flow {
+                    _uiState.update { it.copy(isRankingLoading = true, selectedFilter = filter) }
+                    emitAll(postUseCases.getWeeklyRanking(filter.teaType))
                 }
             }
-            is DataResourceResult.Failure -> {
-                Log.e("HomeViewModel", "홈 컨텐츠 로드 실패: ${result.exception.message}", result.exception)
-            }
-
-            else -> {}
-        }
-    }
-
-    fun onRankingFilterSelected(filter: RankingFilter) {
-        if (_uiState.value.selectedFilter == filter) return
-
-        _uiState.update { it.copy(selectedFilter = filter, isRankingLoading = true) }
-        fetchRanking(filter)
-    }
-
-    private fun fetchRanking(filter: RankingFilter) {
-        rankingJob?.cancel()
-
-        rankingJob = postUseCases.getWeeklyRanking(filter.teaType)
             .onEach { result ->
                 when (result) {
                     is DataResourceResult.Success -> {
@@ -123,15 +76,60 @@ class HomeViewModel(
                         }
                     }
                     is DataResourceResult.Failure -> {
-                        Log.e("HomeViewModel", "랭킹 로드 실패: ${result.exception.message}", result.exception)
+                        Log.e("HomeViewModel", "랭킹 로드 실패: ${result.exception.message}")
                         _uiState.update {
                             it.copy(rankingList = emptyList(), isRankingLoading = false)
                         }
                     }
-
                     else -> {}
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun observeNotifications() {
+        notificationUseCases.getNotifications()
+            .onEach { result ->
+                if (result is DataResourceResult.Success) {
+                    val hasUnread = result.data.any { !it.isRead }
+                    _uiState.update { it.copy(hasUnreadNotifications = hasUnread) }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadStaticContents() {
+        viewModelScope.launch {
+            when (val result = homeUseCases.getHomeContent()) {
+                is DataResourceResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            banner = result.data.banners.firstOrNull(),
+                            quickGuide = result.data.quickGuide,
+                            isLoading = false
+                        )
+                    }
+                }
+                is DataResourceResult.Failure -> {
+                    Log.e("HomeViewModel", "홈 컨텐츠 로드 실패: ${result.exception.message}")
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun onRankingFilterSelected(filter: RankingFilter) {
+        if (_selectedFilter.value == filter) return
+        _selectedFilter.value = filter
+    }
+
+    fun refreshNotificationState() {
+    }
+
+    private fun sendEffect(effect: HomeSideEffect) {
+        viewModelScope.launch {
+            _sideEffect.send(effect)
+        }
     }
 }

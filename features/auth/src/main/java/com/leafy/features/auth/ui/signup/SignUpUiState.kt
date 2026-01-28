@@ -9,9 +9,7 @@ data class SignUpUiState(
     val confirmPassword: String = "",
     val profileImageUri: Uri? = null,
 
-    val isLoading: Boolean = false,
-    val isSignUpSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val isLoading: Boolean = false
 ) {
     val isPasswordMatching: Boolean
         get() = password.isNotEmpty() && password == confirmPassword

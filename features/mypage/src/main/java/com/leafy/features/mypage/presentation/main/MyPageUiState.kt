@@ -10,7 +10,6 @@ import java.time.LocalDate
 
 data class MyPageUiState(
     val isLoading: Boolean = false,
-    val errorMessage: String? = null,
 
     val myProfile: User? = null,
     val followerCount: Int = 0,
@@ -23,9 +22,6 @@ data class MyPageUiState(
     val editBio: String = "",
     val isNicknameValid: Boolean = true,
     val editProfileImageUri: Uri? = null,
-
-    val profileEditMessage: String? = null,
-
     val userAnalysis: UserAnalysis? = null,
 
     val currentYear: Int = LocalDate.now().year,

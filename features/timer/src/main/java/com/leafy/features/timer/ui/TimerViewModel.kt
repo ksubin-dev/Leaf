@@ -3,25 +3,31 @@ package com.leafy.features.timer.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.ui.model.BrewingSessionNavArgs
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.InfusionRecord
 import com.subin.leafy.domain.model.TimerPreset
 import com.subin.leafy.domain.usecase.TimerUseCases
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
-class TimerViewModel(
+@HiltViewModel
+class TimerViewModel @Inject constructor(
     private val timerUseCases: TimerUseCases
 ) : ViewModel() {
-
     private val _internalState = MutableStateFlow(TimerUiState())
     private var timerJob: Job? = null
 
@@ -40,6 +46,9 @@ class TimerViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = TimerUiState(isLoading = true)
     )
+
+    private val _sideEffect = Channel<TimerSideEffect>()
+    val sideEffect: Flow<TimerSideEffect> = _sideEffect.receiveAsFlow()
 
     init {
         loadLastUsedRecipe()
@@ -76,7 +85,6 @@ class TimerViewModel(
 
     fun selectPreset(preset: TimerPreset) {
         if (_internalState.value.status == TimerStatus.RUNNING) return
-
         _internalState.update {
             it.copy(
                 status = TimerStatus.IDLE,
@@ -91,10 +99,10 @@ class TimerViewModel(
                 remainingSeconds = preset.recipe.brewTimeSeconds,
                 progress = 1.0f,
                 infusionRecords = emptyList(),
-                isAlarmFired = false,
-                userMessage = "새로운 레시피가 선택되었습니다."
+                isAlarmFired = false
             )
         }
+        sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString("새로운 레시피가 선택되었습니다.")))
     }
 
     fun markAlarmAsFired() {
@@ -168,21 +176,35 @@ class TimerViewModel(
             val result = timerUseCases.savePreset(preset)
             if (result is DataResourceResult.Success) {
                 selectPreset(preset)
-                _internalState.update { it.copy(userMessage = "레시피 '${preset.name}' 저장 완료!") }
+                sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString("레시피 '${preset.name}' 저장 완료!")))
             } else if (result is DataResourceResult.Failure) {
-                _internalState.update { it.copy(userMessage = result.exception.message ?: "저장 실패") }
+                val msg = result.exception.message ?: "저장 실패"
+                sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString(msg)))
             }
         }
     }
 
     fun deletePreset(presetId: String) {
         val target = uiState.value.presets.find { it.id == presetId }
+
         if (target?.isDefault == true) {
-            _internalState.update { it.copy(userMessage = "기본 프리셋은 삭제할 수 없습니다.") }
+            sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString("기본 프리셋은 삭제할 수 없습니다.")))
             return
         }
+
         viewModelScope.launch {
-            timerUseCases.deletePreset(presetId)
+            val result = timerUseCases.deletePreset(presetId)
+
+            if (result is DataResourceResult.Success) {
+                sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString("레시피가 삭제되었습니다.")))
+
+                if (_internalState.value.selectedPresetId == presetId) {
+                    _internalState.update { it.copy(selectedPresetId = null, currentTeaName = "나만의 차") }
+                }
+            } else if (result is DataResourceResult.Failure) {
+                val msg = result.exception.message ?: "삭제 실패"
+                sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString(msg)))
+            }
         }
     }
 
@@ -195,16 +217,13 @@ class TimerViewModel(
 
     fun recordInfusion() {
         _internalState.update { state ->
-            if (state.status == TimerStatus.IDLE && state.remainingSeconds == state.targetTimeSeconds) {
-                return@update state
-            }
+            if (state.status == TimerStatus.IDLE && state.remainingSeconds == state.targetTimeSeconds) return@update state
+
             val currentTime = System.currentTimeMillis()
             val lastRecordTimestamp = state.infusionRecords.lastOrNull()?.timestamp ?: 0L
             if (currentTime - lastRecordTimestamp < 2000L) return@update state
 
-            val maxCount = state.infusionRecords.maxOfOrNull { it.count } ?: 0
-            val nextCount = maxCount + 1
-
+            val nextCount = (state.infusionRecords.maxOfOrNull { it.count } ?: 0) + 1
             val actualBrewTime = state.targetTimeSeconds - state.remainingSeconds
             val finalBrewTime = if (actualBrewTime <= 0) state.targetTimeSeconds else actualBrewTime
 
@@ -215,14 +234,13 @@ class TimerViewModel(
                 timestamp = System.currentTimeMillis()
             )
 
-            state.copy(
-                infusionRecords = state.infusionRecords + newRecord,
-                userMessage = "${nextCount}번째 우림이 기록되었습니다."
-            )
+            sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString("${nextCount}번째 우림이 기록되었습니다.")))
+
+            state.copy(infusionRecords = state.infusionRecords + newRecord)
         }
     }
 
-    fun getBrewingDataJson(): String {
+    fun navigateToNote() {
         val state = _internalState.value
         val navArgs = BrewingSessionNavArgs(
             teaName = state.currentTeaName,
@@ -233,14 +251,17 @@ class TimerViewModel(
             teaware = state.selectedTeaware.name,
             records = state.infusionRecords.map { it.toInfusionRecordDto() }
         )
-        return Json.encodeToString(navArgs)
+        val json = Json.encodeToString(navArgs)
+        sendEffect(TimerSideEffect.NavigateToNote(json))
     }
 
     fun showDefaultPresetWarning() {
-        _internalState.update { it.copy(userMessage = "기본 레시피는 수정할 수 없습니다.") }
+        sendEffect(TimerSideEffect.ShowSnackbar(UiText.DynamicString("기본 레시피는 수정할 수 없습니다.")))
     }
 
-    fun messageShown() {
-        _internalState.update { it.copy(userMessage = null) }
+    private fun sendEffect(effect: TimerSideEffect) {
+        viewModelScope.launch {
+            _sideEffect.send(effect)
+        }
     }
 }

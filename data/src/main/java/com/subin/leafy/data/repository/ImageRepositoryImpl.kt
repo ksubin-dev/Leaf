@@ -6,8 +6,9 @@ import com.subin.leafy.domain.repository.ImageRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import javax.inject.Inject
 
-class ImageRepositoryImpl(
+class ImageRepositoryImpl @Inject constructor(
     private val storageDataSource: StorageDataSource
 ) : ImageRepository {
 

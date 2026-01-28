@@ -1,73 +1,53 @@
 package com.leafy.features.home.navigation
 
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.leafy.features.home.presentation.home.HomeRoute
+import com.leafy.features.home.presentation.home.HomeViewModel
 import com.leafy.features.home.presentation.notification.NotificationScreen
 import com.leafy.features.home.presentation.notification.NotificationViewModel
-import com.leafy.features.home.presentation.notification.makeNotificationViewModelFactory // 팩토리 함수 Import
-import com.leafy.features.home.presentation.home.HomeRoute
 import com.leafy.features.home.presentation.ranking.RankingDetailRoute
-import com.leafy.features.home.presentation.home.HomeViewModel
-import com.leafy.features.home.presentation.home.HomeViewModelFactory
 import com.leafy.features.home.presentation.ranking.RankingDetailViewModel
-import com.leafy.features.home.presentation.ranking.RankingDetailViewModelFactory
-import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
 
 fun NavGraphBuilder.homeNavGraph(
-    navController: NavController,
-    container: ApplicationContainer
+    navController: NavController
 ) {
     composable<MainNavigationRoute.HomeTab> {
-        val viewModel: HomeViewModel = viewModel(
-            factory = HomeViewModelFactory(
-                homeUseCases = container.homeUseCases,
-                postUseCases = container.postUseCases,
-                userUseCases = container.userUseCases,
-                notificationUseCases = container.notificationUseCases
-            )
-        )
+        val viewModel: HomeViewModel = hiltViewModel()
 
         HomeRoute(
-            viewModel = viewModel,
             navController = navController,
-            onRankingFilterClick = viewModel::onRankingFilterSelected,
             onMoreRankingClick = { currentFilter ->
                 navController.navigate(
                     MainNavigationRoute.RankingDetail(initialFilterLabel = currentFilter.label)
                 )
-            }
+            },
+            viewModel = viewModel
         )
     }
 
-
     composable<MainNavigationRoute.RankingDetail> {
-        val viewModel: RankingDetailViewModel = viewModel(
-            factory = RankingDetailViewModelFactory(
-                postUseCases = container.postUseCases
-            )
-        )
+        val viewModel: RankingDetailViewModel = hiltViewModel()
 
         RankingDetailRoute(
-            viewModel = viewModel,
             onBackClick = { navController.popBackStack() },
             onItemClick = { postId ->
                 navController.navigate(MainNavigationRoute.CommunityDetail(postId))
-            }
+            },
+            viewModel = viewModel
         )
     }
 
     composable<MainNavigationRoute.Notification> {
-        val viewModel: NotificationViewModel = viewModel(
-            factory = makeNotificationViewModelFactory(container)
-        )
+        val viewModel: NotificationViewModel = hiltViewModel()
 
         NotificationScreen(
-            viewModel = viewModel,
             navController = navController,
-            onBackClick = { navController.popBackStack() }
+            onBackClick = { navController.popBackStack() },
+            viewModel = viewModel
         )
     }
 }

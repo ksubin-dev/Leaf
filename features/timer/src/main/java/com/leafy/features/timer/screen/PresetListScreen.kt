@@ -12,9 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.leafy.features.timer.ui.TimerSideEffect
 import com.leafy.features.timer.ui.components.DetailedPresetCard
 import com.leafy.features.timer.ui.components.FilterChipItem
 import com.leafy.features.timer.ui.components.PresetEditDialog
@@ -24,6 +26,8 @@ import com.subin.leafy.domain.model.BrewingRecipe
 import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.TeawareType
 import com.subin.leafy.domain.model.TimerPreset
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,9 +38,8 @@ fun PresetListScreen(
     onAddPreset: (TimerPreset) -> Unit,
     onUpdatePreset: (TimerPreset) -> Unit,
     onDeletePreset: (String) -> Unit,
-    userMessage: String? = null,
+    effectFlow: Flow<TimerSideEffect>,
     onLockedClick: () -> Unit = {},
-    onMessageShown: () -> Unit = {},
     onSettingsClick: () -> Unit
 ) {
     var selectedCategory by remember { mutableStateOf<TeaType?>(null) }
@@ -49,11 +52,13 @@ fun PresetListScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
-    LaunchedEffect(userMessage) {
-        if (userMessage != null) {
-            snackbarHostState.showSnackbar(userMessage)
-            onMessageShown()
+    LaunchedEffect(Unit) {
+        effectFlow.collect { effect ->
+            if (effect is TimerSideEffect.ShowSnackbar) {
+                snackbarHostState.showSnackbar(effect.message.asString(context))
+            }
         }
     }
 
@@ -110,10 +115,7 @@ fun PresetListScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(modifier = Modifier
-            .padding(padding)
-            .fillMaxSize()) {
-
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -155,7 +157,6 @@ fun PresetListScreen(
                                 showEditDialog = true
                             },
                             onLockedClick = onLockedClick
-
                         )
                     }
                 }
@@ -218,34 +219,6 @@ fun PresetListScreenPreview() {
                     infusionCount = 1,
                     teaware = TeawareType.MUG
                 )
-            ),
-            TimerPreset(
-                id = "3",
-                name = "철관음 다회 우림",
-                teaType = TeaType.OOLONG,
-                isDefault = false,
-                recipe = BrewingRecipe(
-                    waterTemp = 90,
-                    leafAmount = 5f,
-                    waterAmount = 100,
-                    brewTimeSeconds = 45,
-                    infusionCount = 5,
-                    teaware = TeawareType.GAIWAN
-                )
-            ),
-            TimerPreset(
-                id = "4",
-                name = "백차 (수미)",
-                teaType = TeaType.WHITE,
-                isDefault = false,
-                recipe = BrewingRecipe(
-                    waterTemp = 85,
-                    leafAmount = 4f,
-                    waterAmount = 150,
-                    brewTimeSeconds = 60,
-                    infusionCount = 3,
-                    teaware = TeawareType.GLASS_POT
-                )
             )
         )
     }
@@ -253,18 +226,18 @@ fun PresetListScreenPreview() {
     LeafyTheme {
         PresetListScreen(
             presets = mockPresets,
-            onBackClick = { /* 뒤로가기 액션 */ },
-            onPresetSelect = { /* 프리셋 선택 액션 */ },
-            onAddPreset = { /* 추가 액션 */ },
-            onUpdatePreset = { /* 수정 액션 */ },
-            onDeletePreset = { /* 삭제 액션 */ },
-            userMessage = null,
+            onBackClick = { },
+            onPresetSelect = { },
+            onAddPreset = { },
+            onUpdatePreset = { },
+            onDeletePreset = { },
+            effectFlow = emptyFlow(),
             onLockedClick = {},
-            onMessageShown = {},
-            onSettingsClick = { /* 설정 클릭 액션 */ }
+            onSettingsClick = { }
         )
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun PresetEditDialogPreview() {

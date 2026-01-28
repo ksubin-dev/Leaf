@@ -4,8 +4,9 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.CommunityPost
 import com.subin.leafy.domain.repository.PostRepository
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class GetFollowingFeedUseCase(
+class GetFollowingFeedUseCase @Inject constructor(
     private val postRepository: PostRepository
 ) {
     operator fun invoke(followingIds: List<String>): Flow<DataResourceResult<List<CommunityPost>>> {

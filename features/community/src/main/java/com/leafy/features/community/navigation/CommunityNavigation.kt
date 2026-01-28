@@ -1,41 +1,31 @@
 package com.leafy.features.community.navigation
 
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
-import com.leafy.features.community.presentation.screen.feed.CommunityScreen
 import com.leafy.features.community.presentation.screen.detail.CommunityPostDetailRoute
 import com.leafy.features.community.presentation.screen.detail.CommunityPostDetailViewModel
-import com.leafy.features.community.presentation.screen.detail.CommunityPostDetailViewModelFactory
+import com.leafy.features.community.presentation.screen.feed.CommunityScreen
 import com.leafy.features.community.presentation.screen.halloffame.HallOfFameScreen
 import com.leafy.features.community.presentation.screen.halloffame.HallOfFameViewModel
-import com.leafy.features.community.presentation.screen.halloffame.HallOfFameViewModelFactory
 import com.leafy.features.community.presentation.screen.popular.PopularPostListScreen
 import com.leafy.features.community.presentation.screen.popular.PopularPostListViewModel
-import com.leafy.features.community.presentation.screen.popular.PopularPostListViewModelFactory
 import com.leafy.features.community.presentation.screen.profile.UserProfileScreen
 import com.leafy.features.community.presentation.screen.profile.UserProfileViewModel
-import com.leafy.features.community.presentation.screen.profile.UserProfileViewModelFactory
 import com.leafy.features.community.presentation.screen.teamaster.TeaMasterListScreen
 import com.leafy.features.community.presentation.screen.teamaster.TeaMasterListViewModel
-import com.leafy.features.community.presentation.screen.teamaster.TeaMasterListViewModelFactory
-import com.leafy.features.community.presentation.screen.userlist.UserListScreen
+import com.leafy.features.community.presentation.screen.userlist.UserListRoute
+import com.leafy.features.community.presentation.screen.userlist.UserListViewModel
 import com.leafy.features.community.presentation.screen.write.CommunityWriteRoute
 import com.leafy.features.community.presentation.screen.write.CommunityWriteViewModel
-import com.leafy.features.community.presentation.screen.write.CommunityWriteViewModelFactory
-import com.leafy.shared.di.ApplicationContainer
 import com.leafy.shared.navigation.MainNavigationRoute
 
 fun NavGraphBuilder.communityNavGraph(
-    navController: NavController,
-    container: ApplicationContainer
+    navController: NavController
 ) {
     composable<MainNavigationRoute.CommunityTab> {
         CommunityScreen(
-            postUseCases = container.postUseCases,
-            userUseCases = container.userUseCases,
             onPostClick = { postId ->
                 navController.navigate(MainNavigationRoute.CommunityDetail(postId))
             },
@@ -55,15 +45,7 @@ fun NavGraphBuilder.communityNavGraph(
     }
 
     composable<MainNavigationRoute.CommunityWrite> {
-        val viewModel: CommunityWriteViewModel = viewModel(
-            factory = CommunityWriteViewModelFactory(
-                postUseCases = container.postUseCases,
-                noteUseCases = container.noteUseCases,
-                userUseCases = container.userUseCases,
-                imageUseCases = container.imageUseCases,
-                imageCompressor = container.imageCompressor
-            )
-        )
+        val viewModel: CommunityWriteViewModel = hiltViewModel()
 
         CommunityWriteRoute(
             viewModel = viewModel,
@@ -75,11 +57,7 @@ fun NavGraphBuilder.communityNavGraph(
     }
 
     composable<MainNavigationRoute.CommunityDetail> {
-        val factory = CommunityPostDetailViewModelFactory(
-            postUseCases = container.postUseCases,
-            userUseCases = container.userUseCases
-        )
-        val viewModel: CommunityPostDetailViewModel = viewModel(factory = factory)
+        val viewModel: CommunityPostDetailViewModel = hiltViewModel()
 
         CommunityPostDetailRoute(
             viewModel = viewModel,
@@ -94,12 +72,7 @@ fun NavGraphBuilder.communityNavGraph(
     }
 
     composable<MainNavigationRoute.UserProfile> {
-        val viewModel: UserProfileViewModel = viewModel(
-            factory = UserProfileViewModelFactory(
-                userUseCases = container.userUseCases,
-                postUseCases = container.postUseCases
-            )
-        )
+        val viewModel: UserProfileViewModel = hiltViewModel()
 
         UserProfileScreen(
             viewModel = viewModel,
@@ -120,12 +93,7 @@ fun NavGraphBuilder.communityNavGraph(
     }
 
     composable<MainNavigationRoute.TeaMasterList> {
-        val viewModel: TeaMasterListViewModel = viewModel(
-            factory = TeaMasterListViewModelFactory.provide(
-                postUseCases = container.postUseCases,
-                userUseCases = container.userUseCases
-            )
-        )
+        val viewModel: TeaMasterListViewModel = hiltViewModel()
 
         TeaMasterListScreen(
             viewModel = viewModel,
@@ -137,11 +105,7 @@ fun NavGraphBuilder.communityNavGraph(
     }
 
     composable<MainNavigationRoute.PopularPostList> {
-        val viewModel: PopularPostListViewModel = viewModel(
-            factory = PopularPostListViewModelFactory.provide(
-                postUseCases = container.postUseCases
-            )
-        )
+        val viewModel: PopularPostListViewModel = hiltViewModel()
 
         PopularPostListScreen(
             viewModel = viewModel,
@@ -153,11 +117,8 @@ fun NavGraphBuilder.communityNavGraph(
     }
 
     composable<MainNavigationRoute.HallOfFameList> {
-        val viewModel: HallOfFameViewModel = viewModel(
-            factory = HallOfFameViewModelFactory.provide(
-                postUseCases = container.postUseCases
-            )
-        )
+        val viewModel: HallOfFameViewModel = hiltViewModel()
+
         HallOfFameScreen(
             viewModel = viewModel,
             onBackClick = { navController.popBackStack() },
@@ -167,14 +128,15 @@ fun NavGraphBuilder.communityNavGraph(
         )
     }
 
-    composable<MainNavigationRoute.UserList> { backStackEntry ->
-        val route = backStackEntry.toRoute<MainNavigationRoute.UserList>()
+    composable<MainNavigationRoute.UserList> {
+        val viewModel: UserListViewModel = hiltViewModel()
 
-        UserListScreen(
-            navController = navController,
-            container = container,
-            userId = route.userId,
-            type = route.type
+        UserListRoute(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() },
+            onUserClick = { userId ->
+                navController.navigate(MainNavigationRoute.UserProfile(userId))
+            }
         )
     }
 }

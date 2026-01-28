@@ -7,8 +7,9 @@ import com.subin.leafy.domain.model.Notification
 import com.subin.leafy.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import javax.inject.Inject
 
-class NotificationRepositoryImpl(
+class NotificationRepositoryImpl @Inject constructor(
     private val notificationDataSource: NotificationDataSource,
     private val authDataSource: AuthDataSource
 ) : NotificationRepository {

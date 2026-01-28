@@ -10,8 +10,9 @@ import com.subin.leafy.data.model.dto.HomeContentDto
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.HomeContent
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class FirestoreHomeDataSourceImpl(
+class FirestoreHomeDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : HomeDataSource {
 

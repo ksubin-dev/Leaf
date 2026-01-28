@@ -14,8 +14,9 @@ import com.subin.leafy.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import javax.inject.Inject
 
-class NoteRepositoryImpl(
+class NoteRepositoryImpl @Inject constructor(
     private val localNoteDataSource: LocalNoteDataSource,
     private val remoteNoteDataSource: RemoteNoteDataSource,
     private val authDataSource: AuthDataSource,
@@ -38,7 +39,6 @@ class NoteRepositoryImpl(
     }
 
     override suspend fun getNoteDetail(noteId: String): DataResourceResult<BrewingNote> {
-        // 1. 노트 데이터 가져오기 (로컬 우선 -> 없으면 리모트)
         var note = localNoteDataSource.getNote(noteId)
 
         if (note == null) {
@@ -46,7 +46,6 @@ class NoteRepositoryImpl(
             if (remoteResult is DataResourceResult.Success) {
                 note = remoteResult.data
             } else {
-                // 리모트에서도 실패하면 에러 리턴
                 return remoteResult
             }
         }
@@ -89,7 +88,7 @@ class NoteRepositoryImpl(
         val noteToUpdate = note.copy(ownerId = myUid)
 
         return try {
-            localNoteDataSource.insertNote(noteToUpdate)
+            localNoteDataSource.updateNote(noteToUpdate)
             remoteNoteDataSource.updateNote(noteToUpdate)
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {

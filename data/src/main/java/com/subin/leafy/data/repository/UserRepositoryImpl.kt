@@ -12,8 +12,9 @@ import com.subin.leafy.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class UserRepositoryImpl(
+class UserRepositoryImpl @Inject constructor(
     private val authDataSource: AuthDataSource,
     private val userDataSource: UserDataSource
 ) : UserRepository {

@@ -9,8 +9,9 @@ import com.subin.leafy.domain.model.BrewingNote
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
+import javax.inject.Inject
 
-class LocalNoteDataSourceImpl(
+class LocalNoteDataSourceImpl @Inject constructor(
     private val noteDao: NoteDao
 ) : LocalNoteDataSource {
 
@@ -45,9 +46,24 @@ class LocalNoteDataSourceImpl(
         }
     }
 
-    // --- 쓰기 (Write) ---
     override suspend fun insertNote(note: BrewingNote) {
         noteDao.insertNote(note.toEntity())
+    }
+
+    override suspend fun updateNote(note: BrewingNote) {
+        val oldEntity = noteDao.getNoteById(note.id)
+
+        if (oldEntity != null) {
+            val newEntity = note.toEntity().copy(
+                likeCount = oldEntity.likeCount,
+                bookmarkCount = oldEntity.bookmarkCount,
+                commentCount = oldEntity.commentCount,
+                viewCount = oldEntity.viewCount
+            )
+            noteDao.insertNote(newEntity)
+        } else {
+            noteDao.insertNote(note.toEntity())
+        }
     }
 
     override suspend fun insertNotes(notes: List<BrewingNote>) {

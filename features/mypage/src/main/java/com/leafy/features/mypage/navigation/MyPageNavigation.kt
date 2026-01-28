@@ -1,52 +1,38 @@
 package com.leafy.features.mypage.navigation
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.leafy.features.mypage.presentation.record.DailyRecordsScreen
-import com.leafy.features.mypage.presentation.social.FollowListScreen
-import com.leafy.features.mypage.presentation.main.MyPageScreen
-import com.leafy.features.mypage.presentation.bookmark.SavedListScreen
 import com.leafy.features.mypage.presentation.analysis.AnalysisReportScreen
 import com.leafy.features.mypage.presentation.analysis.AnalysisViewModel
-import com.leafy.features.mypage.presentation.analysis.AnalysisViewModelFactory
+import com.leafy.features.mypage.presentation.bookmark.SavedListScreen
+import com.leafy.features.mypage.presentation.main.MyPageScreen
 import com.leafy.features.mypage.presentation.main.MyPageViewModel
-import com.leafy.features.mypage.presentation.main.MyPageViewModelFactory
+import com.leafy.features.mypage.presentation.record.DailyRecordsScreen
 import com.leafy.features.mypage.presentation.setting.SettingScreen
 import com.leafy.features.mypage.presentation.setting.SettingViewModel
-import com.leafy.features.mypage.presentation.setting.SettingViewModelFactory
-import com.leafy.features.mypage.presentation.tea.MyTeaListScreen
-import com.leafy.features.mypage.presentation.tea.MyTeaListViewModel
-import com.leafy.features.mypage.presentation.tea.TeaAddEditScreen
-import com.leafy.features.mypage.presentation.tea.TeaAddEditViewModel
-import com.leafy.features.mypage.presentation.tea.makeTeaAddEditViewModelFactory
-import com.leafy.shared.di.ApplicationContainer
+import com.leafy.features.mypage.presentation.social.FollowListScreen
+import com.leafy.features.mypage.presentation.tea.edit.TeaAddEditScreen
+import com.leafy.features.mypage.presentation.tea.edit.TeaAddEditViewModel
+import com.leafy.features.mypage.presentation.tea.list.MyTeaListScreen
+import com.leafy.features.mypage.presentation.tea.list.MyTeaListViewModel
 import com.leafy.shared.navigation.MainNavigationRoute
-import com.leafy.shared.utils.ImageCompressor
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import com.leafy.shared.R as SharedR
 
 fun NavGraphBuilder.mypageNavGraph(
-    container: ApplicationContainer,
     navController: NavController
 ) {
-
     composable<MainNavigationRoute.MyPageTab> {
-        val viewModel: MyPageViewModel = viewModel(
-            factory = makeMyPageViewModelFactory(container)
-        )
+        val viewModel: MyPageViewModel = hiltViewModel()
 
         MyPageScreen(
             viewModel = viewModel,
@@ -90,12 +76,7 @@ fun NavGraphBuilder.mypageNavGraph(
     }
 
     composable<MainNavigationRoute.AnalysisReport> {
-        val viewModel: AnalysisViewModel = viewModel(
-            factory = AnalysisViewModelFactory(
-                analysisUseCases = container.analysisUseCases,
-                userUseCases = container.userUseCases
-            )
-        )
+        val viewModel: AnalysisViewModel = hiltViewModel()
 
         AnalysisReportScreen(
             viewModel = viewModel,
@@ -110,12 +91,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-
-        val viewModel: MyPageViewModel = viewModel(
-            viewModelStoreOwner = parentEntry,
-            factory = makeMyPageViewModelFactory(container)
-        )
-
+        val viewModel: MyPageViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val dailyRecords = uiState.calendarNotes.filter { note ->
@@ -142,7 +118,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
+        val viewModel: MyPageViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         SavedListScreen(
@@ -160,7 +136,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
+        val viewModel: MyPageViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         SavedListScreen(
@@ -178,7 +154,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
+        val viewModel: MyPageViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         LaunchedEffect(Unit) {
@@ -203,7 +179,7 @@ fun NavGraphBuilder.mypageNavGraph(
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry(MainNavigationRoute.MyPageTab)
         }
-        val viewModel: MyPageViewModel = viewModel(parentEntry, factory = makeMyPageViewModelFactory(container))
+        val viewModel: MyPageViewModel = hiltViewModel(parentEntry)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         LaunchedEffect(Unit) {
@@ -225,9 +201,7 @@ fun NavGraphBuilder.mypageNavGraph(
     }
 
     composable<MainNavigationRoute.MyTeaCabinet> {
-        val viewModel: MyTeaListViewModel = viewModel(
-            factory = makeMyTeaListViewModelFactory(container)
-        )
+        val viewModel: MyTeaListViewModel = hiltViewModel()
 
         MyTeaListScreen(
             viewModel = viewModel,
@@ -242,9 +216,7 @@ fun NavGraphBuilder.mypageNavGraph(
     }
 
     composable<MainNavigationRoute.TeaAddEdit> {
-        val viewModel: TeaAddEditViewModel = viewModel(
-            factory = makeTeaAddEditViewModelFactory(container)
-        )
+        val viewModel: TeaAddEditViewModel = hiltViewModel()
 
         TeaAddEditScreen(
             viewModel = viewModel,
@@ -252,15 +224,8 @@ fun NavGraphBuilder.mypageNavGraph(
         )
     }
 
-
     composable<MainNavigationRoute.Settings> {
-        val factory = SettingViewModelFactory(
-            settingUseCases = container.settingUseCases,
-            authUseCases = container.authUseCases,
-            userUseCases = container.userUseCases,
-            timerUseCases = container.timerUseCases
-        )
-        val viewModel: SettingViewModel = viewModel(factory = factory)
+        val viewModel: SettingViewModel = hiltViewModel()
 
         SettingScreen(
             viewModel = viewModel,
@@ -271,32 +236,5 @@ fun NavGraphBuilder.mypageNavGraph(
                 }
             }
         )
-    }
-}
-
-
-@Composable
-private fun makeMyPageViewModelFactory(container: ApplicationContainer): MyPageViewModelFactory {
-    val context = LocalContext.current
-    return MyPageViewModelFactory(
-        userUseCases = container.userUseCases,
-        noteUseCases = container.noteUseCases,
-        postUseCases = container.postUseCases,
-        analysisUseCases = container.analysisUseCases,
-        imageUseCases = container.imageUseCases,
-        teaUseCases = container.teaUseCases,
-        imageCompressor = ImageCompressor(context)
-    )
-}
-
-@Composable
-private fun makeMyTeaListViewModelFactory(container: ApplicationContainer): ViewModelProvider.Factory {
-    return object : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return MyTeaListViewModel(
-                teaUseCases = container.teaUseCases
-            ) as T
-        }
     }
 }
