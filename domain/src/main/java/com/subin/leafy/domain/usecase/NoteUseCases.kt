@@ -15,5 +15,6 @@ data class NoteUseCases @Inject constructor(
     val deleteNote: DeleteNoteUseCase,
 
     val syncNotes: SyncNotesUseCase,
-    val clearLocalCache: ClearLocalCacheUseCase
+    val clearLocalCache: ClearLocalCacheUseCase,
+    val scheduleNoteUpload: ScheduleNoteUpload
 )

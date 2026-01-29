@@ -1,6 +1,7 @@
 package com.leafy.features.note.screen
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -72,7 +73,11 @@ fun NoteScreen(
                     onNavigateBack()
                 }
                 is NoteSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -312,7 +317,7 @@ fun NoteContent(
         }
         LoadingOverlay(
             isLoading = uiState.isLoading,
-            message = "노트를 저장 중입니다..."
+            message = "백그라운드 저장소로 보내는 중..."
         )
     }
 }

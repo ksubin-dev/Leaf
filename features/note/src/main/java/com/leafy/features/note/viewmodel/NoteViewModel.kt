@@ -1,46 +1,24 @@
 package com.leafy.features.note.viewmodel
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.ui.model.BrewingSessionNavArgs
 import com.leafy.shared.utils.LeafyTimeUtils
-import com.leafy.shared.utils.ImageCompressor
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
-import com.subin.leafy.domain.model.BodyType
-import com.subin.leafy.domain.model.BrewingNote
-import com.subin.leafy.domain.model.BrewingRecipe
-import com.subin.leafy.domain.model.FlavorTag
-import com.subin.leafy.domain.model.NoteMetadata
-import com.subin.leafy.domain.model.PostSocialState
-import com.subin.leafy.domain.model.PostStatistics
-import com.subin.leafy.domain.model.RatingInfo
-import com.subin.leafy.domain.model.SensoryEvaluation
-import com.subin.leafy.domain.model.TeaInfo
-import com.subin.leafy.domain.model.TeaType
-import com.subin.leafy.domain.model.WeatherType
-import com.subin.leafy.domain.usecase.ImageUseCases
+import com.subin.leafy.domain.model.*
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import java.util.UUID
-import kotlin.math.roundToInt
-import androidx.core.net.toUri
-import com.leafy.shared.ui.model.BrewingSessionNavArgs
-import com.leafy.shared.utils.UiText
-import com.subin.leafy.domain.model.TeawareType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.util.UUID
+import kotlin.math.roundToInt
 import javax.inject.Inject
-
 
 sealed interface NoteSideEffect {
     data object NavigateBack : NoteSideEffect
@@ -50,9 +28,7 @@ sealed interface NoteSideEffect {
 @HiltViewModel
 class NoteViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
-    private val userUseCases: UserUseCases,
-    private val imageUseCases: ImageUseCases,
-    private val imageCompressor: ImageCompressor
+    private val userUseCases: UserUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -121,7 +97,6 @@ class NoteViewModel @Inject constructor(
 
     fun saveNote() {
         val state = uiState.value
-
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
@@ -131,27 +106,14 @@ class NoteViewModel @Inject constructor(
                     throw Exception("로그인 정보를 찾을 수 없습니다.")
                 }
                 val userId = (userIdResult as DataResourceResult.Success).data
+
                 val targetId = state.noteId ?: UUID.randomUUID().toString()
-
-                val finalImageUrls = state.selectedImages.map { uri ->
-                    async {
-                        val uriString = uri.toString()
-                        if (uriString.startsWith("http")) uriString
-                        else {
-                            val compressedPath = imageCompressor.compressImage(uriString)
-                            val uploadResult = imageUseCases.uploadImage(compressedPath, "notes/$userId/$targetId")
-                            if (uploadResult is DataResourceResult.Success) uploadResult.data
-                            else throw Exception("이미지 업로드 실패")
-                        }
-                    }
-                }.awaitAll()
-
                 val isEditMode = state.noteId != null
                 val currentSystemTime = System.currentTimeMillis()
                 val selectedBrewDate = LeafyTimeUtils.dateStringToTimestamp(state.selectedDateString)
                 val finalCreatedAt = if (isEditMode) state.originalCreatedAt ?: currentSystemTime else currentSystemTime
 
-                val newNote = BrewingNote(
+                val noteData = BrewingNote(
                     id = targetId,
                     ownerId = userId,
                     isPublic = state.isPublic,
@@ -191,24 +153,27 @@ class NoteViewModel @Inject constructor(
                     metadata = NoteMetadata(
                         weather = state.selectedWeather,
                         mood = state.withPeople,
-                        imageUrls = finalImageUrls
+                        imageUrls = emptyList()
                     ),
                     stats = PostStatistics(0, 0, 0, 0),
                     myState = PostSocialState(false, isBookmarked = false),
                 )
 
-                val result = if (isEditMode) noteUseCases.updateNote(newNote) else noteUseCases.saveNote(newNote)
+                val imageUriStrings = state.selectedImages.map { it.toString() }
 
-                if (result is DataResourceResult.Success) {
-                    _uiState.update { it.copy(isLoading = false) }
-                    sendEffect(NoteSideEffect.NavigateBack)
-                } else {
-                    throw (result as DataResourceResult.Failure).exception
-                }
+                noteUseCases.scheduleNoteUpload(
+                    note = noteData,
+                    imageUriStrings = imageUriStrings,
+                    isEditMode = isEditMode
+                )
+
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(NoteSideEffect.ShowSnackbar(UiText.DynamicString("백그라운드에서 저장을 시작했습니다.")))
+                sendEffect(NoteSideEffect.NavigateBack)
 
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
-                val errorMessage = e.message ?: "저장 실패"
+                val errorMessage = e.message ?: "저장 요청 실패"
                 sendEffect(NoteSideEffect.ShowSnackbar(UiText.DynamicString(errorMessage)))
             }
         }

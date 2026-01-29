@@ -1,7 +1,17 @@
 package com.subin.leafy.data.repository
 
 import android.util.Log
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import com.google.gson.Gson
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
+import com.subin.leafy.data.datasource.local.worker.UploadWorker
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.RemoteNoteDataSource
 import com.subin.leafy.data.datasource.remote.UserDataSource
@@ -14,13 +24,15 @@ import com.subin.leafy.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class NoteRepositoryImpl @Inject constructor(
     private val localNoteDataSource: LocalNoteDataSource,
     private val remoteNoteDataSource: RemoteNoteDataSource,
     private val authDataSource: AuthDataSource,
-    private val userDataSource: UserDataSource
+    private val userDataSource: UserDataSource,
+    private val workManager: WorkManager
 ) : NoteRepository {
 
     override fun getMyNotesFlow(): Flow<List<BrewingNote>> {
@@ -113,7 +125,7 @@ class NoteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncNotes(): DataResourceResult<Unit> {
-        Log.d("SYNC_LOG", "🔄 동기화 시작...")
+        Log.d("SYNC_LOG", "동기화 시작...")
 
         val myUid = authDataSource.getCurrentUserId()
             ?: return DataResourceResult.Failure(Exception("로그인 필요"))
@@ -139,6 +151,41 @@ class NoteRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
         }
+    }
+
+    override suspend fun scheduleNoteUpload(note: BrewingNote, imageUriStrings: List<String>, isEditMode: Boolean) {
+        // 1. GSON으로 데이터 직렬화
+        val gson = Gson()
+        val noteJson = gson.toJson(note)
+        val imagesJson = gson.toJson(imageUriStrings)
+
+        // 2. Worker에게 전달할 데이터 포장
+        val inputData = Data.Builder()
+            .putString(UploadWorker.KEY_NOTE_DATA, noteJson)
+            .putString(UploadWorker.KEY_IMAGE_URIS, imagesJson)
+            .putBoolean(UploadWorker.KEY_IS_EDIT_MODE, isEditMode)
+            .build()
+
+        // 3. 제약 조건 (인터넷 연결 필수)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        // 4. 요청 생성 (즉시 실행 + 긴급 작업)
+        val uploadWorkRequest = OneTimeWorkRequestBuilder<UploadWorker>()
+            .setConstraints(constraints)
+            .setInputData(inputData)
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setBackoffCriteria(
+                BackoffPolicy.LINEAR,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag("upload_note_${note.id}")
+            .build()
+
+        // 5. 실행!
+        workManager.enqueue(uploadWorkRequest)
     }
 
     private suspend fun checkAndGrantBadges(userId: String) {
