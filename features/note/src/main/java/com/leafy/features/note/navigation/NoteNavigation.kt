@@ -50,13 +50,6 @@ fun NavGraphBuilder.noteNavGraph(
         NoteScreen(
             viewModel = viewModel,
             onNavigateBack = { navController.popBackStack() },
-            onNavigateToTimer = {
-                navController.navigate(MainNavigationRoute.TimerTab) {
-                    popUpTo(MainNavigationRoute.HomeTab) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
         )
     }
 

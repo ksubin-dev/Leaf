@@ -25,17 +25,11 @@ fun NavGraphBuilder.timerNavGraph(
                 navController.popBackStack()
             },
             onNavigateToNote = { navArgsJson ->
-                val previousBackStackEntry = navController.previousBackStackEntry
-                if (previousBackStackEntry?.destination?.route?.contains("NoteTab") == true) {
-                    previousBackStackEntry.savedStateHandle["brewing_result"] = navArgsJson
-                    navController.popBackStack()
-                } else {
-                    navController.navigate(
-                        MainNavigationRoute.NoteTab(initialRecords = navArgsJson)
-                    ) {
-                        popUpTo(MainNavigationRoute.TimerTab) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                navController.navigate(
+                    MainNavigationRoute.NoteTab(initialRecords = navArgsJson)
+                ) {
+                    popUpTo(MainNavigationRoute.TimerTab) { inclusive = true }
+                    launchSingleTop = true
                 }
             },
             onNavigateToPresetList = {
@@ -43,7 +37,6 @@ fun NavGraphBuilder.timerNavGraph(
             }
         )
     }
-
     composable<MainNavigationRoute.TimerPresetList> { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry<MainNavigationRoute.TimerTab>()

@@ -37,7 +37,6 @@ fun NoteActionButtons(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // [수정 버튼] - 작성자 본인만 표시
         if (isAuthor) {
             Button(
                 onClick = onEditClick,
@@ -65,7 +64,6 @@ fun NoteActionButtons(
             }
         }
 
-        // [공유 버튼] - 누구나 표시
         OutlinedButton(
             onClick = onShareClick,
             modifier = Modifier

@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.ui.model.BrewingSessionNavArgs
 import com.leafy.shared.utils.LeafyTimeUtils
 import com.leafy.shared.utils.UiText
@@ -22,7 +23,7 @@ import javax.inject.Inject
 
 sealed interface NoteSideEffect {
     data object NavigateBack : NoteSideEffect
-    data class ShowSnackbar(val message: UiText) : NoteSideEffect
+    data class ShowToast(val message: UiText) : NoteSideEffect
 }
 
 @HiltViewModel
@@ -103,7 +104,7 @@ class NoteViewModel @Inject constructor(
             try {
                 val userIdResult = userUseCases.getCurrentUserId()
                 if (userIdResult is DataResourceResult.Failure) {
-                    throw Exception("로그인 정보를 찾을 수 없습니다.")
+                    throw Exception("LOGIN_REQUIRED")
                 }
                 val userId = (userIdResult as DataResourceResult.Success).data
 
@@ -168,13 +169,17 @@ class NoteViewModel @Inject constructor(
                 )
 
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(NoteSideEffect.ShowSnackbar(UiText.DynamicString("백그라운드에서 저장을 시작했습니다.")))
+                sendEffect(NoteSideEffect.ShowToast(UiText.StringResource(R.string.msg_save_start_background)))
                 sendEffect(NoteSideEffect.NavigateBack)
 
-            } catch (e: Exception) {
+            }catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
-                val errorMessage = e.message ?: "저장 요청 실패"
-                sendEffect(NoteSideEffect.ShowSnackbar(UiText.DynamicString(errorMessage)))
+                val errorMessage = if (e.message == "LOGIN_REQUIRED") {
+                    UiText.StringResource(R.string.msg_login_required)
+                } else {
+                    UiText.StringResource(R.string.msg_save_error_default)
+                }
+                sendEffect(NoteSideEffect.ShowToast(errorMessage))
             }
         }
     }
@@ -236,9 +241,7 @@ class NoteViewModel @Inject constructor(
                 }
             } else {
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(NoteSideEffect.ShowSnackbar(
-                    UiText.DynamicString("노트 정보를 불러오지 못했습니다.")
-                ))
+                sendEffect(NoteSideEffect.ShowToast(UiText.StringResource(R.string.msg_note_load_error)))
             }
         }
     }
@@ -283,14 +286,10 @@ class NoteViewModel @Inject constructor(
                         memo = if (state.memo.isBlank()) recordMemo else "${state.memo}\n\n$recordMemo",
                     )
                 }
-                sendEffect(NoteSideEffect.ShowSnackbar(
-                    UiText.DynamicString("타이머 기록이 적용되었습니다.")
-                ))
+                sendEffect(NoteSideEffect.ShowToast(UiText.StringResource(R.string.msg_timer_applied)))
             } catch (e: Exception) {
                 e.printStackTrace()
-                sendEffect(NoteSideEffect.ShowSnackbar(
-                    UiText.DynamicString("데이터를 불러오는데 실패했습니다.")
-                ))
+                sendEffect(NoteSideEffect.ShowToast(UiText.StringResource(R.string.msg_data_load_error)))
             }
         }
     }

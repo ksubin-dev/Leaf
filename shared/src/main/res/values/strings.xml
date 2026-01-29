@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="msg_save_start_background">백그라운드에서 저장을 시작했습니다.</string>
+    <string name="msg_save_error_default">저장 요청 실패</string>
+    <string name="msg_login_required">로그인 정보를 찾을 수 없습니다.</string>
+    <string name="msg_note_load_error">노트 정보를 불러오지 못했습니다.</string>
+    <string name="msg_timer_applied">타이머 기록이 적용되었습니다.</string>
+    <string name="msg_data_load_error">데이터를 불러오는데 실패했습니다.</string>
+    <string name="msg_note_private">비공개 처리된 노트입니다.</string>
+    <string name="msg_like_error">좋아요 처리에 실패했습니다.</string>
+    <string name="msg_bookmark_error">북마크 처리에 실패했습니다.</string>
+    <string name="msg_bookmark_success">북마크에 저장되었습니다.</string>
+    <string name="msg_note_deleted">노트가 삭제되었습니다.</string>
+    <string name="msg_delete_error">삭제에 실패했습니다.</string>
+</resources>

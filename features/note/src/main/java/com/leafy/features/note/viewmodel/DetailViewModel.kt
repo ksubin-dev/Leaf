@@ -14,10 +14,11 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.leafy.shared.R
 
 sealed interface DetailSideEffect {
     data object NavigateBack : DetailSideEffect
-    data class ShowSnackbar(val message: UiText) : DetailSideEffect
+    data class ShowToast(val message: UiText) : DetailSideEffect
 }
 
 @HiltViewModel
@@ -53,7 +54,7 @@ class DetailViewModel @Inject constructor(
 
                     if (!isAuthor && !note.isPublic) {
                         _uiState.update { it.copy(isLoading = false) }
-                        sendEffect(DetailSideEffect.ShowSnackbar(UiText.DynamicString("비공개 처리된 노트입니다.")))
+                        sendEffect(DetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_note_private)))
                         sendEffect(DetailSideEffect.NavigateBack)
                     } else {
                         _uiState.update {
@@ -69,7 +70,7 @@ class DetailViewModel @Inject constructor(
                 }
                 is DataResourceResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
-                    sendEffect(DetailSideEffect.ShowSnackbar(UiText.DynamicString("노트를 불러오지 못했습니다.")))
+                    sendEffect(DetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_note_load_error)))
                 }
                 is DataResourceResult.Loading -> { }
             }
@@ -85,15 +86,13 @@ class DetailViewModel @Inject constructor(
         val newLiked = !uiState.value.isLiked
         val updatedNote = currentNote.updateLikeState(isLiked = newLiked)
 
-        // 낙관적 업데이트 (UI 먼저 갱신)
         updateUiStateWithNote(updatedNote)
 
         viewModelScope.launch {
             val result = postUseCases.toggleLike(currentNote.id)
             if (result is DataResourceResult.Failure) {
-                // 실패 시 롤백
                 updateUiStateWithNote(currentNote)
-                sendEffect(DetailSideEffect.ShowSnackbar(UiText.DynamicString("좋아요 처리에 실패했습니다.")))
+                sendEffect(DetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_like_error)))
             }
         }
     }
@@ -109,10 +108,10 @@ class DetailViewModel @Inject constructor(
             val result = postUseCases.toggleBookmark(currentNote.id)
             if (result is DataResourceResult.Failure) {
                 updateUiStateWithNote(currentNote)
-                sendEffect(DetailSideEffect.ShowSnackbar(UiText.DynamicString("북마크 처리에 실패했습니다.")))
+                sendEffect(DetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_error)))
             } else {
                 if (newBookmarked) {
-                    sendEffect(DetailSideEffect.ShowSnackbar(UiText.DynamicString("북마크에 저장되었습니다.")))
+                    sendEffect(DetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_success)))
                 }
             }
         }
@@ -125,13 +124,12 @@ class DetailViewModel @Inject constructor(
             when (noteUseCases.deleteNote(noteId)) {
                 is DataResourceResult.Success -> {
                     _uiState.update { it.copy(isLoading = false) }
-                    // 삭제 성공: 메시지 띄우고 뒤로가기
-                    sendEffect(DetailSideEffect.ShowSnackbar(UiText.DynamicString("노트가 삭제되었습니다.")))
+                    sendEffect(DetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_note_deleted)))
                     sendEffect(DetailSideEffect.NavigateBack)
                 }
                 is DataResourceResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
-                    sendEffect(DetailSideEffect.ShowSnackbar(UiText.DynamicString("삭제에 실패했습니다.")))
+                    sendEffect(DetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_error)))
                 }
                 else -> {}
             }
