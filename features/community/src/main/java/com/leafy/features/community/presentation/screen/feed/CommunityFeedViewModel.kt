@@ -3,6 +3,7 @@ package com.leafy.features.community.presentation.screen.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.features.community.presentation.components.bar.CommunityTab
+import com.leafy.shared.R
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
@@ -22,7 +23,7 @@ import javax.inject.Inject
 
 sealed interface CommunityFeedSideEffect {
     data object HideKeyboard : CommunityFeedSideEffect
-    data class ShowSnackbar(val message: UiText) : CommunityFeedSideEffect
+    data class ShowToast(val message: UiText) : CommunityFeedSideEffect
 }
 
 @HiltViewModel
@@ -40,13 +41,11 @@ class CommunityFeedViewModel @Inject constructor(
     private val _followingPosts = MutableStateFlow<List<CommunityPostUiModel>>(emptyList())
     private val _teaMasters = MutableStateFlow<List<UserUiModel>>(emptyList())
 
-    // User Data (Internal)
     private val _myLikedIds = MutableStateFlow<Set<String>>(emptySet())
     private val _myBookmarkedIds = MutableStateFlow<Set<String>>(emptySet())
     private val _currentUserId = MutableStateFlow<String?>(null)
     private val _currentUserProfileUrl = MutableStateFlow<String?>(null)
 
-    // UI Control State
     private data class UiControlState(
         val isInitialLoading: Boolean = true,
         val errorMessage: String? = null,
@@ -205,8 +204,8 @@ class CommunityFeedViewModel @Inject constructor(
             if (result is DataResourceResult.Failure) {
                 if (newLiked) _myLikedIds.update { it - postId } else _myLikedIds.update { it + postId }
                 updatePostCountsAndState(postId, isLikeToggle = true, isAdd = !newLiked)
-                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
-                    UiText.DynamicString("좋아요 반영에 실패했습니다.")
+                sendEffect(CommunityFeedSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_like_failed)
                 ))
             }
         }
@@ -224,13 +223,15 @@ class CommunityFeedViewModel @Inject constructor(
             if (result is DataResourceResult.Failure) {
                 if (newBookmarked) _myBookmarkedIds.update { it - postId } else _myBookmarkedIds.update { it + postId }
                 updatePostCountsAndState(postId, isLikeToggle = false, isAdd = !newBookmarked)
-                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
-                    UiText.DynamicString("북마크 저장에 실패했습니다.")
+                sendEffect(CommunityFeedSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_bookmark_failed)
                 ))
             } else {
-                if (newBookmarked)sendEffect(CommunityFeedSideEffect.ShowSnackbar(
-                    UiText.DynamicString("북마크 저장")
-                ))
+                if (newBookmarked) {
+                    sendEffect(CommunityFeedSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_bookmark_saved)
+                    ))
+                }
             }
         }
     }
@@ -246,13 +247,13 @@ class CommunityFeedViewModel @Inject constructor(
             val result = userUseCases.followUser(targetUserId, nextState)
             if (result is DataResourceResult.Failure) {
                 _teaMasters.update { list -> list.map { if (it.userId == targetUserId) it.copy(isFollowing = !nextState) else it } }
-                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
-                    UiText.DynamicString("팔로우 실패")
+                sendEffect(CommunityFeedSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_follow_failed)
                 ))
             } else {
-                val msg = if (nextState) "팔로우했습니다." else "팔로우를 취소했습니다."
-                sendEffect(CommunityFeedSideEffect.ShowSnackbar(
-                    UiText.DynamicString(msg)
+                val msgResId = if (nextState) R.string.msg_follow_success else R.string.msg_unfollow_success
+                sendEffect(CommunityFeedSideEffect.ShowToast(
+                    UiText.StringResource(msgResId)
                 ))
             }
         }
@@ -298,7 +299,12 @@ class CommunityFeedViewModel @Inject constructor(
                     _uiControlState.update { it.copy(comments = uiModels, isCommentLoading = false) }
                 }
                 is DataResourceResult.Failure -> {
-                    _uiControlState.update { it.copy(isCommentLoading = false, errorMessage = "댓글 로드 실패") }
+                    _uiControlState.update {
+                        it.copy(isCommentLoading = false) // 에러 메시지보다는 토스트로 알림
+                    }
+                    sendEffect(CommunityFeedSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_comment_load_failed)
+                    ))
                 }
                 else -> {}
             }

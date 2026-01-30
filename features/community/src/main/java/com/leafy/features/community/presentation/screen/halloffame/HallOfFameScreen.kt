@@ -1,5 +1,6 @@
 package com.leafy.features.community.presentation.screen.halloffame
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -30,14 +31,17 @@ fun HallOfFameScreen(
     viewModel: HallOfFameViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is HallOfFameSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is HallOfFameSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -45,19 +49,16 @@ fun HallOfFameScreen(
 
     HallOfFameContent(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onTabSelected = viewModel::updatePeriod,
         onPostClick = onPostClick,
         onBookmarkClick = viewModel::toggleBookmark
     )
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HallOfFameContent(
     uiState: HallOfFameUiState,
-    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onTabSelected: (RankingPeriod) -> Unit,
     onPostClick: (String) -> Unit,
@@ -86,7 +87,6 @@ fun HallOfFameContent(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) } // [연결]
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
 

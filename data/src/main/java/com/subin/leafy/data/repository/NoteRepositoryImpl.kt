@@ -11,7 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import com.google.gson.Gson
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
-import com.subin.leafy.data.datasource.local.worker.UploadWorker
+import com.subin.leafy.data.worker.UploadWorker
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.RemoteNoteDataSource
 import com.subin.leafy.data.datasource.remote.UserDataSource

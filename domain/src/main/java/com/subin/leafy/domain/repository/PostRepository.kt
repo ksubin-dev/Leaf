@@ -78,4 +78,14 @@ interface PostRepository {
     fun getMyLikedPosts(): Flow<DataResourceResult<List<CommunityPost>>>
 
     fun getMyBookmarkedPosts(): Flow<DataResourceResult<List<CommunityPost>>>
+
+    fun schedulePostUpload(
+        title: String,
+        content: String,
+        tags: List<String>,
+        imageUriStrings: List<String>,
+        linkedNoteId: String?,
+        linkedTeaType: String?,
+        linkedRating: Int?
+    )
 }

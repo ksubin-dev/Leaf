@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.leafy.shared.R
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface UserProfileSideEffect {
-    data class ShowSnackbar(val message: UiText) : UserProfileSideEffect
+    data class ShowToast(val message: UiText) : UserProfileSideEffect
 }
 
 data class UserProfileUiState(
@@ -83,7 +84,7 @@ class UserProfileViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = UiText.DynamicString("유저를 찾을 수 없습니다.")
+                        errorMessage = UiText.StringResource(R.string.msg_data_load_error)
                     )
                 }
             }
@@ -126,7 +127,14 @@ class UserProfileViewModel @Inject constructor(
 
             if (result is DataResourceResult.Failure) {
                 _uiState.update { it.copy(isFollowing = currentFollow) }
-                sendEffect(UserProfileSideEffect.ShowSnackbar(UiText.DynamicString("작업을 완료하지 못했습니다.")))
+                sendEffect(UserProfileSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_follow_failed)
+                ))
+            } else {
+                val msgResId = if (newFollowState) R.string.msg_follow_success else R.string.msg_unfollow_success
+                sendEffect(UserProfileSideEffect.ShowToast(
+                    UiText.StringResource(msgResId)
+                ))
             }
         }
     }

@@ -31,7 +31,7 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     ) : MainNavigationRoute
 
     @Serializable data object CommunityTab : MainNavigationRoute
-    @Serializable data class CommunityDetail(val postId: String) : MainNavigationRoute
+    @Serializable data class CommunityDetail(val postId: String, val autoFocus: Boolean = false) : MainNavigationRoute
 
     @Serializable data object CommunityWrite : MainNavigationRoute
     @Serializable data object PopularPostList : MainNavigationRoute

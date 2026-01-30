@@ -1,4 +1,4 @@
-package com.subin.leafy.data.datasource.local.worker
+package com.subin.leafy.data.worker
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker

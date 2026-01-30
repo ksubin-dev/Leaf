@@ -12,4 +12,22 @@
     <string name="msg_bookmark_success">북마크에 저장되었습니다.</string>
     <string name="msg_note_deleted">노트가 삭제되었습니다.</string>
     <string name="msg_delete_error">삭제에 실패했습니다.</string>
+    <string name="msg_post_load_error">게시글을 불러올 수 없습니다.</string>
+    <string name="msg_post_deleted">삭제된 게시글입니다.</string>
+    <string name="msg_comment_failed">댓글 작성 실패</string>
+    <string name="msg_comment_deleted">댓글이 삭제되었습니다.</string>
+    <string name="msg_delete_failed">삭제 실패</string>
+    <string name="msg_like_failed">좋아요 실패</string>
+    <string name="msg_bookmark_failed">북마크 실패</string>
+    <string name="msg_bookmark_saved">북마크 저장됨</string>
+    <string name="msg_follow_success">팔로우했습니다.</string>
+    <string name="msg_unfollow_success">팔로우를 취소했습니다.</string>
+    <string name="msg_follow_failed">팔로우 실패</string>
+    <string name="msg_comment_load_failed">댓글 로드 실패</string>
+    <string name="msg_note_load_fail">노트를 불러오지 못했습니다.</string>
+    <string name="msg_post_upload_fail">게시글 업로드에 실패했습니다.</string>
+    <string name="msg_login_required_write">로그인이 필요합니다.</string>
+    <string name="msg_image_upload_fail">이미지 업로드 실패</string>
+    <string name="msg_image_process_error">이미지 처리 중 오류 발생: %s</string>
+    <string name="msg_unknown_error">알 수 없는 오류</string>
 </resources>

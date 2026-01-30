@@ -4,6 +4,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.leafy.features.community.presentation.screen.detail.CommunityPostDetailRoute
 import com.leafy.features.community.presentation.screen.detail.CommunityPostDetailViewModel
 import com.leafy.features.community.presentation.screen.feed.CommunityScreen
@@ -28,6 +29,11 @@ fun NavGraphBuilder.communityNavGraph(
         CommunityScreen(
             onPostClick = { postId ->
                 navController.navigate(MainNavigationRoute.CommunityDetail(postId))
+            },
+            onCommentClick = { postId ->
+                navController.navigate(
+                    MainNavigationRoute.CommunityDetail(postId = postId, autoFocus = true)
+                )
             },
             onMasterClick = { userId ->
                 navController.navigate(MainNavigationRoute.UserProfile(userId))
@@ -56,10 +62,12 @@ fun NavGraphBuilder.communityNavGraph(
         )
     }
 
-    composable<MainNavigationRoute.CommunityDetail> {
+    composable<MainNavigationRoute.CommunityDetail> { backStackEntry ->
+        val route: MainNavigationRoute.CommunityDetail = backStackEntry.toRoute()
         val viewModel: CommunityPostDetailViewModel = hiltViewModel()
 
         CommunityPostDetailRoute(
+            autoFocus = route.autoFocus,
             viewModel = viewModel,
             onNavigateBack = { navController.popBackStack() },
             onNavigateToNoteDetail = { originNoteId ->
