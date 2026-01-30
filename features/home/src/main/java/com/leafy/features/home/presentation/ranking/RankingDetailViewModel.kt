@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.leafy.features.home.presentation.home.RankingFilter
+import com.leafy.shared.R
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
@@ -14,7 +15,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,7 +25,7 @@ class RankingDetailViewModel @Inject constructor(
 
     private val route = savedStateHandle.toRoute<MainNavigationRoute.RankingDetail>()
 
-    private val initialFilter = RankingFilter.entries.find { it.label == route.initialFilterLabel }
+    private val initialFilter = RankingFilter.entries.find { it.name == route.initialFilterLabel }
         ?: RankingFilter.THIS_WEEK
 
     private val _uiState = MutableStateFlow(RankingDetailUiState(selectedFilter = initialFilter))
@@ -60,7 +60,9 @@ class RankingDetailViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(rankingList = emptyList(), isLoading = false)
                         }
-                        _sideEffect.send(RankingSideEffect.ShowSnackbar(UiText.DynamicString("랭킹을 불러오지 못했습니다.")))
+                        _sideEffect.send(RankingSideEffect.ShowToast(
+                            UiText.StringResource(R.string.msg_ranking_load_failed)
+                        ))
                     }
                     else -> {}
                 }
@@ -81,5 +83,5 @@ data class RankingDetailUiState(
 )
 
 sealed interface RankingSideEffect {
-    data class ShowSnackbar(val message: UiText) : RankingSideEffect
+    data class ShowToast(val message: UiText) : RankingSideEffect
 }

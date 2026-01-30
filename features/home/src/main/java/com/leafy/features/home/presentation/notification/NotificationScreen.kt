@@ -1,5 +1,6 @@
 package com.leafy.features.home.presentation.notification
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -9,11 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.leafy.features.home.presentation.notification.components.NotificationListSection
+import com.leafy.shared.R
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.navigation.MainNavigationRoute
 
@@ -25,7 +28,6 @@ fun NotificationScreen(
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -37,8 +39,12 @@ fun NotificationScreen(
                 is NotificationSideEffect.NavigateToProfile -> {
                     navController.navigate(MainNavigationRoute.UserProfile(effect.userId))
                 }
-                is NotificationSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is NotificationSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -47,7 +53,7 @@ fun NotificationScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("알림", style = MaterialTheme.typography.titleMedium) },
+                title = { Text(stringResource(R.string.title_notification), style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
                     IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(
@@ -63,7 +69,6 @@ fun NotificationScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
 
@@ -98,7 +103,7 @@ private fun EmptyNotificationView() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "새로운 알림이 없습니다.",
+            text = stringResource(R.string.msg_notification_empty),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
