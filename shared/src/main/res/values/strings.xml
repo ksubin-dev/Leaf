@@ -54,4 +54,38 @@
     <string name="msg_notification_empty">새로운 알림이 없습니다.</string>
     <string name="title_ranking_detail">인기 시음 기록</string>
     <string name="msg_ranking_empty">랭킹 데이터가 없습니다.</string>
+    <string name="msg_check_nickname">닉네임을 확인해주세요.</string>
+    <string name="msg_profile_updated">프로필이 수정되었습니다.</string>
+    <string name="msg_profile_update_fail">프로필 수정 실패</string>
+
+    <string name="title_saved_notes">저장한 노트</string>
+    <string name="title_liked_posts">좋아요한 글</string>
+
+    <string name="insight_no_data">아직 분석할 데이터가 없어요. 차를 마셔보세요!</string>
+    <string name="insight_time_slot">주로 %s 시간대에 차를 즐깁니다.</string>
+    <string name="insight_avg_time">평균 브루잉 시간은 %s 입니다.</string>
+    <string name="insight_pref_temp">가장 선호하는 물 온도는 %d°C 입니다.</string>
+    <string name="insight_fav_tea">요즘은 \'%s\'를 가장 많이 드셨네요.</string>
+    <string name="insight_streak">%d일째 연속으로 차를 마시고 계시네요!</string>
+    <string name="title_analysis_report">나의 티 리포트</string>
+    <string name="msg_analysis_empty">아직 분석할 데이터가 충분하지 않아요.\n차를 마시고 기록을 남겨보세요!</string>
+    <string name="msg_analysis_error">분석 데이터를 불러오지 못했습니다.</string>
+
+    <string name="title_weekly_activity">주간 활동 및 카페인</string>
+    <string name="format_weekly_count">이번 주 %d회</string>
+    <string name="format_daily_caffeine">일일 평균 %dmg</string>
+
+    <string name="title_tea_preference">즐겨 마시는 차 종류</string>
+    <string name="format_favorite_tea">가장 많이 마신 차는 \'%s\'입니다.</string>
+
+    <string name="action_share_report">리포트 공유하기</string>
+
+    <string name="title_settings">설정</string>
+    <string name="msg_setting_save_fail">설정 저장 실패</string>
+    <string name="msg_logout_fail">로그아웃 실패</string>
+    <string name="msg_delete_account_fail">회원 탈퇴 실패</string>
+    <string name="msg_tea_load_failed">차 정보를 불러올 수 없습니다.</string>
+    <string name="msg_tea_save_failed">저장 실패</string>
+    <string name="msg_tea_delete_success">삭제되었습니다.</string>
+    <string name="msg_error_occurred">오류 발생</string>
 </resources>

@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.utils.ImageCompressor
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
@@ -19,7 +20,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 sealed interface TeaAddEditSideEffect {
-    data class ShowSnackbar(val message: UiText) : TeaAddEditSideEffect
+    data class ShowToast(val message: UiText) : TeaAddEditSideEffect
     data object SaveSuccess : TeaAddEditSideEffect
     data object DeleteSuccess : TeaAddEditSideEffect
 }
@@ -85,7 +86,7 @@ class TeaAddEditViewModel @Inject constructor(
                 }
             } else {
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString("차 정보를 불러올 수 없습니다.")))
+                sendEffect(TeaAddEditSideEffect.ShowToast(UiText.StringResource(R.string.msg_tea_load_failed)))
             }
         }
     }
@@ -115,11 +116,16 @@ class TeaAddEditViewModel @Inject constructor(
                     if (uploadResult is DataResourceResult.Success) {
                         finalImageUrl = uploadResult.data
                     } else {
-                        throw Exception("이미지 업로드 실패")
+                        sendEffect(TeaAddEditSideEffect.ShowToast(UiText.StringResource(R.string.msg_image_upload_fail)))
+                        _uiState.update { it.copy(isLoading = false) }
+                        return@launch
                     }
                 } catch (e: Exception) {
                     _uiState.update { it.copy(isLoading = false) }
-                    sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString(e.message ?: "이미지 처리 오류")))
+                    val msg = e.message
+                    val uiText = if (msg != null) UiText.StringResource(R.string.msg_image_process_error, msg)
+                    else UiText.StringResource(R.string.msg_unknown_error)
+                    sendEffect(TeaAddEditSideEffect.ShowToast(uiText))
                     return@launch
                 }
             }
@@ -143,7 +149,9 @@ class TeaAddEditViewModel @Inject constructor(
             } else {
                 val errorMsg = (result as DataResourceResult.Failure).exception.message
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString(errorMsg ?: "저장 실패")))
+                val uiText = if (errorMsg != null) UiText.DynamicString(errorMsg)
+                else UiText.StringResource(R.string.msg_tea_save_failed)
+                sendEffect(TeaAddEditSideEffect.ShowToast(uiText))
             }
         }
     }
@@ -156,9 +164,10 @@ class TeaAddEditViewModel @Inject constructor(
             if (result is DataResourceResult.Success) {
                 _uiState.update { it.copy(isLoading = false) }
                 sendEffect(TeaAddEditSideEffect.DeleteSuccess)
+                sendEffect(TeaAddEditSideEffect.ShowToast(UiText.StringResource(R.string.msg_tea_delete_success)))
             } else {
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(TeaAddEditSideEffect.ShowSnackbar(UiText.DynamicString("삭제 실패")))
+                sendEffect(TeaAddEditSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_failed)))
             }
         }
     }

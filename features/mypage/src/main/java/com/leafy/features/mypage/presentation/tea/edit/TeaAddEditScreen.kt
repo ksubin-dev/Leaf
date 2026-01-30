@@ -1,6 +1,7 @@
 package com.leafy.features.mypage.presentation.tea.edit
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,7 +41,6 @@ fun TeaAddEditScreen(
     viewModel: TeaAddEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
@@ -51,8 +51,12 @@ fun TeaAddEditScreen(
                 is TeaAddEditSideEffect.DeleteSuccess -> {
                     onBackClick()
                 }
-                is TeaAddEditSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is TeaAddEditSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -79,7 +83,6 @@ fun TeaAddEditScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Box(
             modifier = Modifier

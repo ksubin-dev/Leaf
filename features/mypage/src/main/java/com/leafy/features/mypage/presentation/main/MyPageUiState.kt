@@ -2,6 +2,7 @@ package com.leafy.features.mypage.presentation.main
 
 import android.net.Uri
 import com.leafy.shared.ui.model.UserUiModel
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.CommunityPost
 import com.subin.leafy.domain.model.User
@@ -31,7 +32,7 @@ data class MyPageUiState(
     val selectedDate: LocalDate = LocalDate.now(),
     val selectedDateNotes: List<BrewingNote> = emptyList(),
 
-    val analysisTeaserContent: String? = null,
+    val analysisTeaserContent: UiText? = null,
     val analysisTeaserIconRes: Int? = null,
 
     val bookmarkedPosts: List<CommunityPost> = emptyList(),

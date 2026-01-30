@@ -1,5 +1,6 @@
 package com.leafy.features.mypage.presentation.setting
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,12 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.mypage.presentation.setting.component.DeleteAccountDialog
 import com.leafy.features.mypage.presentation.setting.component.LogoutDialog
+import com.leafy.shared.R
 import com.leafy.shared.common.singleClick
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +29,6 @@ fun SettingScreen(
     viewModel: SettingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -36,8 +38,12 @@ fun SettingScreen(
                 is SettingSideEffect.DeleteAccountSuccess -> {
                     onLogoutSuccess()
                 }
-                is SettingSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is SettingSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -49,10 +55,13 @@ fun SettingScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("설정", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.title_settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = singleClick { onBackClick() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "뒤로가기"
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -60,7 +69,6 @@ fun SettingScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier

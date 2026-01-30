@@ -1,5 +1,6 @@
 package com.leafy.features.mypage.presentation.analysis
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -20,6 +22,7 @@ import com.leafy.features.mypage.presentation.analysis.component.AnalysisHabitSe
 import com.leafy.features.mypage.presentation.analysis.component.AnalysisStatCard
 import com.leafy.features.mypage.presentation.analysis.component.CaffeineTrendChart
 import com.leafy.features.mypage.presentation.analysis.component.TeaDistributionChart
+import com.leafy.shared.R
 import com.leafy.shared.common.singleClick
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,14 +34,17 @@ fun AnalysisReportScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is AnalysisSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is AnalysisSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -47,7 +53,7 @@ fun AnalysisReportScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("나의 티 리포트") },
+                title = { Text(stringResource(R.string.title_analysis_report)) },
                 navigationIcon = {
                     IconButton(onClick = singleClick { onBackClick() }) {
                         Icon(
@@ -61,7 +67,6 @@ fun AnalysisReportScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
 
         if (uiState.isLoading) {
@@ -81,7 +86,7 @@ fun AnalysisReportScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "아직 분석할 데이터가 충분하지 않아요 \n차를 마시고 기록을 남겨보세요!",
+                    text = stringResource(R.string.msg_analysis_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -117,7 +122,7 @@ fun AnalysisReportScreen(
                     if (data.weeklyCaffeineTrend.any { it > 0 }) {
                         Column {
                             Text(
-                                text = "주간 활동 및 카페인",
+                                text = stringResource(R.string.title_weekly_activity),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -125,13 +130,13 @@ fun AnalysisReportScreen(
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "이번 주 ${data.weeklyCount}회",
+                                    text = stringResource(R.string.format_weekly_count, data.weeklyCount),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "  |  일일 평균 ${data.dailyCaffeineAvg}mg",
+                                    text = "  |  " + stringResource(R.string.format_daily_caffeine, data.dailyCaffeineAvg),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -148,14 +153,14 @@ fun AnalysisReportScreen(
                     if (data.teaTypeDistribution.isNotEmpty()) {
                         Column {
                             Text(
-                                text = "즐겨 마시는 차 종류",
+                                text = stringResource(R.string.title_tea_preference),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             if (data.favoriteTeaType != null && data.favoriteTeaType != "-") {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "가장 많이 마신 차는 '${data.favoriteTeaType}'입니다.",
+                                    text = stringResource(R.string.format_favorite_tea, data.favoriteTeaType!!),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -184,7 +189,7 @@ fun AnalysisReportScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "리포트 공유하기",
+                            text = stringResource(R.string.action_share_report),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )

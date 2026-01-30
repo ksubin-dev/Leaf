@@ -11,7 +11,7 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object Notification : MainNavigationRoute
     @Serializable
     data class RankingDetail(
-        val initialFilterLabel: String = "이번 주"
+        val initialFilterName: String = "THIS_WEEK"
     ) : MainNavigationRoute
     @Serializable
     data class NoteTab(

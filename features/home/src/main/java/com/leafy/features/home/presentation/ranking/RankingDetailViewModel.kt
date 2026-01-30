@@ -25,7 +25,7 @@ class RankingDetailViewModel @Inject constructor(
 
     private val route = savedStateHandle.toRoute<MainNavigationRoute.RankingDetail>()
 
-    private val initialFilter = RankingFilter.entries.find { it.name == route.initialFilterLabel }
+    private val initialFilter = RankingFilter.entries.find { it.name == route.initialFilterName }
         ?: RankingFilter.THIS_WEEK
 
     private val _uiState = MutableStateFlow(RankingDetailUiState(selectedFilter = initialFilter))
