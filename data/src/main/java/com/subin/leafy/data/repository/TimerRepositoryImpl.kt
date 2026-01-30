@@ -14,7 +14,6 @@ class TimerRepositoryImpl @Inject constructor(
     private val timerDataSource: TimerDataSource
 ) : TimerRepository {
 
-
     override fun getPresetsFlow(): Flow<List<TimerPreset>> {
         return timerDataSource.getPresets()
             .onStart {
@@ -30,17 +29,13 @@ class TimerRepositoryImpl @Inject constructor(
         return timerDataSource.deletePreset(presetId)
     }
 
-
-
-    override suspend fun saveLastUsedRecipe(timeSeconds: Int, temperature: Int): DataResourceResult<Unit> {
-        return timerDataSource.saveLastUsedRecipe(timeSeconds, temperature)
+    override suspend fun saveLastUsedRecipe(name: String, timeSeconds: Int, temperature: Int): DataResourceResult<Unit> {
+        return timerDataSource.saveLastUsedRecipe(name, timeSeconds, temperature)
     }
 
-    override suspend fun getLastUsedRecipe(): DataResourceResult<Pair<Int, Int>?> {
+    override suspend fun getLastUsedRecipe(): DataResourceResult<Triple<String, Int, Int>?> {
         return timerDataSource.getLastUsedRecipe()
     }
-
-
 
     override fun getTimerSettingsFlow(): Flow<TimerSettings> {
         return timerDataSource.getTimerSettings()

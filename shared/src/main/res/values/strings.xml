@@ -34,4 +34,12 @@
     <string name="msg_sign_up_success">회원가입 완료! 로그인해주세요.</string>
     <string name="msg_sign_up_fail">회원가입 실패</string>
     <string name="msg_password_mismatch">비밀번호가 일치하지 않습니다.</string>
+    <string name="msg_preset_selected">새로운 레시피가 선택되었습니다.</string>
+    <string name="msg_preset_saved">레시피 \'%s\' 저장 완료!</string>
+    <string name="msg_preset_save_fail">레시피 저장 실패</string>
+    <string name="msg_preset_deleted">레시피가 삭제되었습니다.</string>
+    <string name="msg_preset_delete_fail">삭제 실패</string>
+    <string name="msg_default_preset_warning">기본 레시피는 수정할 수 없습니다.</string>
+    <string name="msg_infusion_recorded">%d번째 우림이 기록되었습니다.</string>
+    <string name="msg_timer_started">타이머 시작</string>
 </resources>

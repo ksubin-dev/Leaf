@@ -21,6 +21,8 @@ class LocalTimerDataSourceImpl @Inject constructor(
 ) : TimerDataSource {
 
     companion object {
+        private val KEY_LAST_NAME = stringPreferencesKey("last_timer_name")
+
         private val KEY_LAST_TIME = intPreferencesKey("last_timer_time")
         private val KEY_LAST_TEMP = intPreferencesKey("last_timer_temp")
 
@@ -64,10 +66,10 @@ class LocalTimerDataSourceImpl @Inject constructor(
         }
     }
 
-
-    override suspend fun saveLastUsedRecipe(timeSeconds: Int, temperature: Int): DataResourceResult<Unit> {
+    override suspend fun saveLastUsedRecipe(name: String, timeSeconds: Int, temperature: Int): DataResourceResult<Unit> {
         return try {
             dataStore.edit { prefs ->
+                prefs[KEY_LAST_NAME] = name
                 prefs[KEY_LAST_TIME] = timeSeconds
                 prefs[KEY_LAST_TEMP] = temperature
             }
@@ -77,18 +79,19 @@ class LocalTimerDataSourceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getLastUsedRecipe(): DataResourceResult<Pair<Int, Int>?> {
+    override suspend fun getLastUsedRecipe(): DataResourceResult<Triple<String, Int, Int>?> {
         return try {
             val prefs = dataStore.data.firstOrNull()
 
             if (prefs == null) {
                 DataResourceResult.Success(null)
             } else {
+                val name = prefs[KEY_LAST_NAME] ?: "나만의 차"
                 val time = prefs[KEY_LAST_TIME]
                 val temp = prefs[KEY_LAST_TEMP]
 
                 if (time != null && temp != null) {
-                    DataResourceResult.Success(time to temp)
+                    DataResourceResult.Success(Triple(name, time, temp))
                 } else {
                     DataResourceResult.Success(null)
                 }
