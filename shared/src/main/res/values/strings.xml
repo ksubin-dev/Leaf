@@ -42,4 +42,8 @@
     <string name="msg_default_preset_warning">기본 레시피는 수정할 수 없습니다.</string>
     <string name="msg_infusion_recorded">%d번째 우림이 기록되었습니다.</string>
     <string name="msg_timer_started">타이머 시작</string>
+    <string name="hint_search">검색어를 입력하세요</string>
+    <string name="msg_search_failed">검색에 실패했습니다.</string>
+    <string name="tab_search_posts">게시글</string>
+    <string name="tab_search_users">사용자</string>
 </resources>
