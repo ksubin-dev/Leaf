@@ -3,6 +3,8 @@ package com.leafy.features.auth.ui.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
@@ -20,6 +22,19 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+
+sealed interface SignInSideEffect {
+    data object NavigateToHome : SignInSideEffect
+    data class ShowToast(val message: UiText) : SignInSideEffect
+}
+
+data class SignInUiState(
+    val email: String = "",
+    val password: String = "",
+    val isAutoLogin: Boolean = false,
+    val isLoading: Boolean = false,
+)
 
 @HiltViewModel
 class SignInViewModel @Inject constructor(
@@ -70,14 +85,18 @@ class SignInViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = authUseCases.login(state.email, state.password)) {
                 is DataResourceResult.Success -> {
-                    Log.d("SignIn", "로그인 성공! 데이터 동기화 시작")
+                    Log.d("SignIn", "로그인 성공 데이터 동기화 시작")
                     handleLoginSuccess(state)
                 }
                 is DataResourceResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
-
-                    val msg = result.exception.message ?: "로그인에 실패했습니다."
-                    sendEffect(SignInSideEffect.ShowSnackbar(msg))
+                    val msg = result.exception.message
+                    val uiText = if (msg.isNullOrBlank()) {
+                        UiText.StringResource(R.string.msg_login_fail)
+                    } else {
+                        UiText.DynamicString(msg)
+                    }
+                    sendEffect(SignInSideEffect.ShowToast(uiText))
                 }
                 else -> {}
             }

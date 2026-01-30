@@ -1,5 +1,6 @@
 package com.leafy.features.auth.ui.login
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +22,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -34,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,9 +58,7 @@ fun SignInScreen(
     onLoginSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
+    val context = LocalContext.current
     var showNotImplementedDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -73,8 +71,12 @@ fun SignInScreen(
                 is SignInSideEffect.NavigateToHome -> {
                     onLoginSuccess()
                 }
-                is SignInSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                is SignInSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -94,7 +96,6 @@ fun SignInScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.statusBars,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -139,7 +140,7 @@ fun SignInContent(
         verticalArrangement = Arrangement.Center
     ) {
         Image(
-            painter = painterResource(id = SharedR.drawable.ic_leafy_logo),
+            painter = painterResource(id = SharedR.drawable.ic_leafy_logo_1),
             contentDescription = "Leafy Logo",
             modifier = Modifier.size(150.dp)
         )

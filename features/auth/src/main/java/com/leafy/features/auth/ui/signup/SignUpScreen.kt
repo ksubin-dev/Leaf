@@ -1,33 +1,20 @@
 package com.leafy.features.auth.ui.signup
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -35,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.auth.ui.common.AuthButton
+import com.leafy.shared.R
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyDialog
@@ -50,7 +38,7 @@ fun SignUpScreen(
     onSignUpSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorDialogMessage by remember { mutableStateOf("") }
@@ -67,11 +55,15 @@ fun SignUpScreen(
                 is SignUpSideEffect.NavigateToHome -> {
                     onSignUpSuccess()
                 }
-                is SignUpSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                is SignUpSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 is SignUpSideEffect.ShowErrorDialog -> {
-                    errorDialogMessage = effect.message
+                    errorDialogMessage = effect.message.asString(context)
                     showErrorDialog = true
                 }
             }
@@ -92,7 +84,6 @@ fun SignUpScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -190,7 +181,7 @@ fun SignUpContent(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
             ),
-            errorMessage = if (showPasswordMismatch) "비밀번호가 일치하지 않습니다." else null
+            errorMessage = if (showPasswordMismatch) stringResource(R.string.msg_password_mismatch) else null
         )
 
         Spacer(modifier = Modifier.height(40.dp))
