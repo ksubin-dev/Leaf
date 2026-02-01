@@ -2,6 +2,7 @@ package com.leafy.features.community.presentation.screen.popular
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface PopularPostListSideEffect {
-    data class ShowSnackbar(val message: UiText) : PopularPostListSideEffect
+    data class ShowToast(val message: UiText) : PopularPostListSideEffect
 }
 
 @HiltViewModel
@@ -45,8 +46,8 @@ class PopularPostListViewModel @Inject constructor(
                     }
                     is DataResourceResult.Failure -> {
                         _uiState.update { it.copy(isLoading = false) }
-                        sendEffect(PopularPostListSideEffect.ShowSnackbar(
-                            UiText.DynamicString("데이터를 불러오지 못했습니다.")
+                        sendEffect(PopularPostListSideEffect.ShowToast(
+                            UiText.StringResource(R.string.msg_data_load_error)
                         ))
                     }
                     else -> {}

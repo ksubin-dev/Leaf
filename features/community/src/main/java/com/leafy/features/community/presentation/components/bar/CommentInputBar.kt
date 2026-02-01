@@ -18,6 +18,7 @@ import com.leafy.shared.ui.component.LeafyProfileImage
 @Composable
 fun CommentInputBar(
     modifier: Modifier = Modifier,
+    textFieldModifier: Modifier = Modifier,
     isLoading: Boolean,
     currentUserProfileUrl: String?,
     input: String,
@@ -54,7 +55,7 @@ fun CommentInputBar(
                     placeholder = {
                         Text("따뜻한 댓글을 남겨주세요...", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                     },
-                    modifier = Modifier
+                    modifier = textFieldModifier
                         .weight(1f)
                         .heightIn(min = 48.dp),
                     colors = TextFieldDefaults.colors(

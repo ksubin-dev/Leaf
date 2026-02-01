@@ -1,5 +1,6 @@
 package com.leafy.features.community.presentation.screen.detail
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -23,24 +26,29 @@ import com.leafy.features.community.presentation.components.bar.CommentInputBar
 import com.leafy.features.community.presentation.components.item.CommentItem
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LeafyDialog
+import kotlinx.coroutines.delay
 
 @Composable
 fun CommunityPostDetailRoute(
+    autoFocus: Boolean,
     onNavigateBack: () -> Unit,
     onNavigateToNoteDetail: (String) -> Unit,
     onNavigateToUserProfile: (String) -> Unit,
     viewModel: CommunityPostDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
                 is PostDetailSideEffect.NavigateBack -> onNavigateBack()
-                is PostDetailSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is PostDetailSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -51,8 +59,8 @@ fun CommunityPostDetailRoute(
     }
 
     CommunityPostDetailScreen(
+        autoFocus = autoFocus,
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
         onInputChange = viewModel::updateCommentInput,
         onSendComment = viewModel::sendComment,
@@ -68,7 +76,7 @@ fun CommunityPostDetailRoute(
 @Composable
 fun CommunityPostDetailScreen(
     uiState: CommunityPostDetailUiState,
-    snackbarHostState: SnackbarHostState,
+    autoFocus: Boolean,
     onNavigateBack: () -> Unit,
     onInputChange: (String) -> Unit,
     onSendComment: () -> Unit,
@@ -80,6 +88,16 @@ fun CommunityPostDetailScreen(
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        if (autoFocus) {
+            delay(300)
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     var commentIdToDelete by remember { mutableStateOf<String?>(null) }
 
@@ -99,7 +117,6 @@ fun CommunityPostDetailScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("게시글", fontWeight = FontWeight.Bold) },
@@ -122,6 +139,7 @@ fun CommunityPostDetailScreen(
         },
         bottomBar = {
             CommentInputBar(
+                textFieldModifier = Modifier.focusRequester(focusRequester),
                 input = uiState.commentInput,
                 onInputChange = onInputChange,
                 onSend = {

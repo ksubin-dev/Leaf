@@ -31,7 +31,9 @@ data class PostUseCases @Inject constructor(
     val addComment: AddCommentUseCase,
     val deleteComment: DeleteCommentUseCase,
 
-    val observePostChanges: ObservePostChangesUseCase
+    val observePostChanges: ObservePostChangesUseCase,
+
+    val schedulePostUpload: SchedulePostUpload
 
     //나중에 추가 신고 기능
 )

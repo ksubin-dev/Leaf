@@ -1,5 +1,6 @@
 package com.leafy.features.community.presentation.screen.userlist
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,14 +30,17 @@ fun UserListRoute(
     viewModel: UserListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is UserListSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is UserListSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -45,18 +48,15 @@ fun UserListRoute(
 
     UserListScreen(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onUserClick = onUserClick,
         onFollowToggle = viewModel::toggleFollow
     )
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserListScreen(
     uiState: UserListUiState,
-    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onUserClick: (String) -> Unit,
     onFollowToggle: (UserUiModel) -> Unit
@@ -85,7 +85,6 @@ fun UserListScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(
             modifier = Modifier

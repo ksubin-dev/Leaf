@@ -2,6 +2,7 @@ package com.leafy.features.community.presentation.screen.halloffame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.utils.UiText
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface HallOfFameSideEffect {
-    data class ShowSnackbar(val message: UiText) : HallOfFameSideEffect
+    data class ShowToast(val message: UiText) : HallOfFameSideEffect
 }
 
 @HiltViewModel
@@ -53,7 +54,9 @@ class HallOfFameViewModel @Inject constructor(
                     }
                     is DataResourceResult.Failure -> {
                         _posts.value = emptyList()
-                        sendEffect(HallOfFameSideEffect.ShowSnackbar(UiText.DynamicString("데이터를 불러오지 못했습니다.")))
+                        sendEffect(HallOfFameSideEffect.ShowToast(
+                            UiText.StringResource(R.string.msg_data_load_error)
+                        ))
                     }
                     else -> {}
                 }
@@ -90,9 +93,14 @@ class HallOfFameViewModel @Inject constructor(
         viewModelScope.launch {
             val result = postUseCases.toggleBookmark(postId)
             if (result is DataResourceResult.Failure) {
-                // Rollback
                 updatePostState(postId, currentBookmarked)
-                sendEffect(HallOfFameSideEffect.ShowSnackbar(UiText.DynamicString("북마크 변경 실패")))
+                sendEffect(HallOfFameSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_bookmark_failed)
+                ))
+            } else if (newBookmarked) {
+                sendEffect(HallOfFameSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_bookmark_saved)
+                ))
             }
         }
     }

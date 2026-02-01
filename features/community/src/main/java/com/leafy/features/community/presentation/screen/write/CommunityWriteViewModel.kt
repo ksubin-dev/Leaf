@@ -5,39 +5,30 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.features.community.presentation.common.model.NoteSelectionUiModel
-import com.leafy.shared.utils.ImageCompressor
+import com.leafy.shared.R
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
-import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
-import com.subin.leafy.domain.usecase.UserUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.UUID
 import javax.inject.Inject
 
 sealed interface CommunityWriteSideEffect {
     data object PostSuccess : CommunityWriteSideEffect
-    data class ShowSnackbar(val message: UiText) : CommunityWriteSideEffect
+    data class ShowToast(val message: UiText) : CommunityWriteSideEffect
 }
 
 @HiltViewModel
 class CommunityWriteViewModel @Inject constructor(
     private val postUseCases: PostUseCases,
-    private val noteUseCases: NoteUseCases,
-    private val userUseCases: UserUseCases,
-    private val imageUseCases: ImageUseCases,
-    private val imageCompressor: ImageCompressor
+    private val noteUseCases: NoteUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CommunityWriteUiState())
@@ -59,6 +50,7 @@ class CommunityWriteViewModel @Inject constructor(
             }
         }
     }
+
 
     fun updateTitle(text: String) = _uiState.update { it.copy(title = text) }
     fun updateContent(text: String) = _uiState.update { it.copy(content = text) }
@@ -127,7 +119,9 @@ class CommunityWriteViewModel @Inject constructor(
                 }
             } else {
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(CommunityWriteSideEffect.ShowSnackbar(UiText.DynamicString("노트를 불러오지 못했습니다.")))
+                sendEffect(CommunityWriteSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_note_load_fail)
+                ))
             }
         }
     }
@@ -150,87 +144,23 @@ class CommunityWriteViewModel @Inject constructor(
         val state = uiState.value
         if (!state.isPostValid) return
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                val finalImageUrls = processImages(state.selectedImageUris)
+        _uiState.update { it.copy(isLoading = true) }
 
-                val result = if (state.linkedNoteId != null) {
-                    postUseCases.shareNoteAsPost(
-                        noteId = state.linkedNoteId,
-                        content = state.content,
-                        tags = state.tags,
-                        imageUrls = finalImageUrls
-                    )
-                } else {
-                    createNormalPost(state, finalImageUrls)
-                }
-
-                if (result is DataResourceResult.Success) {
-                    _uiState.update { it.copy(isLoading = false) }
-                    sendEffect(CommunityWriteSideEffect.PostSuccess)
-                } else {
-                    throw Exception("게시글 업로드에 실패했습니다.")
-                }
-
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false) }
-                sendEffect(CommunityWriteSideEffect.ShowSnackbar(UiText.DynamicString(e.message ?: "알 수 없는 오류")))
-            }
-        }
-    }
-
-    private suspend fun processImages(uris: List<Uri>): List<String> = coroutineScope {
-        val userIdResult = userUseCases.getCurrentUserId()
-        if (userIdResult is DataResourceResult.Failure) throw Exception("로그인이 필요합니다.")
-        val userId = (userIdResult as DataResourceResult.Success).data
-
-        val imageFolderId = UUID.randomUUID().toString()
-
-        uris.map { uri ->
-            async {
-                val scheme = uri.scheme
-                val uriString = uri.toString()
-                if (scheme == "http" || scheme == "https") {
-                    uriString
-                } else {
-                    try {
-                        val compressedPath = imageCompressor.compressImage(uriString)
-                        val uploadResult = imageUseCases.uploadImage(
-                            uri = compressedPath,
-                            folder = "posts/$userId/$imageFolderId"
-                        )
-
-                        if (uploadResult is DataResourceResult.Success) {
-                            uploadResult.data
-                        } else {
-                            throw Exception("이미지 업로드 실패")
-                        }
-                    } catch (e: Exception) {
-                        throw Exception("이미지 처리 중 오류 발생: ${e.message}")
-                    }
-                }
-            }
-        }.awaitAll()
-    }
-
-    private suspend fun createNormalPost(
-        state: CommunityWriteUiState,
-        imageUrls: List<String>
-    ): DataResourceResult<Unit> {
-        val newPostId = UUID.randomUUID().toString()
-
-        return postUseCases.createPost(
-            postId = newPostId,
+        postUseCases.schedulePostUpload(
             title = state.title,
             content = state.content,
-            imageUrls = imageUrls,
-            teaType = state.linkedTeaType,
-            rating = state.linkedRating,
             tags = state.tags,
-            brewingSummary = null,
-            originNoteId = null
+            imageUriStrings = state.selectedImageUris.map { it.toString() },
+            linkedNoteId = state.linkedNoteId,
+            linkedTeaType = state.linkedTeaType,
+            linkedRating = state.linkedRating
         )
+
+        _uiState.update { it.copy(isLoading = false) }
+        sendEffect(CommunityWriteSideEffect.ShowToast(
+            UiText.StringResource(R.string.msg_save_start_background)
+        ))
+        sendEffect(CommunityWriteSideEffect.PostSuccess)
     }
 
     private fun sendEffect(effect: CommunityWriteSideEffect) {

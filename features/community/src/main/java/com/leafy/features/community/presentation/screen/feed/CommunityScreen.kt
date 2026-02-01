@@ -1,5 +1,6 @@
 package com.leafy.features.community.presentation.screen.feed
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +28,7 @@ import com.leafy.shared.ui.model.UserUiModel
 @Composable
 fun CommunityScreen(
     onPostClick: (String) -> Unit,
+    onCommentClick: (String) -> Unit,
     onMasterClick: (String) -> Unit,
     onMorePopularClick: () -> Unit = {},
     onMoreBookmarkClick: () -> Unit = {},
@@ -34,7 +36,6 @@ fun CommunityScreen(
     viewModel: CommunityFeedViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
@@ -44,11 +45,12 @@ fun CommunityScreen(
                 is CommunityFeedSideEffect.HideKeyboard -> {
                     keyboardController?.hide()
                 }
-                is CommunityFeedSideEffect.ShowSnackbar -> {
-                    val message = effect.message.asString(context)
-
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(message)
+                is CommunityFeedSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -56,14 +58,13 @@ fun CommunityScreen(
 
     LaunchedEffect(uiState.errorMessage) {
         if (uiState.errorMessage != null && !uiState.popularPosts.isEmpty()) {
-            snackbarHostState.showSnackbar(uiState.errorMessage!!)
+            Toast.makeText(context, uiState.errorMessage, Toast.LENGTH_SHORT).show()
             viewModel.onMessageShown()
         }
     }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -109,7 +110,7 @@ fun CommunityScreen(
                             onPostClick = { onPostClick(it.postId) },
                             onLikeClick = { viewModel.toggleLike(it.postId) },
                             onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
-                            onCommentClick = { onPostClick(it.postId) },
+                            onCommentClick = { onCommentClick(it.postId) },
                             onProfileClick = onMasterClick
                         )
                     }

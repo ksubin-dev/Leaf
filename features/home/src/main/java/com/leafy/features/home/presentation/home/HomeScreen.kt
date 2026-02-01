@@ -1,5 +1,6 @@
 package com.leafy.features.home.presentation.home
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,12 +14,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -44,7 +42,6 @@ fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -53,9 +50,12 @@ fun HomeRoute(
                 is HomeSideEffect.NavigateTo -> {
                     navController.navigate(effect.route)
                 }
-
-                is HomeSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is HomeSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -67,7 +67,6 @@ fun HomeRoute(
 
     HomeScreen(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onSearchClick = {
             navController.navigate(MainNavigationRoute.Search)
         },
@@ -92,7 +91,6 @@ fun HomeRoute(
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
-    snackbarHostState: SnackbarHostState,
     onSearchClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -113,7 +111,6 @@ fun HomeScreen(
                 onProfileClick = onProfileClick
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
 
@@ -204,7 +201,6 @@ fun HomeScreenPreview() {
                 rankingList = listOf(),
                 selectedFilter = RankingFilter.THIS_WEEK
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onSearchClick = {},
             onNotificationClick = {},
             onProfileClick = {},

@@ -1,5 +1,6 @@
 package com.leafy.features.community.presentation.screen.popular
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -25,14 +26,17 @@ fun PopularPostListScreen(
     viewModel: PopularPostListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is PopularPostListSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is PopularPostListSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -40,7 +44,6 @@ fun PopularPostListScreen(
 
     PopularPostListContent(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onPostClick = onPostClick
     )
@@ -50,12 +53,10 @@ fun PopularPostListScreen(
 @Composable
 fun PopularPostListContent(
     uiState: PopularPostListUiState,
-    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onPostClick: (String) -> Unit
 ) {
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {

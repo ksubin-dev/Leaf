@@ -2,6 +2,7 @@ package com.leafy.features.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface SearchSideEffect {
-    data class ShowSnackbar(val message: UiText) : SearchSideEffect
+    data class ShowToast(val message: UiText) : SearchSideEffect
 }
 
 @HiltViewModel
@@ -108,7 +109,7 @@ class SearchViewModel @Inject constructor(
             }
             is DataResourceResult.Failure -> {
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(SearchSideEffect.ShowSnackbar(UiText.DynamicString("검색 실패")))
+                sendEffect(SearchSideEffect.ShowToast(UiText.StringResource(R.string.msg_search_failed)))
             }
             else -> { _uiState.update { it.copy(isLoading = false) } }
         }
@@ -122,7 +123,7 @@ class SearchViewModel @Inject constructor(
             }
             is DataResourceResult.Failure -> {
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(SearchSideEffect.ShowSnackbar(UiText.DynamicString("검색 실패")))
+                sendEffect(SearchSideEffect.ShowToast(UiText.StringResource(R.string.msg_search_failed)))
             }
             else -> { _uiState.update { it.copy(isLoading = false) } }
         }

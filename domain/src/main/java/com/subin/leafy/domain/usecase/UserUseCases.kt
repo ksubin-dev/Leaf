@@ -14,6 +14,7 @@ data class UserUseCases @Inject constructor(
     val getUserBadges: GetUserBadgesUseCase,
     val searchUsers: SearchUsersUseCase,
     val checkNickname: CheckProfileNicknameUseCase,
-    val updateFcmToken: UpdateFcmTokenUseCase
+    val updateFcmToken: UpdateFcmTokenUseCase,
+    val scheduleProfileUpdate: ScheduleProfileUpdateUseCase
 
 )

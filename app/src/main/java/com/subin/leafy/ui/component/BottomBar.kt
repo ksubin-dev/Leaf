@@ -35,7 +35,6 @@ fun BottomBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
     ) {
         NavigationBar(
             modifier = Modifier.align(Alignment.BottomCenter),
@@ -88,7 +87,7 @@ fun BottomBar(
             onClick = onTimerButtonClick,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-40).dp)
+                .offset(y = (-20).dp)
         )
     }
 }

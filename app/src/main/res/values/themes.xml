@@ -5,7 +5,7 @@
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/white</item>
 
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_leafy_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_with_bg</item>
 
         <item name="postSplashScreenTheme">@style/Theme.Leafy</item>
     </style>

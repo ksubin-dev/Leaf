@@ -2,6 +2,7 @@ package com.leafy.features.mypage.presentation.analysis
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.UserAnalysis
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface AnalysisSideEffect {
-    data class ShowSnackbar(val message: UiText) : AnalysisSideEffect
+    data class ShowToast(val message: UiText) : AnalysisSideEffect
 }
 
 data class AnalysisUiState(
@@ -51,7 +52,7 @@ class AnalysisViewModel @Inject constructor(
                 analysisUseCases.getUserAnalysis(userId)
                     .catch { e ->
                         _uiState.update { it.copy(isLoading = false) }
-                        sendEffect(AnalysisSideEffect.ShowSnackbar(UiText.DynamicString(e.message ?: "오류 발생")))
+                        sendEffect(AnalysisSideEffect.ShowToast(UiText.StringResource(R.string.msg_analysis_error)))
                     }
                     .onEach { analysis ->
                         _uiState.update {
@@ -65,7 +66,7 @@ class AnalysisViewModel @Inject constructor(
                     .launchIn(viewModelScope)
             } else {
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(AnalysisSideEffect.ShowSnackbar(UiText.DynamicString("로그인이 필요합니다.")))
+                sendEffect(AnalysisSideEffect.ShowToast(UiText.StringResource(R.string.msg_login_required)))
             }
         }
     }

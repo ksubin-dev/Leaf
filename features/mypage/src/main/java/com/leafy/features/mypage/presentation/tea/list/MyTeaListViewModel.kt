@@ -2,6 +2,7 @@ package com.leafy.features.mypage.presentation.tea.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.model.TeaItem
 import com.subin.leafy.domain.usecase.TeaUseCases
@@ -12,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface MyTeaListSideEffect {
-    data class ShowSnackbar(val message: UiText) : MyTeaListSideEffect
+    data class ShowToast(val message: UiText) : MyTeaListSideEffect
 }
 
 data class MyTeaListUiState(
@@ -41,7 +42,10 @@ class MyTeaListViewModel @Inject constructor(
         teaUseCases.getTeas()
             .catch { e ->
                 _uiState.update { it.copy(isLoading = false) }
-                sendEffect(MyTeaListSideEffect.ShowSnackbar(UiText.DynamicString(e.message ?: "오류 발생")))
+                val msg = e.message
+                val uiText = if (msg != null) UiText.DynamicString(msg)
+                else UiText.StringResource(R.string.msg_error_occurred)
+                sendEffect(MyTeaListSideEffect.ShowToast(uiText))
             }
             .onEach { teas ->
                 _uiState.update {

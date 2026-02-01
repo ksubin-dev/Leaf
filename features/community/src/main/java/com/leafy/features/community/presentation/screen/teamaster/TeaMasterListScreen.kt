@@ -1,5 +1,6 @@
 package com.leafy.features.community.presentation.screen.teamaster
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -27,14 +28,17 @@ fun TeaMasterListScreen(
     viewModel: TeaMasterListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is TeaMasterListSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is TeaMasterListSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -42,24 +46,20 @@ fun TeaMasterListScreen(
 
     TeaMasterListContent(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onMasterClick = onMasterClick,
         onFollowToggle = viewModel::toggleFollow
     )
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeaMasterListContent(
     uiState: TeaMasterListUiState,
-    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onMasterClick: (String) -> Unit,
     onFollowToggle: (UserUiModel) -> Unit
 ) {
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -140,7 +140,6 @@ private fun TeaMasterListScreenPreview() {
                 masters = dummyMasters,
                 currentUserId = "999"
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onBackClick = {},
             onMasterClick = {},
             onFollowToggle = {}

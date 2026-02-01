@@ -3,6 +3,7 @@ package com.leafy.features.community.presentation.screen.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.CommentUiModel
 import com.leafy.shared.ui.model.CommunityPostUiModel
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface PostDetailSideEffect {
-    data class ShowSnackbar(val message: UiText) : PostDetailSideEffect
+    data class ShowToast(val message: UiText) : PostDetailSideEffect
     data object NavigateBack : PostDetailSideEffect
 }
 
@@ -84,9 +85,9 @@ class CommunityPostDetailViewModel @Inject constructor(
             }
             is DataResourceResult.Failure -> {
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = UiText.DynamicString("게시글을 불러올 수 없습니다."))
+                    it.copy(isLoading = false, errorMessage = UiText.StringResource(R.string.msg_post_load_error))
                 }
-                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("삭제된 게시글입니다.")))
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_post_deleted)))
                 sendEffect(PostDetailSideEffect.NavigateBack)
             }
             else -> { _uiState.update { it.copy(isLoading = false) } }
@@ -134,7 +135,7 @@ class CommunityPostDetailViewModel @Inject constructor(
                 _uiState.update { it.copy(commentInput = "") }
                 fetchPostDetail()
             } else {
-                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("댓글 작성 실패")))
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_comment_failed)))
             }
             _uiState.update { it.copy(isSendingComment = false) }
         }
@@ -144,10 +145,10 @@ class CommunityPostDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = postUseCases.deleteComment(postId, commentId)
             if (result is DataResourceResult.Success) {
-                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("댓글이 삭제되었습니다.")))
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_comment_deleted)))
                 fetchPostDetail()
             } else {
-                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("삭제 실패")))
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_failed)))
             }
         }
     }
@@ -163,7 +164,7 @@ class CommunityPostDetailViewModel @Inject constructor(
             val result = postUseCases.toggleLike(postId)
             if (result is DataResourceResult.Failure) {
                 _uiState.update { it.copy(post = currentPost) }
-                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("좋아요 실패")))
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_like_failed)))
             }
         }
     }
@@ -178,11 +179,10 @@ class CommunityPostDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = postUseCases.toggleBookmark(postId)
             if (result is DataResourceResult.Failure) {
-                // Rollback
                 _uiState.update { it.copy(post = currentPost) }
-                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("북마크 실패")))
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_failed)))
             } else if (newBookmarked) {
-                sendEffect(PostDetailSideEffect.ShowSnackbar(UiText.DynamicString("북마크 저장됨")))
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_saved)))
             }
         }
     }

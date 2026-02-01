@@ -1,5 +1,6 @@
 package com.leafy.features.timer.screen
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,14 +40,17 @@ fun TimerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
     var showExitDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is TimerSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is TimerSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 is TimerSideEffect.NavigateToNote -> {
                     onNavigateToNote(effect.navArgsJson)
@@ -91,7 +95,6 @@ fun TimerScreen(
 
     TimerScreenContent(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onBackClick = {
             if (uiState.status == TimerStatus.RUNNING) showExitDialog = true
             else onBackClick()
@@ -111,7 +114,6 @@ fun TimerScreen(
 @Composable
 fun TimerScreenContent(
     uiState: TimerUiState,
-    snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
     onNavigateToNoteClick: () -> Unit,
     onNavigateToPresetList: () -> Unit,
@@ -145,7 +147,6 @@ fun TimerScreenContent(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (uiState.infusionRecords.isNotEmpty()) {
                 Surface(
@@ -268,7 +269,6 @@ fun TimerScreenPreview() {
     LeafyTheme {
         TimerScreenContent(
             uiState = mockState,
-            snackbarHostState = remember { SnackbarHostState() },
             onNavigateToNoteClick = {},
             onToggleTimer = {},
             onResetTimer = {},
@@ -292,7 +292,6 @@ fun TimerScreenIdlePreview() {
     LeafyTheme {
         TimerScreenContent(
             uiState = mockState,
-            snackbarHostState = remember { SnackbarHostState() },
             onNavigateToNoteClick = {},
             onToggleTimer = {},
             onResetTimer = {},

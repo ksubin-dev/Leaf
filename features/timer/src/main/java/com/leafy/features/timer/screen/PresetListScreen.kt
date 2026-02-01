@@ -1,5 +1,6 @@
 package com.leafy.features.timer.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -51,19 +52,23 @@ fun PresetListScreen(
         else presets.filter { it.teaType == selectedCategory }
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         effectFlow.collect { effect ->
-            if (effect is TimerSideEffect.ShowSnackbar) {
-                snackbarHostState.showSnackbar(effect.message.asString(context))
+            when (effect) {
+                is TimerSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                else -> {}
             }
         }
     }
-
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Brewing Presets", fontWeight = FontWeight.Bold) },

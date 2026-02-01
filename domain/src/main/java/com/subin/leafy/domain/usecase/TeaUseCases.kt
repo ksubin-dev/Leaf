@@ -11,5 +11,6 @@ data class TeaUseCases @Inject constructor(
     val saveTea: SaveTeaUseCase,
     val deleteTea: DeleteTeaUseCase,
     val toggleFavorite: ToggleFavoriteTeaUseCase,
-    val syncTeas: SyncTeasUseCase
+    val syncTeas: SyncTeasUseCase,
+    val scheduleTeaUpload: ScheduleTeaUploadUseCase
 )

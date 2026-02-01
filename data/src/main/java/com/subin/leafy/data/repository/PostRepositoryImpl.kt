@@ -1,5 +1,9 @@
 package com.subin.leafy.data.repository
 
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.subin.leafy.data.worker.CommunityUploadWorker
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.PostDataSource
 import com.subin.leafy.data.datasource.remote.TeaMasterDataSource
@@ -25,7 +29,8 @@ class PostRepositoryImpl @Inject constructor(
     private val authDataSource: AuthDataSource,
     private val postDataSource: PostDataSource,
     private val userDataSource: UserDataSource,
-    private val teaMasterDataSource: TeaMasterDataSource
+    private val teaMasterDataSource: TeaMasterDataSource,
+    private val workManager: WorkManager
 ) : PostRepository {
 
     private val _postChangeFlow = MutableSharedFlow<PostChangeEvent>()
@@ -253,6 +258,33 @@ class PostRepositoryImpl @Inject constructor(
                 postResult
             }
         }
+    }
+
+    override fun schedulePostUpload(
+        title: String,
+        content: String,
+        tags: List<String>,
+        imageUriStrings: List<String>,
+        linkedNoteId: String?,
+        linkedTeaType: String?,
+        linkedRating: Int?
+    ) {
+        val inputData = workDataOf(
+            CommunityUploadWorker.KEY_TITLE to title,
+            CommunityUploadWorker.KEY_CONTENT to content,
+            CommunityUploadWorker.KEY_TAGS to tags.toTypedArray(),
+            CommunityUploadWorker.KEY_IMAGE_URIS to imageUriStrings.toTypedArray(),
+
+            CommunityUploadWorker.KEY_LINKED_NOTE_ID to linkedNoteId,
+            CommunityUploadWorker.KEY_LINKED_TEA_TYPE to linkedTeaType,
+            CommunityUploadWorker.KEY_LINKED_RATING to (linkedRating ?: -1)
+        )
+
+        val uploadRequest = OneTimeWorkRequestBuilder<CommunityUploadWorker>()
+            .setInputData(inputData)
+            .build()
+
+        workManager.enqueue(uploadRequest)
     }
 
     private fun mapPostsWithMyStateInternal(

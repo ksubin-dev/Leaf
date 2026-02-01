@@ -1,6 +1,7 @@
 package com.leafy.features.community.presentation.screen.write
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,7 +40,6 @@ fun CommunityWriteRoute(
     viewModel: CommunityWriteViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -48,8 +48,12 @@ fun CommunityWriteRoute(
                 is CommunityWriteSideEffect.PostSuccess -> {
                     onPostSuccess()
                 }
-                is CommunityWriteSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is CommunityWriteSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -57,7 +61,6 @@ fun CommunityWriteRoute(
 
     CommunityWriteContent(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         myNotes = uiState.myNotes,
         onNavigateBack = onNavigateBack,
         onUpload = viewModel::uploadPost,
@@ -76,7 +79,6 @@ fun CommunityWriteRoute(
 @Composable
 fun CommunityWriteContent(
     uiState: CommunityWriteUiState,
-    snackbarHostState: SnackbarHostState,
     myNotes: List<NoteSelectionUiModel>,
     onNavigateBack: () -> Unit,
     onUpload: () -> Unit,
@@ -117,7 +119,6 @@ fun CommunityWriteContent(
 
     Scaffold(
         contentWindowInsets = WindowInsets.statusBars,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("새 게시물", fontWeight = FontWeight.Bold) },
@@ -283,7 +284,6 @@ fun CommunityWriteScreenPreview() {
     LeafyTheme {
         CommunityWriteContent(
             uiState = dummyState,
-            snackbarHostState = remember { SnackbarHostState() },
             myNotes = dummyNotes,
             onNavigateBack = {},
             onUpload = {},
