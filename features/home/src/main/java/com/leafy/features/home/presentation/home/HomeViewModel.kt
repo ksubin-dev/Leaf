@@ -3,6 +3,8 @@ package com.leafy.features.home.presentation.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
+import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.HomeUseCases
 import com.subin.leafy.domain.usecase.NotificationUseCases
@@ -14,6 +16,11 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed interface HomeSideEffect {
+    data class ShowToast(val message: UiText) : HomeSideEffect
+    data class NavigateTo(val route: String) : HomeSideEffect
+}
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -37,7 +44,6 @@ class HomeViewModel @Inject constructor(
         observeNotifications()
         observeRanking()
     }
-
 
     private fun loadUserProfile() {
         viewModelScope.launch {
@@ -80,6 +86,7 @@ class HomeViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(rankingList = emptyList(), isRankingLoading = false)
                         }
+                        sendEffect(HomeSideEffect.ShowToast(UiText.StringResource(R.string.msg_ranking_load_failed)))
                     }
                     else -> {}
                 }
@@ -113,6 +120,7 @@ class HomeViewModel @Inject constructor(
                 is DataResourceResult.Failure -> {
                     Log.e("HomeViewModel", "홈 컨텐츠 로드 실패: ${result.exception.message}")
                     _uiState.update { it.copy(isLoading = false) }
+                    sendEffect(HomeSideEffect.ShowToast(UiText.StringResource(R.string.msg_home_content_load_failed)))
                 }
                 else -> {}
             }

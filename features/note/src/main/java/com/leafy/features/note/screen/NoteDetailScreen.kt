@@ -1,5 +1,6 @@
 package com.leafy.features.note.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,8 +13,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,7 +53,6 @@ fun NoteDetailScreen(
     onNavigateToEdit: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -68,8 +66,12 @@ fun NoteDetailScreen(
                 is DetailSideEffect.NavigateBack -> {
                     onNavigateBack()
                 }
-                is DetailSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is DetailSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -91,7 +93,6 @@ fun NoteDetailScreen(
 
     NoteDetailContent(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
         onNavigateToEdit = onNavigateToEdit,
         onDeleteNote = { showDeleteDialog = true },
@@ -105,7 +106,6 @@ fun NoteDetailScreen(
 @Composable
 fun NoteDetailContent(
     uiState: DetailUiState,
-    snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onDeleteNote: () -> Unit,
@@ -115,7 +115,6 @@ fun NoteDetailContent(
     onShareClick: () -> Unit
 ) {
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -288,7 +287,6 @@ fun NoteDetailScreenPreview() {
                 isLiked = true,
                 isBookmarked = false
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onNavigateBack = {},
             onNavigateToEdit = {},
             onDeleteNote = {},

@@ -9,8 +9,3 @@ data class NotificationUiState(
     val errorMessage: UiText? = null
 )
 
-sealed interface NotificationSideEffect {
-    data class NavigateToPost(val postId: String) : NotificationSideEffect
-    data class NavigateToProfile(val userId: String) : NotificationSideEffect
-    data class ShowSnackbar(val message: UiText) : NotificationSideEffect
-}

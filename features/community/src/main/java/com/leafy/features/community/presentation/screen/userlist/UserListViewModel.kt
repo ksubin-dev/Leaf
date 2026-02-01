@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.leafy.shared.R
 import com.leafy.shared.navigation.MainNavigationRoute
 import com.leafy.shared.navigation.UserListType
 import com.leafy.shared.ui.mapper.toUiModel
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface UserListSideEffect {
-    data class ShowSnackbar(val message: UiText) : UserListSideEffect
+    data class ShowToast(val message: UiText) : UserListSideEffect
 }
 
 data class UserListUiState(
@@ -68,9 +69,7 @@ class UserListViewModel @Inject constructor(
                 UserListType.FOLLOWING -> FollowType.FOLLOWING
             }
 
-            val result = userUseCases.getFollowList(targetUserId, domainType)
-
-            when (result) {
+            when (val result = userUseCases.getFollowList(targetUserId, domainType)) {
                 is DataResourceResult.Success -> {
                     val userUiModels = result.data.map { it.toUiModel() }
                     _uiState.update {
@@ -79,7 +78,9 @@ class UserListViewModel @Inject constructor(
                 }
                 is DataResourceResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
-                    sendEffect(UserListSideEffect.ShowSnackbar(UiText.DynamicString("리스트를 불러오지 못했습니다.")))
+                    sendEffect(UserListSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_data_load_error)
+                    ))
                 }
                 else -> {}
             }
@@ -96,7 +97,14 @@ class UserListViewModel @Inject constructor(
 
             if (result is DataResourceResult.Failure) {
                 updateFollowStateLocal(targetUser.userId, !nextState)
-                sendEffect(UserListSideEffect.ShowSnackbar(UiText.DynamicString("팔로우 변경 실패")))
+                sendEffect(UserListSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_follow_failed)
+                ))
+            } else {
+                val msgResId = if (nextState) R.string.msg_follow_success else R.string.msg_unfollow_success
+                sendEffect(UserListSideEffect.ShowToast(
+                    UiText.StringResource(msgResId)
+                ))
             }
         }
     }

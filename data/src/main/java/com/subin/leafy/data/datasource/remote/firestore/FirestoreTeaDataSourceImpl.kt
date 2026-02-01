@@ -20,7 +20,6 @@ class FirestoreTeaDataSourceImpl @Inject constructor(
 
     private val teasCollection = firestore.collection(COLLECTION_TEAS)
 
-    // 1. 백업 가져오기
     override suspend fun getMyBackupTeas(userId: String): DataResourceResult<List<TeaItem>> {
         return try {
             val snapshot = teasCollection
@@ -37,7 +36,6 @@ class FirestoreTeaDataSourceImpl @Inject constructor(
         }
     }
 
-    // 2. 저장 (Create & Update)
     override suspend fun saveTea(tea: TeaItem): DataResourceResult<Unit> {
         return try {
             val dto = tea.toDto()
@@ -52,7 +50,6 @@ class FirestoreTeaDataSourceImpl @Inject constructor(
         }
     }
 
-    // 3. 삭제
     override suspend fun deleteTea(teaId: String): DataResourceResult<Unit> {
         return try {
             teasCollection.document(teaId)

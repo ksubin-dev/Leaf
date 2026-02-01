@@ -14,9 +14,8 @@ interface TimerRepository {
 
     suspend fun deletePreset(presetId: String): DataResourceResult<Unit>
 
-    suspend fun saveLastUsedRecipe(timeSeconds: Int, temperature: Int): DataResourceResult<Unit>
-
-    suspend fun getLastUsedRecipe(): DataResourceResult<Pair<Int, Int>?>
+    suspend fun saveLastUsedRecipe(name: String, timeSeconds: Int, temperature: Int): DataResourceResult<Unit>
+    suspend fun getLastUsedRecipe(): DataResourceResult<Triple<String, Int, Int>?>
 
     fun getTimerSettingsFlow(): Flow<TimerSettings>
 

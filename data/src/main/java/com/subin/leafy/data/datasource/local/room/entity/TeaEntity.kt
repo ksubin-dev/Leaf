@@ -9,15 +9,15 @@ data class TeaEntity(
     val ownerId: String,
     val name: String,
     val brand: String,
-    val type: String,           // Enum Name 저장 ("GREEN", "BLACK")
+    val type: String,
 
     val origin: String,
     val leafStyle: String,
     val grade: String,
 
     val imageUrl: String?,
-    val isFavorite: Boolean,    // 즐겨찾기
-    val stockQuantity: String,  // "50g", "3개" 등 자유 입력
+    val isFavorite: Boolean,
+    val stockQuantity: String,
     val memo: String,
 
     val createdAt: Long

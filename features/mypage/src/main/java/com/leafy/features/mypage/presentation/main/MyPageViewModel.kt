@@ -5,14 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.R
 import com.leafy.shared.ui.model.UserUiModel
-import com.leafy.shared.utils.ImageCompressor
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserAnalysis
 import com.subin.leafy.domain.usecase.AnalysisUseCases
-import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.TeaUseCases
@@ -29,7 +27,7 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 sealed interface MyPageSideEffect {
-    data class ShowSnackbar(val message: UiText) : MyPageSideEffect
+    data class ShowToast(val message: UiText) : MyPageSideEffect
 }
 
 @HiltViewModel
@@ -38,9 +36,7 @@ class MyPageViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
     private val postUseCases: PostUseCases,
     private val analysisUseCases: AnalysisUseCases,
-    private val imageUseCases: ImageUseCases,
-    private val teaUseCases: TeaUseCases,
-    private val imageCompressor: ImageCompressor
+    private val teaUseCases: TeaUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MyPageUiState())
@@ -50,6 +46,7 @@ class MyPageViewModel @Inject constructor(
     val sideEffect: Flow<MyPageSideEffect> = _sideEffect.receiveAsFlow()
 
     private val _currentCalendarDate = MutableStateFlow(LocalDate.now())
+
 
     init {
         loadInitialData()
@@ -116,7 +113,6 @@ class MyPageViewModel @Inject constructor(
         }
         _currentCalendarDate.value = newDate
     }
-
 
     private fun loadTeaStats() {
         teaUseCases.getTeaCount()
@@ -212,7 +208,7 @@ class MyPageViewModel @Inject constructor(
                 loadFollowLists()
                 loadMyProfile()
             } else {
-                sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("팔로우 요청 실패")))
+                sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_follow_failed)))
             }
         }
     }
@@ -258,61 +254,61 @@ class MyPageViewModel @Inject constructor(
         val currentState = _uiState.value
 
         if (!currentState.isNicknameValid) {
-            sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("닉네임을 확인해주세요.")))
+            sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_check_nickname)))
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            var profileImageUrl: String? = null
+            val imageUriString = currentState.editProfileImageUri?.toString()
 
-            if (currentState.editProfileImageUri != null) {
-                try {
-                    val compressedUriString = imageCompressor.compressImage(currentState.editProfileImageUri.toString())
-                    val uploadResult = imageUseCases.uploadImage(compressedUriString, "profile_images")
-
-                    if (uploadResult is DataResourceResult.Success) {
-                        profileImageUrl = uploadResult.data
-                    } else {
-                        val errorMsg = (uploadResult as DataResourceResult.Failure).exception.message ?: "이미지 업로드 실패"
-                        sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString(errorMsg)))
-                        _uiState.update { it.copy(isLoading = false) }
-                        return@launch
-                    }
-                } catch (e: Exception) {
-                    sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("이미지 처리 오류: ${e.message}")))
-                    _uiState.update { it.copy(isLoading = false) }
-                    return@launch
-                }
-            }
-
-            val updateResult = userUseCases.updateProfile(
+            userUseCases.scheduleProfileUpdate(
                 nickname = currentState.editNickname,
                 bio = currentState.editBio,
-                profileUrl = profileImageUrl
+                imageUriString = imageUriString
             )
 
-            if (updateResult is DataResourceResult.Success) {
-                _uiState.update { it.copy(isLoading = false, isEditingProfile = false) }
-                sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString("프로필이 수정되었습니다.")))
-                loadMyProfile()
-            } else {
-                val errorMsg = (updateResult as DataResourceResult.Failure).exception.message ?: "프로필 수정 실패"
-                _uiState.update { it.copy(isLoading = false) }
-                sendEffect(MyPageSideEffect.ShowSnackbar(UiText.DynamicString(errorMsg)))
+            _uiState.update { state ->
+                val updatedProfile = state.myProfile?.copy(
+                    nickname = currentState.editNickname,
+                    bio = currentState.editBio,
+                    profileImageUrl = imageUriString ?: state.myProfile.profileImageUrl
+                )
+
+                state.copy(
+                    isLoading = false,
+                    isEditingProfile = false,
+                    myProfile = updatedProfile
+                )
             }
+
+            sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_save_start_background)))
         }
     }
 
-    private fun generateRandomInsight(data: UserAnalysis): Pair<String?, Int?> {
-        if (data.totalBrewingCount == 0) return "아직 분석할 데이터가 없어요. 차를 마셔보세요!" to R.drawable.ic_leaf
-        val insights = mutableListOf<Pair<String, Int>>()
-        if (data.preferredTimeSlot.isNotBlank()) insights.add("주로 ${data.preferredTimeSlot} 시간대에 차를 즐깁니다." to R.drawable.ic_clock)
-        if (data.averageBrewingTime.isNotBlank()) insights.add("평균 브루잉 시간은 ${data.averageBrewingTime} 입니다." to R.drawable.ic_timer)
-        if (data.preferredTemperature > 0) insights.add("가장 선호하는 물 온도는 ${data.preferredTemperature}°C 입니다." to R.drawable.ic_temp)
-        if (!data.favoriteTeaType.isNullOrBlank() && data.favoriteTeaType != "-") insights.add("요즘은 '${data.favoriteTeaType}'를 가장 많이 드셨네요." to R.drawable.ic_note_photo_teaware)
-        if (data.currentStreakDays > 2) insights.add("${data.currentStreakDays}일째 연속으로 차를 마시고 계시네요!" to R.drawable.ic_weather_clear)
+    private fun generateRandomInsight(data: UserAnalysis): Pair<UiText?, Int?> {
+        if (data.totalBrewingCount == 0) {
+            return UiText.StringResource(R.string.insight_no_data) to R.drawable.ic_leaf
+        }
+
+        val insights = mutableListOf<Pair<UiText, Int>>()
+
+        if (data.preferredTimeSlot.isNotBlank()) {
+            insights.add(UiText.StringResource(R.string.insight_time_slot, data.preferredTimeSlot) to R.drawable.ic_clock)
+        }
+        if (data.averageBrewingTime.isNotBlank()) {
+            insights.add(UiText.StringResource(R.string.insight_avg_time, data.averageBrewingTime) to R.drawable.ic_timer)
+        }
+        if (data.preferredTemperature > 0) {
+            insights.add(UiText.StringResource(R.string.insight_pref_temp, data.preferredTemperature) to R.drawable.ic_temp)
+        }
+        if (!data.favoriteTeaType.isNullOrBlank() && data.favoriteTeaType != "-") {
+            insights.add(UiText.StringResource(R.string.insight_fav_tea, data.favoriteTeaType!!) to R.drawable.ic_note_photo_teaware)
+        }
+        if (data.currentStreakDays > 2) {
+            insights.add(UiText.StringResource(R.string.insight_streak, data.currentStreakDays) to R.drawable.ic_weather_clear)
+        }
         return if (insights.isEmpty()) null to null else insights.random()
     }
 

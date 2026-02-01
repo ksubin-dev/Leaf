@@ -11,7 +11,7 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data object Notification : MainNavigationRoute
     @Serializable
     data class RankingDetail(
-        val initialFilterLabel: String = "이번 주"
+        val initialFilterName: String = "THIS_WEEK"
     ) : MainNavigationRoute
     @Serializable
     data class NoteTab(
@@ -31,7 +31,7 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     ) : MainNavigationRoute
 
     @Serializable data object CommunityTab : MainNavigationRoute
-    @Serializable data class CommunityDetail(val postId: String) : MainNavigationRoute
+    @Serializable data class CommunityDetail(val postId: String, val autoFocus: Boolean = false) : MainNavigationRoute
 
     @Serializable data object CommunityWrite : MainNavigationRoute
     @Serializable data object PopularPostList : MainNavigationRoute
@@ -56,6 +56,8 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data class TeaAddEdit(val teaId: String? = null) : MainNavigationRoute
 
     @Serializable data object AnalysisReport : MainNavigationRoute
+
+    @Serializable data object MyRecordSearch : MainNavigationRoute
 }
 
 enum class UserListType {

@@ -18,4 +18,6 @@ interface NoteRepository {
     suspend fun getUserNotes(userId: String): DataResourceResult<List<BrewingNote>>
     suspend fun syncNotes(): DataResourceResult<Unit>
     suspend fun clearLocalCache(): DataResourceResult<Unit>
+
+    suspend fun scheduleNoteUpload(note: BrewingNote, imageUriStrings: List<String>, isEditMode: Boolean)
 }

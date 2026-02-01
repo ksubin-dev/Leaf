@@ -7,7 +7,7 @@ import javax.inject.Inject
 class GetLastUsedRecipeUseCase @Inject constructor(
     private val timerRepository: TimerRepository
 ) {
-    suspend operator fun invoke(): DataResourceResult<Pair<Int, Int>?> {
+    suspend operator fun invoke(): DataResourceResult<Triple<String, Int, Int>?> {
         return timerRepository.getLastUsedRecipe()
     }
 }

@@ -1,5 +1,5 @@
 package com.leafy.features.mypage.presentation.record
-//
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize

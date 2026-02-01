@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="msg_save_start_background">백그라운드에서 저장을 시작했습니다.</string>
+    <string name="msg_save_error_default">저장 요청 실패</string>
+    <string name="msg_login_required">로그인 정보를 찾을 수 없습니다.</string>
+    <string name="msg_note_load_error">노트 정보를 불러오지 못했습니다.</string>
+    <string name="msg_timer_applied">타이머 기록이 적용되었습니다.</string>
+    <string name="msg_data_load_error">데이터를 불러오는데 실패했습니다.</string>
+    <string name="msg_note_private">비공개 처리된 노트입니다.</string>
+    <string name="msg_like_error">좋아요 처리에 실패했습니다.</string>
+    <string name="msg_bookmark_error">북마크 처리에 실패했습니다.</string>
+    <string name="msg_bookmark_success">북마크에 저장되었습니다.</string>
+    <string name="msg_note_deleted">노트가 삭제되었습니다.</string>
+    <string name="msg_delete_error">삭제에 실패했습니다.</string>
+    <string name="msg_post_load_error">게시글을 불러올 수 없습니다.</string>
+    <string name="msg_post_deleted">삭제된 게시글입니다.</string>
+    <string name="msg_comment_failed">댓글 작성 실패</string>
+    <string name="msg_comment_deleted">댓글이 삭제되었습니다.</string>
+    <string name="msg_delete_failed">삭제 실패</string>
+    <string name="msg_like_failed">좋아요 실패</string>
+    <string name="msg_bookmark_failed">북마크 실패</string>
+    <string name="msg_bookmark_saved">북마크 저장됨</string>
+    <string name="msg_follow_success">팔로우했습니다.</string>
+    <string name="msg_unfollow_success">팔로우를 취소했습니다.</string>
+    <string name="msg_follow_failed">팔로우 실패</string>
+    <string name="msg_comment_load_failed">댓글 로드 실패</string>
+    <string name="msg_note_load_fail">노트를 불러오지 못했습니다.</string>
+    <string name="msg_post_upload_fail">게시글 업로드에 실패했습니다.</string>
+    <string name="msg_login_required_write">로그인이 필요합니다.</string>
+    <string name="msg_image_upload_fail">이미지 업로드 실패</string>
+    <string name="msg_image_process_error">이미지 처리 중 오류 발생: %s</string>
+    <string name="msg_unknown_error">알 수 없는 오류</string>
+    <string name="msg_login_fail">로그인에 실패했습니다.</string>
+    <string name="msg_sign_up_success">회원가입 완료! 로그인해주세요.</string>
+    <string name="msg_sign_up_fail">회원가입 실패</string>
+    <string name="msg_password_mismatch">비밀번호가 일치하지 않습니다.</string>
+    <string name="msg_preset_selected">새로운 레시피가 선택되었습니다.</string>
+    <string name="msg_preset_saved">레시피 \'%s\' 저장 완료!</string>
+    <string name="msg_preset_save_fail">레시피 저장 실패</string>
+    <string name="msg_preset_deleted">레시피가 삭제되었습니다.</string>
+    <string name="msg_preset_delete_fail">삭제 실패</string>
+    <string name="msg_default_preset_warning">기본 레시피는 수정할 수 없습니다.</string>
+    <string name="msg_infusion_recorded">%d번째 우림이 기록되었습니다.</string>
+    <string name="msg_timer_started">타이머 시작</string>
+    <string name="hint_search">검색어를 입력하세요</string>
+    <string name="msg_search_failed">검색에 실패했습니다.</string>
+    <string name="tab_search_posts">게시글</string>
+    <string name="tab_search_users">사용자</string>
+    <string name="msg_ranking_load_failed">랭킹을 불러오는데 실패했습니다.</string>
+    <string name="msg_home_content_load_failed">홈 정보를 불러오는데 실패했습니다.</string>
+    <string name="title_notification">알림</string>
+    <string name="msg_notification_load_failed">알림을 불러오는데 실패했습니다.</string>
+    <string name="msg_notification_deleted">알림이 삭제되었습니다.</string>
+    <string name="msg_notification_empty">새로운 알림이 없습니다.</string>
+    <string name="title_ranking_detail">인기 시음 기록</string>
+    <string name="msg_ranking_empty">랭킹 데이터가 없습니다.</string>
+    <string name="msg_check_nickname">닉네임을 확인해주세요.</string>
+    <string name="msg_profile_updated">프로필이 수정되었습니다.</string>
+    <string name="msg_profile_update_fail">프로필 수정 실패</string>
+
+    <string name="title_saved_notes">저장한 노트</string>
+    <string name="title_liked_posts">좋아요한 글</string>
+
+    <string name="insight_no_data">아직 분석할 데이터가 없어요. 차를 마셔보세요!</string>
+    <string name="insight_time_slot">주로 %s 시간대에 차를 즐깁니다.</string>
+    <string name="insight_avg_time">평균 브루잉 시간은 %s 입니다.</string>
+    <string name="insight_pref_temp">가장 선호하는 물 온도는 %d°C 입니다.</string>
+    <string name="insight_fav_tea">요즘은 \'%s\'를 가장 많이 드셨네요.</string>
+    <string name="insight_streak">%d일째 연속으로 차를 마시고 계시네요!</string>
+    <string name="title_analysis_report">나의 티 리포트</string>
+    <string name="msg_analysis_empty">아직 분석할 데이터가 충분하지 않아요.\n차를 마시고 기록을 남겨보세요!</string>
+    <string name="msg_analysis_error">분석 데이터를 불러오지 못했습니다.</string>
+
+    <string name="title_weekly_activity">주간 활동 및 카페인</string>
+    <string name="format_weekly_count">이번 주 %d회</string>
+    <string name="format_daily_caffeine">일일 평균 %dmg</string>
+
+    <string name="title_tea_preference">즐겨 마시는 차 종류</string>
+    <string name="format_favorite_tea">가장 많이 마신 차는 \'%s\'입니다.</string>
+
+    <string name="action_share_report">리포트 공유하기</string>
+
+    <string name="title_settings">설정</string>
+    <string name="msg_setting_save_fail">설정 저장 실패</string>
+    <string name="msg_logout_fail">로그아웃 실패</string>
+    <string name="msg_delete_account_fail">회원 탈퇴 실패</string>
+    <string name="msg_tea_load_failed">차 정보를 불러올 수 없습니다.</string>
+    <string name="msg_tea_save_failed">저장 실패</string>
+    <string name="msg_tea_delete_success">삭제되었습니다.</string>
+    <string name="msg_error_occurred">오류 발생</string>
+</resources>

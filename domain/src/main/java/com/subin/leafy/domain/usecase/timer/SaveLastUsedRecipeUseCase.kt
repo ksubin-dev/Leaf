@@ -7,15 +7,24 @@ import javax.inject.Inject
 class SaveLastUsedRecipeUseCase @Inject constructor(
     private val timerRepository: TimerRepository
 ) {
-    suspend operator fun invoke(timeSeconds: Int, temperature: Int): DataResourceResult<Unit> {
+    suspend operator fun invoke(
+        name: String,
+        timeSeconds: Int,
+        temperature: Int
+    ): DataResourceResult<Unit> {
+
+        if (name.isBlank()) {
+            return DataResourceResult.Failure(Exception("레시피 이름이 올바르지 않습니다."))
+        }
 
         if (timeSeconds <= 0) {
             return DataResourceResult.Failure(Exception("유효하지 않은 시간입니다."))
         }
+
         if (temperature !in 0..100) {
             return DataResourceResult.Failure(Exception("유효하지 않은 온도입니다."))
         }
 
-        return timerRepository.saveLastUsedRecipe(timeSeconds, temperature)
+        return timerRepository.saveLastUsedRecipe(name, timeSeconds, temperature)
     }
 }

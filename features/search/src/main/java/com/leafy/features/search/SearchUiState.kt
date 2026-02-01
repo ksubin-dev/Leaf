@@ -1,11 +1,13 @@
 package com.leafy.features.search
 
+import androidx.annotation.StringRes
+import com.leafy.shared.R
 import com.leafy.shared.ui.model.CommunityPostUiModel
 import com.leafy.shared.ui.model.UserUiModel
 
-enum class SearchTab(val label: String) {
-    POSTS("게시글"),
-    USERS("사용자")
+enum class SearchTab(@StringRes val labelResId: Int) {
+    POSTS(R.string.tab_search_posts),
+    USERS(R.string.tab_search_users)
 }
 
 data class SearchUiState(

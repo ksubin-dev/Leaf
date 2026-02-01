@@ -2,6 +2,7 @@ package com.leafy.features.community.presentation.screen.teamaster
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.ui.mapper.toUiModel
 import com.leafy.shared.ui.model.UserUiModel
 import com.leafy.shared.utils.UiText
@@ -15,7 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface TeaMasterListSideEffect {
-    data class ShowSnackbar(val message: UiText) : TeaMasterListSideEffect
+    data class ShowToast(val message: UiText) : TeaMasterListSideEffect
 }
 
 data class TeaMasterListUiState(
@@ -59,7 +60,9 @@ class TeaMasterListViewModel @Inject constructor(
                     }
                 } else {
                     _uiState.update { it.copy(isLoading = false) }
-                    sendEffect(TeaMasterListSideEffect.ShowSnackbar(UiText.DynamicString("데이터를 불러오지 못했습니다.")))
+                    sendEffect(TeaMasterListSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_data_load_error)
+                    ))
                 }
             }
         }
@@ -82,7 +85,14 @@ class TeaMasterListViewModel @Inject constructor(
             val result = userUseCases.followUser(targetUser.userId, nextState)
             if (result is DataResourceResult.Failure) {
                 _uiState.update { state -> state.copy(masters = currentList) }
-                sendEffect(TeaMasterListSideEffect.ShowSnackbar(UiText.DynamicString("팔로우 변경 실패")))
+                sendEffect(TeaMasterListSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_follow_failed)
+                ))
+            } else {
+                val msgResId = if (nextState) R.string.msg_follow_success else R.string.msg_unfollow_success
+                sendEffect(TeaMasterListSideEffect.ShowToast(
+                    UiText.StringResource(msgResId)
+                ))
             }
         }
     }

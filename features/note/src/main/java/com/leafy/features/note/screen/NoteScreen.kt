@@ -1,6 +1,7 @@
 package com.leafy.features.note.screen
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,13 +22,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -59,10 +57,8 @@ import com.subin.leafy.domain.model.WeatherType
 fun NoteScreen(
     viewModel: NoteViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToTimer: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -71,8 +67,12 @@ fun NoteScreen(
                 is NoteSideEffect.NavigateBack -> {
                     onNavigateBack()
                 }
-                is NoteSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is NoteSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -80,10 +80,8 @@ fun NoteScreen(
 
     NoteContent(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
         onSave = viewModel::saveNote,
-        onNavigateToTimer = onNavigateToTimer,
 
         onAddImages = viewModel::addImages,
         onRemoveImage = viewModel::removeImage,
@@ -125,11 +123,8 @@ fun NoteScreen(
 @Composable
 fun NoteContent(
     uiState: NoteUiState,
-    snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onSave: () -> Unit,
-    onNavigateToTimer: () -> Unit,
-
     onAddImages: (List<Uri>) -> Unit,
     onRemoveImage: (Uri) -> Unit,
     onTeaNameChange: (String) -> Unit,
@@ -211,7 +206,6 @@ fun NoteContent(
                     }
                 )
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { paddingValues ->
             Box(
                 modifier = Modifier
@@ -273,7 +267,6 @@ fun NoteContent(
                             onInfusionCountChange = onInfusionCountChange,
                             teaware = uiState.teaware,
                             onTeawareChange = onTeawareChange,
-                            onTimerClick = onNavigateToTimer
                         )
                     }
                     item {
@@ -312,7 +305,7 @@ fun NoteContent(
         }
         LoadingOverlay(
             isLoading = uiState.isLoading,
-            message = "노트를 저장 중입니다..."
+            message = "백그라운드 저장소로 보내는 중..."
         )
     }
 }
@@ -342,10 +335,8 @@ fun NoteScreenPreview() {
 
         NoteContent(
             uiState = dummyState,
-            snackbarHostState = remember { SnackbarHostState() },
             onNavigateBack = {},
             onSave = {},
-            onNavigateToTimer = {},
             onAddImages = {}, onRemoveImage = {}, onTeaNameChange = {},
             onTeaBrandChange = {}, onTeaTypeChange = {}, onTeaOriginChange = {},
             onTeaLeafStyleChange = {}, onTeaGradeChange = {}, onDateTimeChange = {},

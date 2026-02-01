@@ -1,6 +1,7 @@
 package com.leafy.features.mypage.presentation.main
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,8 +18,10 @@ import com.leafy.features.mypage.presentation.main.component.AnalysisTeaserCard
 import com.leafy.features.mypage.presentation.main.component.MyPageTopAppBar
 import com.leafy.features.mypage.presentation.main.component.ProfileHeader
 import com.leafy.features.mypage.presentation.main.session.MyPageCalendarSection
+import com.leafy.features.mypage.presentation.main.session.MyRecordSearchEntry
 import com.leafy.features.mypage.presentation.main.session.MyTeaCabinetSection
 import com.leafy.features.mypage.presentation.main.session.SavedNotesSummarySection
+import com.leafy.shared.R
 import java.time.LocalDate
 
 @Composable
@@ -34,17 +38,21 @@ fun MyPageScreen(
     onFollowingClick: () -> Unit,
     onMyTeaCabinetClick: () -> Unit,
     onAnalysisClick: () -> Unit,
+    onMyRecordSearchClick: () -> Unit,
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
             when (effect) {
-                is MyPageSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                is MyPageSideEffect.ShowToast -> {
+                    Toast.makeText(
+                        context,
+                        effect.message.asString(context),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -57,7 +65,6 @@ fun MyPageScreen(
                 onSettingsClick = onSettingsClick
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         MyPageContent(
             modifier = Modifier
@@ -94,7 +101,8 @@ fun MyPageScreen(
             onBioChange = viewModel::onBioChange,
             onProfileImageSelected = viewModel::onProfileImageSelected,
             onMyTeaCabinetClick = onMyTeaCabinetClick,
-            onAnalysisClick = onAnalysisClick
+            onAnalysisClick = onAnalysisClick,
+            onSearchClick = onMyRecordSearchClick
         )
     }
 }
@@ -121,9 +129,11 @@ private fun MyPageContent(
     onBioChange: (String) -> Unit,
     onProfileImageSelected: (Uri) -> Unit,
     onMyTeaCabinetClick: () -> Unit,
-    onAnalysisClick: () -> Unit
+    onAnalysisClick: () -> Unit,
+    onSearchClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -157,6 +167,12 @@ private fun MyPageContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        MyRecordSearchEntry(
+            onClick = onSearchClick
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         MyPageCalendarSection(
             uiState = uiState,
             onDateClick = onDateClick,
@@ -179,7 +195,7 @@ private fun MyPageContent(
 
         if (uiState.analysisTeaserContent != null && uiState.analysisTeaserIconRes != null) {
             AnalysisTeaserCard(
-                content = uiState.analysisTeaserContent,
+                content = uiState.analysisTeaserContent.asString(context),
                 iconResId = uiState.analysisTeaserIconRes,
                 onClick = onAnalysisClick,
                 modifier = Modifier.padding(horizontal = 24.dp)
@@ -188,7 +204,7 @@ private fun MyPageContent(
         }
 
         SavedNotesSummarySection(
-            title = "저장한 노트",
+            title = stringResource(R.string.title_saved_notes),
             bookmarkedPosts = uiState.bookmarkedPosts,
             onViewAllClick = onViewAllBookmarksClick,
             onPostClick = onPostDetailClick
@@ -197,7 +213,7 @@ private fun MyPageContent(
         if (uiState.likedPosts.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             SavedNotesSummarySection(
-                title = "좋아요한 글",
+                title = stringResource(R.string.title_liked_posts),
                 bookmarkedPosts = uiState.likedPosts,
                 onViewAllClick = onViewAllLikedPostsClick,
                 onPostClick = onPostDetailClick

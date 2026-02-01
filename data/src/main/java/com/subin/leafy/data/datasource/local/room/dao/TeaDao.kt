@@ -10,27 +10,27 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TeaDao {
 
-    // 1. 전체 조회 (즐겨찾기 우선 정렬)
-    @Query("SELECT * FROM teas ORDER BY isFavorite DESC, createdAt DESC")
-    fun getAllTeas(): Flow<List<TeaEntity>>
+    @Query("SELECT * FROM teas WHERE ownerId = :ownerId ORDER BY isFavorite DESC, createdAt DESC")
+    fun getAllTeas(ownerId: String): Flow<List<TeaEntity>>
 
-    // 2. 검색 쿼리
-    @Query("SELECT * FROM teas WHERE name LIKE '%' || :query || '%' OR brand LIKE '%' || :query || '%' ORDER BY isFavorite DESC")
-    fun searchTeas(query: String): Flow<List<TeaEntity>>
+    @Query("SELECT * FROM teas WHERE ownerId = :ownerId AND (name LIKE '%' || :query || '%' OR brand LIKE '%' || :query || '%') ORDER BY isFavorite DESC")
+    fun searchTeas(ownerId: String, query: String): Flow<List<TeaEntity>>
 
-    // 3. 개수 실시간 조회
-    @Query("SELECT COUNT(*) FROM teas")
-    fun getTeaCount(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM teas WHERE ownerId = :ownerId")
+    fun getTeaCount(ownerId: String): Flow<Int>
 
-    // 4. 상세 조회
     @Query("SELECT * FROM teas WHERE id = :teaId")
     suspend fun getTeaById(teaId: String): TeaEntity?
 
-    // 5. 추가/수정
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTea(tea: TeaEntity)
 
-    // 6. 삭제
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTeas(teas: List<TeaEntity>)
+
     @Query("DELETE FROM teas WHERE id = :teaId")
     suspend fun deleteTea(teaId: String)
+
+    @Query("DELETE FROM teas WHERE ownerId = :ownerId")
+    suspend fun deleteMyAllTeas(ownerId: String)
 }

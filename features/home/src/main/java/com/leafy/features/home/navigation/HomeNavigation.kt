@@ -22,7 +22,7 @@ fun NavGraphBuilder.homeNavGraph(
             navController = navController,
             onMoreRankingClick = { currentFilter ->
                 navController.navigate(
-                    MainNavigationRoute.RankingDetail(initialFilterLabel = currentFilter.label)
+                    MainNavigationRoute.RankingDetail(initialFilterName = currentFilter.name)
                 )
             },
             viewModel = viewModel

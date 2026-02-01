@@ -2,6 +2,7 @@ package com.leafy.features.home.presentation.notification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.Notification
@@ -12,6 +13,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed interface NotificationSideEffect {
+    data class NavigateToPost(val postId: String) : NotificationSideEffect
+    data class NavigateToProfile(val userId: String) : NotificationSideEffect
+    data class ShowToast(val message: UiText) : NotificationSideEffect
+}
 
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
@@ -47,7 +54,7 @@ class NotificationViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                errorMessage = UiText.DynamicString(result.exception.message ?: "알림 로드 실패")
+                                errorMessage = UiText.StringResource(R.string.msg_notification_load_failed)
                             )
                         }
                     }
@@ -82,11 +89,18 @@ class NotificationViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = notificationUseCases.deleteNotification(notificationId)) {
                 is DataResourceResult.Success -> {
-                    _sideEffect.send(NotificationSideEffect.ShowSnackbar(UiText.DynamicString("알림이 삭제되었습니다.")))
+                    _sideEffect.send(NotificationSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_notification_deleted)
+                    ))
                 }
                 is DataResourceResult.Failure -> {
-                    val msg = result.exception.message ?: "삭제 실패"
-                    _sideEffect.send(NotificationSideEffect.ShowSnackbar(UiText.DynamicString(msg)))
+                    val msg = result.exception.message
+                    val uiText = if (msg.isNullOrBlank()) {
+                        UiText.StringResource(R.string.msg_delete_failed)
+                    } else {
+                        UiText.DynamicString(msg)
+                    }
+                    _sideEffect.send(NotificationSideEffect.ShowToast(uiText))
                 }
                 else -> {}
             }

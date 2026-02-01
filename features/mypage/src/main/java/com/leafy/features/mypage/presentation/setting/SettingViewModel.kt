@@ -2,6 +2,7 @@ package com.leafy.features.mypage.presentation.setting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.leafy.shared.R
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TimerSettings
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface SettingSideEffect {
-    data class ShowSnackbar(val message: UiText) : SettingSideEffect
+    data class ShowToast(val message: UiText) : SettingSideEffect
     data object LogoutSuccess : SettingSideEffect
     data object DeleteAccountSuccess : SettingSideEffect
 }
@@ -127,7 +128,10 @@ class SettingViewModel @Inject constructor(
             val result = timerUseCases.updateTimerSettings(newSettings)
 
             if (result is DataResourceResult.Failure) {
-                sendEffect(SettingSideEffect.ShowSnackbar(UiText.DynamicString("설정 저장 실패: ${result.exception.message}")))
+                val msg = result.exception.message
+                val uiText = if (msg != null) UiText.DynamicString(msg)
+                else UiText.StringResource(R.string.msg_setting_save_fail)
+                sendEffect(SettingSideEffect.ShowToast(uiText))
             }
         }
     }
@@ -143,7 +147,7 @@ class SettingViewModel @Inject constructor(
             if (result is DataResourceResult.Success) {
                 sendEffect(SettingSideEffect.LogoutSuccess)
             } else {
-                sendEffect(SettingSideEffect.ShowSnackbar(UiText.DynamicString("로그아웃 실패")))
+                sendEffect(SettingSideEffect.ShowToast(UiText.StringResource(R.string.msg_logout_fail)))
             }
         }
     }
@@ -159,7 +163,7 @@ class SettingViewModel @Inject constructor(
             if (result is DataResourceResult.Success) {
                 sendEffect(SettingSideEffect.DeleteAccountSuccess)
             } else {
-                sendEffect(SettingSideEffect.ShowSnackbar(UiText.DynamicString("회원 탈퇴 실패")))
+                sendEffect(SettingSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_account_fail)))
             }
         }
     }
