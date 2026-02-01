@@ -15,6 +15,8 @@ import com.leafy.features.mypage.presentation.bookmark.SavedListScreen
 import com.leafy.features.mypage.presentation.main.MyPageScreen
 import com.leafy.features.mypage.presentation.main.MyPageViewModel
 import com.leafy.features.mypage.presentation.record.DailyRecordsScreen
+import com.leafy.features.mypage.presentation.search.MyRecordSearchScreen
+import com.leafy.features.mypage.presentation.search.MyRecordSearchViewModel
 import com.leafy.features.mypage.presentation.setting.SettingScreen
 import com.leafy.features.mypage.presentation.setting.SettingViewModel
 import com.leafy.features.mypage.presentation.social.FollowListScreen
@@ -71,6 +73,21 @@ fun NavGraphBuilder.mypageNavGraph(
             },
             onAnalysisClick = {
                 navController.navigate(MainNavigationRoute.AnalysisReport)
+            },
+            onMyRecordSearchClick = {
+                navController.navigate(MainNavigationRoute.MyRecordSearch)
+            }
+        )
+    }
+
+    composable<MainNavigationRoute.MyRecordSearch> {
+        val viewModel: MyRecordSearchViewModel = hiltViewModel()
+
+        MyRecordSearchScreen(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() },
+            onNoteClick = { noteId ->
+                navController.navigate(MainNavigationRoute.NoteDetail(noteId = noteId))
             }
         )
     }

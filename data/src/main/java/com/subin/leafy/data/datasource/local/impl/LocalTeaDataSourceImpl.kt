@@ -14,16 +14,16 @@ class LocalTeaDataSourceImpl @Inject constructor(
     private val teaDao: TeaDao
 ) : LocalTeaDataSource {
 
-    override fun getTeasFlow(): Flow<List<TeaItem>> {
-        return teaDao.getAllTeas().map { it.toTeaDomainList() }
+    override fun getTeasFlow(ownerId: String): Flow<List<TeaItem>> {
+        return teaDao.getAllTeas(ownerId).map { it.toTeaDomainList() }
     }
 
-    override fun searchTeas(query: String): Flow<List<TeaItem>> {
-        return teaDao.searchTeas(query).map { it.toTeaDomainList() }
+    override fun searchTeas(ownerId: String, query: String): Flow<List<TeaItem>> {
+        return teaDao.searchTeas(ownerId, query).map { it.toTeaDomainList() }
     }
 
-    override fun getTeaCountFlow(): Flow<Int> {
-        return teaDao.getTeaCount()
+    override fun getTeaCountFlow(ownerId: String): Flow<Int> {
+        return teaDao.getTeaCount(ownerId)
     }
 
     override suspend fun getTea(id: String): TeaItem? {
@@ -34,7 +34,16 @@ class LocalTeaDataSourceImpl @Inject constructor(
         teaDao.insertTea(tea.toEntity())
     }
 
+    override suspend fun insertTeas(teas: List<TeaItem>) {
+        val entities = teas.map { it.toEntity() }
+        teaDao.insertTeas(entities)
+    }
+
     override suspend fun deleteTea(id: String) {
         teaDao.deleteTea(id)
+    }
+
+    override suspend fun deleteMyAllTeas(ownerId: String) {
+        teaDao.deleteMyAllTeas(ownerId)
     }
 }

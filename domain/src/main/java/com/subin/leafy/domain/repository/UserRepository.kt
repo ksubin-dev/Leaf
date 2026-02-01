@@ -42,4 +42,6 @@ interface UserRepository {
     suspend fun syncFcmToken(isEnabled: Boolean): DataResourceResult<Unit>
 
     suspend fun checkNicknameAvailability(nickname: String): DataResourceResult<Boolean>
+
+    suspend fun scheduleProfileUpdate(nickname: String, bio: String, imageUriString: String?)
 }

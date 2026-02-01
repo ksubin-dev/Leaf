@@ -18,6 +18,7 @@ import com.leafy.features.mypage.presentation.main.component.AnalysisTeaserCard
 import com.leafy.features.mypage.presentation.main.component.MyPageTopAppBar
 import com.leafy.features.mypage.presentation.main.component.ProfileHeader
 import com.leafy.features.mypage.presentation.main.session.MyPageCalendarSection
+import com.leafy.features.mypage.presentation.main.session.MyRecordSearchEntry
 import com.leafy.features.mypage.presentation.main.session.MyTeaCabinetSection
 import com.leafy.features.mypage.presentation.main.session.SavedNotesSummarySection
 import com.leafy.shared.R
@@ -37,6 +38,7 @@ fun MyPageScreen(
     onFollowingClick: () -> Unit,
     onMyTeaCabinetClick: () -> Unit,
     onAnalysisClick: () -> Unit,
+    onMyRecordSearchClick: () -> Unit,
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -99,7 +101,8 @@ fun MyPageScreen(
             onBioChange = viewModel::onBioChange,
             onProfileImageSelected = viewModel::onProfileImageSelected,
             onMyTeaCabinetClick = onMyTeaCabinetClick,
-            onAnalysisClick = onAnalysisClick
+            onAnalysisClick = onAnalysisClick,
+            onSearchClick = onMyRecordSearchClick
         )
     }
 }
@@ -126,7 +129,8 @@ private fun MyPageContent(
     onBioChange: (String) -> Unit,
     onProfileImageSelected: (Uri) -> Unit,
     onMyTeaCabinetClick: () -> Unit,
-    onAnalysisClick: () -> Unit
+    onAnalysisClick: () -> Unit,
+    onSearchClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -162,6 +166,12 @@ private fun MyPageContent(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        MyRecordSearchEntry(
+            onClick = onSearchClick
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         MyPageCalendarSection(
             uiState = uiState,

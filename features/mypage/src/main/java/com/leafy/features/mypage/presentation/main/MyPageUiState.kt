@@ -37,5 +37,5 @@ data class MyPageUiState(
 
     val bookmarkedPosts: List<CommunityPost> = emptyList(),
     val likedPosts: List<CommunityPost> = emptyList(),
-    val myTeaCabinetCount: Int = 0
+    val myTeaCabinetCount: Int = 0,
 )

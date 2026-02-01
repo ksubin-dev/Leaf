@@ -13,10 +13,21 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import com.subin.leafy.data.worker.ProfileUploadWorker
+import java.util.concurrent.TimeUnit
 
 class UserRepositoryImpl @Inject constructor(
     private val authDataSource: AuthDataSource,
-    private val userDataSource: UserDataSource
+    private val userDataSource: UserDataSource,
+    private val workManager: WorkManager
 ) : UserRepository {
 
     override fun getMyProfileFlow(): Flow<DataResourceResult<User>> {
@@ -224,5 +235,32 @@ class UserRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
         }
+    }
+
+    override suspend fun scheduleProfileUpdate(nickname: String, bio: String, imageUriString: String?) {
+        val inputData = Data.Builder()
+            .putString(ProfileUploadWorker.KEY_NICKNAME, nickname)
+            .putString(ProfileUploadWorker.KEY_BIO, bio)
+            .putString(ProfileUploadWorker.KEY_IMAGE_URI, imageUriString)
+            .build()
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val workRequest = OneTimeWorkRequestBuilder<ProfileUploadWorker>()
+            .setConstraints(constraints)
+            .setInputData(inputData)
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setBackoffCriteria(
+                BackoffPolicy.LINEAR,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag("update_profile")
+            .build()
+
+        workManager.cancelAllWorkByTag("update_profile")
+        workManager.enqueue(workRequest)
     }
 }

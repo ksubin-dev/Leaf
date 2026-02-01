@@ -5,14 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.leafy.shared.R
 import com.leafy.shared.ui.model.UserUiModel
-import com.leafy.shared.utils.ImageCompressor
 import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.User
 import com.subin.leafy.domain.model.UserAnalysis
 import com.subin.leafy.domain.usecase.AnalysisUseCases
-import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.TeaUseCases
@@ -38,9 +36,7 @@ class MyPageViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
     private val postUseCases: PostUseCases,
     private val analysisUseCases: AnalysisUseCases,
-    private val imageUseCases: ImageUseCases,
-    private val teaUseCases: TeaUseCases,
-    private val imageCompressor: ImageCompressor
+    private val teaUseCases: TeaUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MyPageUiState())
@@ -50,6 +46,7 @@ class MyPageViewModel @Inject constructor(
     val sideEffect: Flow<MyPageSideEffect> = _sideEffect.receiveAsFlow()
 
     private val _currentCalendarDate = MutableStateFlow(LocalDate.now())
+
 
     init {
         loadInitialData()
@@ -264,44 +261,29 @@ class MyPageViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            var profileImageUrl: String? = null
+            val imageUriString = currentState.editProfileImageUri?.toString()
 
-            if (currentState.editProfileImageUri != null) {
-                try {
-                    val compressedUriString = imageCompressor.compressImage(currentState.editProfileImageUri.toString())
-                    val uploadResult = imageUseCases.uploadImage(compressedUriString, "profile_images")
-
-                    if (uploadResult is DataResourceResult.Success) {
-                        profileImageUrl = uploadResult.data
-                    } else {
-                        sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_image_upload_fail)))
-                        _uiState.update { it.copy(isLoading = false) }
-                        return@launch
-                    }
-                } catch (e: Exception) {
-                    val msg = e.message
-                    val uiText = if (msg != null) UiText.StringResource(R.string.msg_image_process_error, msg)
-                    else UiText.StringResource(R.string.msg_unknown_error)
-                    sendEffect(MyPageSideEffect.ShowToast(uiText))
-                    _uiState.update { it.copy(isLoading = false) }
-                    return@launch
-                }
-            }
-
-            val updateResult = userUseCases.updateProfile(
+            userUseCases.scheduleProfileUpdate(
                 nickname = currentState.editNickname,
                 bio = currentState.editBio,
-                profileUrl = profileImageUrl
+                imageUriString = imageUriString
             )
 
-            if (updateResult is DataResourceResult.Success) {
-                _uiState.update { it.copy(isLoading = false, isEditingProfile = false) }
-                sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_profile_updated)))
-                loadMyProfile()
-            } else {
-                _uiState.update { it.copy(isLoading = false) }
-                sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_profile_update_fail)))
+            _uiState.update { state ->
+                val updatedProfile = state.myProfile?.copy(
+                    nickname = currentState.editNickname,
+                    bio = currentState.editBio,
+                    profileImageUrl = imageUriString ?: state.myProfile.profileImageUrl
+                )
+
+                state.copy(
+                    isLoading = false,
+                    isEditingProfile = false,
+                    myProfile = updatedProfile
+                )
             }
+
+            sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_save_start_background)))
         }
     }
 

@@ -1,4 +1,6 @@
 package com.subin.leafy.data.repository
+import androidx.work.WorkManager
+import com.google.gson.Gson
 import com.subin.leafy.data.datasource.local.LocalTeaDataSource
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.RemoteTeaDataSource
@@ -6,24 +8,38 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.TeaItem
 import com.subin.leafy.domain.repository.TeaRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkRequest
+import com.subin.leafy.data.worker.TeaUploadWorker
+import java.util.concurrent.TimeUnit
 
 class TeaRepositoryImpl @Inject constructor(
     private val localTeaDataSource: LocalTeaDataSource,
     private val remoteTeaDataSource: RemoteTeaDataSource,
-    private val authDataSource: AuthDataSource
+    private val authDataSource: AuthDataSource,
+    private val workManager: WorkManager
 ) : TeaRepository {
 
     override fun getTeasFlow(): Flow<List<TeaItem>> {
-        return localTeaDataSource.getTeasFlow()
+        val myUid = authDataSource.getCurrentUserId() ?: return flowOf(emptyList())
+        return localTeaDataSource.getTeasFlow(myUid)
     }
 
     override fun searchTeas(query: String): Flow<List<TeaItem>> {
-        return localTeaDataSource.searchTeas(query)
+        val myUid = authDataSource.getCurrentUserId() ?: return flowOf(emptyList())
+        return localTeaDataSource.searchTeas(myUid, query)
     }
 
     override fun getTeaCountFlow(): Flow<Int> {
-        return localTeaDataSource.getTeaCountFlow()
+        val myUid = authDataSource.getCurrentUserId() ?: return flowOf(0)
+        return localTeaDataSource.getTeaCountFlow(myUid)
     }
 
     override suspend fun getTeaDetail(id: String): TeaItem? {
@@ -37,8 +53,6 @@ class TeaRepositoryImpl @Inject constructor(
 
         return try {
             localTeaDataSource.insertTea(teaToSave)
-            // (2) 리모트 DB 백업 (실패해도 로컬엔 저장됐으니 성공으로 간주하거나,
-            // 추후 WorkManager로 재시도 로직을 붙일 수 있음)
             remoteTeaDataSource.saveTea(teaToSave)
 
             DataResourceResult.Success(Unit)
@@ -73,14 +87,46 @@ class TeaRepositoryImpl @Inject constructor(
         return if (result is DataResourceResult.Success) {
             val remoteTeas = result.data
 
-            if (remoteTeas.isNotEmpty()) {
-                remoteTeas.forEach { tea ->
-                    localTeaDataSource.insertTea(tea)
+            try {
+                localTeaDataSource.deleteMyAllTeas(myUid)
+
+                if (remoteTeas.isNotEmpty()) {
+                    localTeaDataSource.insertTeas(remoteTeas)
                 }
+                DataResourceResult.Success(Unit)
+            } catch (e: Exception) {
+                DataResourceResult.Failure(e)
             }
-            DataResourceResult.Success(Unit)
         } else {
             DataResourceResult.Failure((result as DataResourceResult.Failure).exception)
         }
+    }
+
+    override suspend fun scheduleTeaUpload(tea: TeaItem, imageUriString: String?) {
+        val gson = Gson()
+        val teaJson = gson.toJson(tea)
+
+        val inputData = Data.Builder()
+            .putString(TeaUploadWorker.KEY_TEA_DATA, teaJson)
+            .putString(TeaUploadWorker.KEY_IMAGE_URI, imageUriString)
+            .build()
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val uploadWorkRequest = OneTimeWorkRequestBuilder<TeaUploadWorker>()
+            .setConstraints(constraints)
+            .setInputData(inputData)
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setBackoffCriteria(
+                BackoffPolicy.LINEAR,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag("upload_tea_${tea.id}")
+            .build()
+
+        workManager.enqueue(uploadWorkRequest)
     }
 }

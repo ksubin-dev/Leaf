@@ -134,10 +134,18 @@ class NoteRepositoryImpl @Inject constructor(
 
         return if (result is DataResourceResult.Success) {
             val remoteNotes = result.data
-            if (remoteNotes.isNotEmpty()) {
-                localNoteDataSource.insertNotes(remoteNotes)
+
+            try {
+                localNoteDataSource.deleteMyAllNotes(myUid)
+
+                if (remoteNotes.isNotEmpty()) {
+                    localNoteDataSource.insertNotes(remoteNotes)
+                }
+                Log.d("SYNC_LOG", "동기화 완료: ${remoteNotes.size}개 로드됨")
+                DataResourceResult.Success(Unit)
+            } catch (e: Exception) {
+                DataResourceResult.Failure(e)
             }
-            DataResourceResult.Success(Unit)
         } else {
             val exception = (result as DataResourceResult.Failure).exception
             DataResourceResult.Failure(exception)

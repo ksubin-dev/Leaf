@@ -56,6 +56,8 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     @Serializable data class TeaAddEdit(val teaId: String? = null) : MainNavigationRoute
 
     @Serializable data object AnalysisReport : MainNavigationRoute
+
+    @Serializable data object MyRecordSearch : MainNavigationRoute
 }
 
 enum class UserListType {
