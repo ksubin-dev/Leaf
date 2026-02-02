@@ -64,27 +64,12 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateProfile(
+        userId: String,
         nickname: String?,
         bio: String?,
         profileUrl: String?
     ): DataResourceResult<Unit> {
-        val myUid = authDataSource.getCurrentUserId()
-            ?: return DataResourceResult.Failure(Exception("Not logged in"))
-
-        val myProfileResult = userDataSource.getUser(myUid)
-        if (myProfileResult !is DataResourceResult.Success) {
-            return DataResourceResult.Failure(Exception("Failed to load profile"))
-        }
-
-        val currentUser = myProfileResult.data
-
-        val updatedUser = currentUser.copy(
-            nickname = nickname ?: currentUser.nickname,
-            bio = bio ?: currentUser.bio,
-            profileImageUrl = profileUrl ?: currentUser.profileImageUrl
-        )
-
-        return userDataSource.updateUser(updatedUser)
+        return userDataSource.updateProfile(userId, nickname, bio, profileUrl)
     }
 
     override suspend fun followUser(targetUserId: String): DataResourceResult<Unit> {
@@ -237,8 +222,14 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun scheduleProfileUpdate(nickname: String, bio: String, imageUriString: String?) {
+    override suspend fun scheduleProfileUpdate(
+        nickname: String,
+        bio: String,
+        imageUriString: String?,
+        userId: String
+    ) {
         val inputData = Data.Builder()
+            .putString(ProfileUploadWorker.KEY_USER_ID, userId)
             .putString(ProfileUploadWorker.KEY_NICKNAME, nickname)
             .putString(ProfileUploadWorker.KEY_BIO, bio)
             .putString(ProfileUploadWorker.KEY_IMAGE_URI, imageUriString)
@@ -251,7 +242,6 @@ class UserRepositoryImpl @Inject constructor(
         val workRequest = OneTimeWorkRequestBuilder<ProfileUploadWorker>()
             .setConstraints(constraints)
             .setInputData(inputData)
-            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setBackoffCriteria(
                 BackoffPolicy.LINEAR,
                 WorkRequest.MIN_BACKOFF_MILLIS,

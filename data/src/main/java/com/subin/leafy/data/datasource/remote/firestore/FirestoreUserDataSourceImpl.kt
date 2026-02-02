@@ -319,6 +319,36 @@ class FirestoreUserDataSourceImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateProfile(
+        userId: String,
+        nickname: String?,
+        bio: String?,
+        profileImageUrl: String?
+    ): DataResourceResult<Unit> {
+        return try {
+            val updates = mutableMapOf<String, Any>()
+
+            if (nickname != null) {
+                updates[FirestoreConstants.FIELD_NICKNAME] = nickname
+            }
+            if (bio != null) {
+                updates[FirestoreConstants.FIELD_BIO] = bio
+            }
+            if (profileImageUrl != null) {
+                updates[FirestoreConstants.FIELD_PROFILE_IMAGE] = profileImageUrl
+            }
+
+            if (updates.isNotEmpty()) {
+                usersCollection.document(userId)
+                    .update(updates)
+                    .await()
+            }
+            DataResourceResult.Success(Unit)
+        } catch (e: Exception) {
+            DataResourceResult.Failure(e)
+        }
+    }
+
     override suspend fun updateFcmToken(userId: String, token: String?) {
         val updates = if (token == null) {
             mapOf(FirestoreConstants.FIELD_FCM_TOKEN to FieldValue.delete())

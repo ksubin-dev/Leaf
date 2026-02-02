@@ -253,6 +253,8 @@ class MyPageViewModel @Inject constructor(
     fun saveProfile() {
         val currentState = _uiState.value
 
+        val userId = currentState.myProfile?.id ?: return
+
         if (!currentState.isNicknameValid) {
             sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_check_nickname)))
             return
@@ -266,7 +268,8 @@ class MyPageViewModel @Inject constructor(
             userUseCases.scheduleProfileUpdate(
                 nickname = currentState.editNickname,
                 bio = currentState.editBio,
-                imageUriString = imageUriString
+                imageUriString = imageUriString,
+                userId = userId
             )
 
             _uiState.update { state ->
@@ -286,7 +289,6 @@ class MyPageViewModel @Inject constructor(
             sendEffect(MyPageSideEffect.ShowToast(UiText.StringResource(R.string.msg_save_start_background)))
         }
     }
-
     private fun generateRandomInsight(data: UserAnalysis): Pair<UiText?, Int?> {
         if (data.totalBrewingCount == 0) {
             return UiText.StringResource(R.string.insight_no_data) to R.drawable.ic_leaf
