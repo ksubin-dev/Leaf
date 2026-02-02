@@ -10,6 +10,8 @@ interface UserDataSource {
     suspend fun getUser(userId: String): DataResourceResult<User>
     fun getUserFlow(userId: String): Flow<DataResourceResult<User>>
     suspend fun updateUser(user: User): DataResourceResult<Unit>
+
+    suspend fun updateProfile(userId: String, nickname: String?, bio: String?, profileImageUrl: String?): DataResourceResult<Unit>
     suspend fun searchUsers(
         query: String,
         lastUserId: String? = null,

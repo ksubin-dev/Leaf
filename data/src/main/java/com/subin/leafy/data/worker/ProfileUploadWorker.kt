@@ -24,13 +24,17 @@ class ProfileUploadWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val nickname = inputData.getString(KEY_NICKNAME) ?: return@withContext Result.failure()
+            val userId = inputData.getString(KEY_USER_ID)
+            val nickname = inputData.getString(KEY_NICKNAME)
             val bio = inputData.getString(KEY_BIO) ?: ""
             val imageUriString = inputData.getString(KEY_IMAGE_URI)
 
+            if (userId == null || nickname == null) {
+                return@withContext Result.failure()
+            }
+
             val finalImageUrl = if (imageUriString != null && !imageUriString.startsWith("http")) {
                 val compressedPath = imageCompressor.compressImage(imageUriString)
-                val userId = userUseCases.getCurrentUserId().let { if(it is DataResourceResult.Success) it.data else "temp" }
                 val uploadPath = "profile_images/$userId"
                 val result = imageUseCases.uploadImage(compressedPath, uploadPath)
 
@@ -43,7 +47,7 @@ class ProfileUploadWorker @AssistedInject constructor(
                 imageUriString
             }
 
-            val updateResult = userUseCases.updateProfile(nickname, bio, finalImageUrl)
+            val updateResult = userUseCases.updateProfile(userId, nickname, bio, finalImageUrl)
 
             if (updateResult is DataResourceResult.Success) {
                 Result.success()
@@ -52,12 +56,12 @@ class ProfileUploadWorker @AssistedInject constructor(
             }
 
         } catch (e: Exception) {
-            e.printStackTrace()
             Result.failure()
         }
     }
 
     companion object {
+        const val KEY_USER_ID = "key_user_id"
         const val KEY_NICKNAME = "key_nickname"
         const val KEY_BIO = "key_bio"
         const val KEY_IMAGE_URI = "key_image_uri"

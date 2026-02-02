@@ -12,6 +12,7 @@ interface UserRepository {
     suspend fun getUserProfile(targetUserId: String): DataResourceResult<User>
 
     suspend fun updateProfile(
+        userId: String,
         nickname: String? = null,
         bio: String? = null,
         profileUrl: String? = null
@@ -43,5 +44,10 @@ interface UserRepository {
 
     suspend fun checkNicknameAvailability(nickname: String): DataResourceResult<Boolean>
 
-    suspend fun scheduleProfileUpdate(nickname: String, bio: String, imageUriString: String?)
+    suspend fun scheduleProfileUpdate(
+        nickname: String,
+        bio: String,
+        imageUriString: String?,
+        userId: String
+    )
 }

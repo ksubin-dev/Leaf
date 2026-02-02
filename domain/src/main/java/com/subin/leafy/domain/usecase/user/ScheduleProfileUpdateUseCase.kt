@@ -6,7 +6,12 @@ import javax.inject.Inject
 class ScheduleProfileUpdateUseCase @Inject constructor(
     private val repository: UserRepository
 ) {
-    suspend operator fun invoke(nickname: String, bio: String, imageUriString: String?) {
-        repository.scheduleProfileUpdate(nickname, bio, imageUriString)
+    suspend operator fun invoke(
+        nickname: String,
+        bio: String,
+        imageUriString: String?,
+        userId: String
+    ) {
+        repository.scheduleProfileUpdate(nickname, bio, imageUriString, userId)
     }
 }
