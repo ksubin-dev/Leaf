@@ -214,66 +214,72 @@ fun CommunityPostDetailScreen(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
-        if (uiState.isLoading && uiState.post == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.post == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("게시글을 찾을 수 없습니다.")
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                item {
-                    PostDetailContent(
-                        post = uiState.post,
-                        onLikeClick = onLikeClick,
-                        onBookmarkClick = onBookmarkClick,
-                        onOriginNoteClick = onOriginNoteClick,
-                        onUserProfileClick = onUserProfileClick
-                    )
+        when {
+            uiState.isLoading && uiState.post == null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
+            }
 
-                item {
-                    HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    Text(
-                        text = "댓글 ${uiState.comments.size}",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-                    )
+            uiState.post == null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("게시글을 찾을 수 없습니다.")
                 }
+            }
 
-                if (uiState.comments.isEmpty()) {
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
                     item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(40.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("첫 댓글을 남겨주세요!", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        PostDetailContent(
+                            post = uiState.post!!,
+                            onLikeClick = onLikeClick,
+                            onBookmarkClick = onBookmarkClick,
+                            onOriginNoteClick = onOriginNoteClick,
+                            onUserProfileClick = onUserProfileClick
+                        )
                     }
-                } else {
-                    items(
-                        items = uiState.comments,
-                        key = { it.commentId }
-                    ) { comment ->
-                        CommentItem(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            comment = comment,
-                            onDeleteClick = { commentIdToDelete = comment.commentId },
-                            onProfileClick = onUserProfileClick
+
+                    item {
+                        HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        Text(
+                            text = "댓글 ${uiState.comments.size}",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
                         )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = 68.dp, end = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-                        )
+                    }
+
+                    if (uiState.comments.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(40.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("첫 댓글을 남겨주세요!", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    } else {
+                        items(
+                            items = uiState.comments,
+                            key = { it.commentId }
+                        ) { comment ->
+                            CommentItem(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                comment = comment,
+                                onDeleteClick = { commentIdToDelete = comment.commentId },
+                                onProfileClick = onUserProfileClick
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(start = 68.dp, end = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                            )
+                        }
                     }
                 }
             }

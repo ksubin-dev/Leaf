@@ -112,28 +112,34 @@ fun RankingDetailScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+            when {
+                uiState.isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
-            } else if (uiState.rankingList.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.msg_ranking_empty),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    itemsIndexed(uiState.rankingList) { index, item ->
-                        RankedTeaRow(
-                            item = item,
-                            rank = index + 1,
-                            onClick = singleClick { onItemClick(item.postId) }
+
+                uiState.rankingList.isEmpty() -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            stringResource(R.string.msg_ranking_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        itemsIndexed(uiState.rankingList) { index, item ->
+                            RankedTeaRow(
+                                item = item,
+                                rank = index + 1,
+                                onClick = singleClick { onItemClick(item.postId) }
+                            )
+                        }
                     }
                 }
             }

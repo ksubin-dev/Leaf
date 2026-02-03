@@ -61,6 +61,7 @@ fun UserProfileScreen(
         onNavigateToUserList = onNavigateToUserList
     )
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileContent(
@@ -91,77 +92,83 @@ fun UserProfileContent(
             )
         }
     ) { padding ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (user != null) {
-            Column(modifier = Modifier.padding(padding)) {
-
-                UserProfileHeader(
-                    user = user,
-                    isMe = uiState.isMe,
-                    isFollowing = uiState.isFollowing,
-                    postCount = uiState.userPosts.size,
-                    onFollowClick = onFollowClick,
-                    onFollowerClick = {
-                        onNavigateToUserList(user.userId, user.nickname, UserListType.FOLLOWER)
-                    },
-                    onFollowingClick = {
-                        onNavigateToUserList(user.userId, user.nickname, UserListType.FOLLOWING)
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                PrimaryTabRow(
-                    selectedTabIndex = selectedTab.ordinal,
-                    containerColor = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    divider = {},
-                    indicator = {
-                        TabRowDefaults.PrimaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(selectedTab.ordinal),
-                            color = MaterialTheme.colorScheme.primary,
-                            width = Dp.Unspecified,
-                            shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
-                        )
-                    }
-                ) {
-                    ProfileTab.entries.forEach { tab ->
-                        Tab(
-                            selected = selectedTab == tab,
-                            onClick = { selectedTab = tab },
-                            icon = { Icon(imageVector = tab.icon, contentDescription = null) },
-                            selectedContentColor = MaterialTheme.colorScheme.primary,
-                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+        when {
+            uiState.isLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
+            }
 
-                Box(modifier = Modifier.weight(1f)) {
-                    when (selectedTab) {
-                        ProfileTab.GRID -> {
-                            UserProfileGallery(
-                                posts = uiState.userPosts,
-                                onPostClick = onPostClick
+            user != null -> {
+                Column(modifier = Modifier.padding(padding)) {
+
+                    UserProfileHeader(
+                        user = user,
+                        isMe = uiState.isMe,
+                        isFollowing = uiState.isFollowing,
+                        postCount = uiState.userPosts.size,
+                        onFollowClick = onFollowClick,
+                        onFollowerClick = {
+                            onNavigateToUserList(user.userId, user.nickname, UserListType.FOLLOWER)
+                        },
+                        onFollowingClick = {
+                            onNavigateToUserList(user.userId, user.nickname, UserListType.FOLLOWING)
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    PrimaryTabRow(
+                        selectedTabIndex = selectedTab.ordinal,
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        divider = {},
+                        indicator = {
+                            TabRowDefaults.PrimaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(selectedTab.ordinal),
+                                color = MaterialTheme.colorScheme.primary,
+                                width = Dp.Unspecified,
+                                shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
                             )
                         }
-                        ProfileTab.LIST -> {
-                            UserProfileList(
-                                posts = uiState.userPosts,
-                                onPostClick = onPostClick
+                    ) {
+                        ProfileTab.entries.forEach { tab ->
+                            Tab(
+                                selected = selectedTab == tab,
+                                onClick = { selectedTab = tab },
+                                icon = { Icon(imageVector = tab.icon, contentDescription = null) },
+                                selectedContentColor = MaterialTheme.colorScheme.primary,
+                                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        when (selectedTab) {
+                            ProfileTab.GRID -> {
+                                UserProfileGallery(
+                                    posts = uiState.userPosts,
+                                    onPostClick = onPostClick
+                                )
+                            }
+                            ProfileTab.LIST -> {
+                                UserProfileList(
+                                    posts = uiState.userPosts,
+                                    onPostClick = onPostClick
+                                )
+                            }
+                        }
+                    }
                 }
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = uiState.errorMessage?.asString() ?: "유저 정보를 불러올 수 없습니다.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+            else -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = uiState.errorMessage?.asString() ?: "유저 정보를 불러올 수 없습니다.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

@@ -55,6 +55,7 @@ fun HallOfFameScreen(
         onBookmarkClick = viewModel::toggleBookmark
     )
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HallOfFameContent(
@@ -125,38 +126,44 @@ fun HallOfFameContent(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+            when {
+                uiState.isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
-            } else if (uiState.posts.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("해당 기간의 랭킹 데이터가 없습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                uiState.posts.isEmpty() -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("해당 기간의 랭킹 데이터가 없습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    itemsIndexed(uiState.posts) { index, post ->
-                        val rank = index + 1
-                        val isMonthlyTop = (uiState.selectedPeriod == RankingPeriod.MONTHLY && index == 0)
 
-                        if (isMonthlyTop) {
-                            HallOfFameTopCard(
-                                post = post,
-                                onClick = { onPostClick(post.postId) },
-                                onBookmarkClick = { onBookmarkClick(post) }
-                            )
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        itemsIndexed(uiState.posts) { index, post ->
+                            val rank = index + 1
+                            val isMonthlyTop = (uiState.selectedPeriod == RankingPeriod.MONTHLY && index == 0)
 
-                            Spacer(modifier = Modifier.height(8.dp))
-                        } else {
-                            CommunityCompactCard(
-                                post = post,
-                                rank = rank,
-                                onClick = { onPostClick(post.postId) },
-                                onBookmarkClick = { onBookmarkClick(post) }
-                            )
+                            if (isMonthlyTop) {
+                                HallOfFameTopCard(
+                                    post = post,
+                                    onClick = { onPostClick(post.postId) },
+                                    onBookmarkClick = { onBookmarkClick(post) }
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                            } else {
+                                CommunityCompactCard(
+                                    post = post,
+                                    rank = rank,
+                                    onClick = { onPostClick(post.postId) },
+                                    onBookmarkClick = { onBookmarkClick(post) }
+                                )
+                            }
                         }
                     }
                 }

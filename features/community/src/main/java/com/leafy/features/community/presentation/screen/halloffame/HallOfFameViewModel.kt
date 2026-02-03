@@ -91,16 +91,21 @@ class HallOfFameViewModel @Inject constructor(
         updatePostState(postId, newBookmarked)
 
         viewModelScope.launch {
-            val result = postUseCases.toggleBookmark(postId)
-            if (result is DataResourceResult.Failure) {
-                updatePostState(postId, currentBookmarked)
-                sendEffect(HallOfFameSideEffect.ShowToast(
-                    UiText.StringResource(R.string.msg_bookmark_failed)
-                ))
-            } else if (newBookmarked) {
-                sendEffect(HallOfFameSideEffect.ShowToast(
-                    UiText.StringResource(R.string.msg_bookmark_saved)
-                ))
+            when (val result = postUseCases.toggleBookmark(postId)) {
+                is DataResourceResult.Failure -> {
+                    updatePostState(postId, currentBookmarked)
+                    sendEffect(HallOfFameSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_bookmark_failed)
+                    ))
+                }
+                is DataResourceResult.Success -> {
+                    if (newBookmarked) {
+                        sendEffect(HallOfFameSideEffect.ShowToast(
+                            UiText.StringResource(R.string.msg_bookmark_saved)
+                        ))
+                    }
+                }
+                else -> {}
             }
         }
     }

@@ -97,27 +97,35 @@ class CommunityPostDetailViewModel @Inject constructor(
 
     private suspend fun observeComments() {
         postUseCases.getComments(postId).collect { result ->
-            if (result is DataResourceResult.Success) {
-                _uiState.update { state ->
-                    state.copy(
-                        comments = result.data.map { it.toUiModel() }
-                    )
+            when (result) {
+                is DataResourceResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            comments = result.data.map { it.toUiModel() }
+                        )
+                    }
                 }
+                else -> {}
             }
         }
     }
 
     private suspend fun fetchCurrentUserProfile() {
-        val idResult = userUseCases.getCurrentUserId()
-        if (idResult is DataResourceResult.Success) {
-            val myId = idResult.data
-            _uiState.update { it.copy(currentUserId = myId) }
-            val profileResult = userUseCases.getUserProfile(myId)
-            if (profileResult is DataResourceResult.Success) {
-                _uiState.update {
-                    it.copy(currentUserProfileUrl = profileResult.data.profileImageUrl)
+        when (val idResult = userUseCases.getCurrentUserId()) {
+            is DataResourceResult.Success -> {
+                val myId = idResult.data
+                _uiState.update { it.copy(currentUserId = myId) }
+
+                when (val profileResult = userUseCases.getUserProfile(myId)) {
+                    is DataResourceResult.Success -> {
+                        _uiState.update {
+                            it.copy(currentUserProfileUrl = profileResult.data.profileImageUrl)
+                        }
+                    }
+                    else -> {}
                 }
             }
+            else -> {}
         }
     }
 
@@ -125,14 +133,15 @@ class CommunityPostDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            val result = postUseCases.deletePost(postId)
-
-            if (result is DataResourceResult.Success) {
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_post_deleted)))
-                sendEffect(PostDetailSideEffect.NavigateBack)
-            } else {
-                _uiState.update { it.copy(isLoading = false) }
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_failed)))
+            when (val result = postUseCases.deletePost(postId)) {
+                is DataResourceResult.Success -> {
+                    sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_post_deleted)))
+                    sendEffect(PostDetailSideEffect.NavigateBack)
+                }
+                else -> {
+                    _uiState.update { it.copy(isLoading = false) }
+                    sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_failed)))
+                }
             }
         }
     }
@@ -147,13 +156,15 @@ class CommunityPostDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSendingComment = true) }
-            val result = postUseCases.addComment(postId, content)
 
-            if (result is DataResourceResult.Success) {
-                _uiState.update { it.copy(commentInput = "") }
-                fetchPostDetail()
-            } else {
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_comment_failed)))
+            when (val result = postUseCases.addComment(postId, content)) {
+                is DataResourceResult.Success -> {
+                    _uiState.update { it.copy(commentInput = "") }
+                    fetchPostDetail()
+                }
+                else -> {
+                    sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_comment_failed)))
+                }
             }
             _uiState.update { it.copy(isSendingComment = false) }
         }
@@ -161,12 +172,14 @@ class CommunityPostDetailViewModel @Inject constructor(
 
     fun deleteComment(commentId: String) {
         viewModelScope.launch {
-            val result = postUseCases.deleteComment(postId, commentId)
-            if (result is DataResourceResult.Success) {
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_comment_deleted)))
-                fetchPostDetail()
-            } else {
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_failed)))
+            when (val result = postUseCases.deleteComment(postId, commentId)) {
+                is DataResourceResult.Success -> {
+                    sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_comment_deleted)))
+                    fetchPostDetail()
+                }
+                else -> {
+                    sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_failed)))
+                }
             }
         }
     }
@@ -179,10 +192,12 @@ class CommunityPostDetailViewModel @Inject constructor(
         _uiState.update { it.copy(post = updatedPost) }
 
         viewModelScope.launch {
-            val result = postUseCases.toggleLike(postId)
-            if (result is DataResourceResult.Failure) {
-                _uiState.update { it.copy(post = currentPost) }
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_like_failed)))
+            when (val result = postUseCases.toggleLike(postId)) {
+                is DataResourceResult.Failure -> {
+                    _uiState.update { it.copy(post = currentPost) }
+                    sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_like_failed)))
+                }
+                else -> {}
             }
         }
     }
@@ -195,12 +210,17 @@ class CommunityPostDetailViewModel @Inject constructor(
         _uiState.update { it.copy(post = updatedPost) }
 
         viewModelScope.launch {
-            val result = postUseCases.toggleBookmark(postId)
-            if (result is DataResourceResult.Failure) {
-                _uiState.update { it.copy(post = currentPost) }
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_failed)))
-            } else if (newBookmarked) {
-                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_saved)))
+            when (val result = postUseCases.toggleBookmark(postId)) {
+                is DataResourceResult.Failure -> {
+                    _uiState.update { it.copy(post = currentPost) }
+                    sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_failed)))
+                }
+                is DataResourceResult.Success -> {
+                    if (newBookmarked) {
+                        sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_bookmark_saved)))
+                    }
+                }
+                else -> {}
             }
         }
     }

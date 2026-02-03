@@ -11,6 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,17 +27,21 @@ import com.leafy.features.mypage.presentation.analysis.component.CaffeineTrendCh
 import com.leafy.features.mypage.presentation.analysis.component.TeaDistributionChart
 import com.leafy.shared.R
 import com.leafy.shared.common.singleClick
+import com.leafy.shared.utils.ShareUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalysisReportScreen(
     onBackClick: () -> Unit,
-    onShareClick: () -> Unit = {},
     viewModel: AnalysisViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+
+    val coroutineScope = rememberCoroutineScope()
+    val graphicsLayer = rememberGraphicsLayer()
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { effect ->
@@ -49,6 +56,8 @@ fun AnalysisReportScreen(
             }
         }
     }
+
+    val captureBackgroundColor = MaterialTheme.colorScheme.background
 
     Scaffold(
         topBar = {
@@ -68,134 +77,155 @@ fun AnalysisReportScreen(
             )
         },
     ) { innerPadding ->
-
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.analysisData == null || uiState.analysisData?.totalBrewingCount == 0) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.msg_analysis_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            uiState.analysisData?.let { data ->
-                Column(
+        when {
+            uiState.isLoading -> {
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    CircularProgressIndicator()
+                }
+            }
 
-                    AnalysisStatCard(
-                        totalCount = data.totalBrewingCount,
-                        streakDays = data.currentStreakDays,
-                        monthlyCount = data.monthlyBrewingCount
+            uiState.analysisData == null || uiState.analysisData?.totalBrewingCount == 0 -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.msg_analysis_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
+                }
+            }
 
-                    if (data.totalBrewingCount > 0) {
-                        AnalysisHabitSection(
-                            preferredTemp = data.preferredTemperature,
-                            avgTime = data.averageBrewingTime,
-                            preferredTimeSlot = data.preferredTimeSlot,
-                            avgRating = data.averageRating
-                        )
-                    }
-
-                    if (data.weeklyCaffeineTrend.any { it > 0 }) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.title_weekly_activity),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = stringResource(R.string.format_weekly_count, data.weeklyCount),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = "  |  " + stringResource(R.string.format_daily_caffeine, data.dailyCaffeineAvg),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            CaffeineTrendChart(
-                                weeklyTrend = data.weeklyCaffeineTrend
-                            )
-                        }
-                    }
-
-                    if (data.teaTypeDistribution.isNotEmpty()) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.title_tea_preference),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            if (data.favoriteTeaType != null && data.favoriteTeaType != "-") {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = stringResource(R.string.format_favorite_tea, data.favoriteTeaType!!),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            TeaDistributionChart(
-                                distribution = data.teaTypeDistribution
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = singleClick { onShareClick() },
+            else -> {
+                uiState.analysisData?.let { data ->
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = MaterialTheme.shapes.medium
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(scrollState)
+                            .drawWithContent {
+                                graphicsLayer.record {
+                                    drawRect(color = captureBackgroundColor)
+                                    this@drawWithContent.drawContent()
+                                }
+                                drawContent()
+                            },
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        AnalysisStatCard(
+                            totalCount = data.totalBrewingCount,
+                            streakDays = data.currentStreakDays,
+                            monthlyCount = data.monthlyBrewingCount
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.action_share_report),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                        if (data.totalBrewingCount > 0) {
+                            AnalysisHabitSection(
+                                preferredTemp = data.preferredTemperature,
+                                avgTime = data.averageBrewingTime,
+                                preferredTimeSlot = data.preferredTimeSlot,
+                                avgRating = data.averageRating
+                            )
+                        }
+
+                        if (data.weeklyCaffeineTrend.any { it > 0 }) {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.title_weekly_activity),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = stringResource(R.string.format_weekly_count, data.weeklyCount),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "  |  " + stringResource(R.string.format_daily_caffeine, data.dailyCaffeineAvg),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                CaffeineTrendChart(
+                                    weeklyTrend = data.weeklyCaffeineTrend
+                                )
+                            }
+                        }
+
+                        if (data.teaTypeDistribution.isNotEmpty()) {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.title_tea_preference),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                if (data.favoriteTeaType != null && data.favoriteTeaType != "-") {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.format_favorite_tea, data.favoriteTeaType!!),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                TeaDistributionChart(
+                                    distribution = data.teaTypeDistribution
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = singleClick {
+                                coroutineScope.launch {
+                                    try {
+                                        val bitmap = graphicsLayer.toImageBitmap()
+                                        ShareUtils.shareImage(context, bitmap.asAndroidBitmap())
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        Toast.makeText(context, "이미지 생성 실패", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.action_share_report),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
                 }
             }
         }

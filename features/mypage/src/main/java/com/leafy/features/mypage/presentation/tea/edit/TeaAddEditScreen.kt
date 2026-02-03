@@ -73,9 +73,11 @@ fun TeaAddEditScreen(
             TopAppBar(
                 title = {
                     Text(
-                        if (uiState.teaId == null) "차 추가"
-                        else if (uiState.isEditMode) "차 정보 수정"
-                        else "차 상세 정보"
+                        text = when {
+                            uiState.teaId == null -> "차 추가"
+                            uiState.isEditMode -> "차 정보 수정"
+                            else -> "차 상세 정보"
+                        }
                     )
                 },
                 navigationIcon = {
@@ -282,32 +284,35 @@ fun TeaAddEditScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (uiState.isEditMode) {
-                    Button(
-                        onClick = singleClick { viewModel.saveTea() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = uiState.isFormValid && !uiState.isLoading,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(if (uiState.teaId == null) "추가하기" else "저장하기", modifier = Modifier.padding(vertical = 4.dp))
+                when {
+                    uiState.isEditMode -> {
+                        Button(
+                            onClick = singleClick { viewModel.saveTea() },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = uiState.isFormValid && !uiState.isLoading,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(if (uiState.teaId == null) "추가하기" else "저장하기", modifier = Modifier.padding(vertical = 4.dp))
+                        }
                     }
-                } else if (uiState.teaId != null) {
-                    Button(
-                        onClick = singleClick { onRecordClick(uiState.teaId!!) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(Icons.Default.EditNote, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "이 차로 기록하기",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
+                    uiState.teaId != null -> {
+                        Button(
+                            onClick = singleClick { onRecordClick(uiState.teaId!!) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Icon(Icons.Default.EditNote, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "이 차로 기록하기",
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
                     }
                 }
 
