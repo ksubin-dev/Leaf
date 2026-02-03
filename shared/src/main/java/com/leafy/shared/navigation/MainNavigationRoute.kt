@@ -17,7 +17,8 @@ sealed interface MainNavigationRoute : LeafyNavigation {
     data class NoteTab(
         val initialRecords: String? = null,
         val noteId: String? = null,
-        val date: String? = null
+        val date: String? = null,
+        val teaId: String? = null
     ) : MainNavigationRoute
 
     @Serializable data class NoteDetail(val noteId: String) : MainNavigationRoute

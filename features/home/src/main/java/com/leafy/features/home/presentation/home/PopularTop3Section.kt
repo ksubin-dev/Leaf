@@ -57,35 +57,41 @@ fun PopularTop3Section(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.5f))
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.5f))
+                }
             }
-        } else if (rankingList.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "집계된 랭킹 데이터가 없습니다.",
-                    color = colors.onSurfaceVariant
-                )
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                rankingList.take(3).forEach { item ->
-                    RankedTeaRow(
-                        item = item,
-                        rank = item.rank,
-                        onClick = singleClick { onItemClick(item.postId) }
+
+            rankingList.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "집계된 랭킹 데이터가 없습니다.",
+                        color = colors.onSurfaceVariant
                     )
+                }
+            }
+
+            else -> {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    rankingList.take(3).forEach { item ->
+                        RankedTeaRow(
+                            item = item,
+                            rank = item.rank,
+                            onClick = singleClick { onItemClick(item.postId) }
+                        )
+                    }
                 }
             }
         }

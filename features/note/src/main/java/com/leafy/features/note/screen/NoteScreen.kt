@@ -249,8 +249,8 @@ fun NoteContent(
                             onDateTimeChange = onDateTimeChange,
                             selectedWeather = uiState.selectedWeather,
                             onWeatherSelected = onWeatherSelected,
-                            withPeople = uiState.withPeople,
-                            onWithPeopleChange = onWithPeopleChange
+                            mood = uiState.withPeople,
+                            onMoodChange = onWithPeopleChange
                         )
                     }
                     item {

@@ -237,7 +237,12 @@ fun NavGraphBuilder.mypageNavGraph(
 
         TeaAddEditScreen(
             viewModel = viewModel,
-            onBackClick = { navController.popBackStack() }
+            onBackClick = { navController.popBackStack() },
+            onRecordClick = { teaId ->
+                navController.navigate(
+                    MainNavigationRoute.NoteTab(teaId = teaId)
+                )
+            }
         )
     }
 

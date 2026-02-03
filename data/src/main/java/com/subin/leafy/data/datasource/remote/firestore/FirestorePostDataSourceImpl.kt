@@ -232,7 +232,17 @@ class FirestorePostDataSourceImpl @Inject constructor(
     override suspend fun deletePost(postId: String): DataResourceResult<Unit> {
         return try {
             val postRef = postsCollection.document(postId)
-            val noteRef = firestore.collection(FirestoreConstants.COLLECTION_NOTES).document(postId)
+
+            val commentsRef = postRef.collection(FirestoreConstants.COLLECTION_COMMENTS)
+            val commentsSnapshot = commentsRef.get().await()
+
+            if (!commentsSnapshot.isEmpty) {
+                val batch = firestore.batch()
+                commentsSnapshot.documents.forEach { doc ->
+                    batch.delete(doc.reference)
+                }
+                batch.commit().await()
+            }
 
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(postRef)
@@ -243,6 +253,10 @@ class FirestorePostDataSourceImpl @Inject constructor(
 
                 val postDto = snapshot.toObject<CommunityPostDto>()
                 val authorId = postDto?.author?.id
+                val originNoteId = postDto?.originNoteId ?: postId
+
+                val noteRef = firestore.collection(FirestoreConstants.COLLECTION_NOTES).document(originNoteId)
+                val noteSnapshot = transaction.get(noteRef)
 
                 transaction.delete(postRef)
 
@@ -251,7 +265,6 @@ class FirestorePostDataSourceImpl @Inject constructor(
                     transaction.update(userRef, FIELD_POST_COUNT, FieldValue.increment(-1))
                 }
 
-                val noteSnapshot = transaction.get(noteRef)
                 if (noteSnapshot.exists()) {
                     transaction.update(noteRef, FirestoreConstants.FIELD_IS_PUBLIC, false)
                 }
@@ -260,6 +273,7 @@ class FirestorePostDataSourceImpl @Inject constructor(
 
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
+            Log.e("FirestorePost", "Delete Error", e)
             DataResourceResult.Failure(e)
         }
     }
@@ -368,7 +382,6 @@ class FirestorePostDataSourceImpl @Inject constructor(
                 }
             }.await()
 
-            // 3. 좋아요 알림 전송 (좋아요 취소 시엔 안 보냄, 내 글엔 안 보냄)
             if (isLiked && postAuthorId.isNotEmpty() && postAuthorId != userId) {
                 sendNotification(
                     targetUserId = postAuthorId,

@@ -31,15 +31,15 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.leafy.features.note.ui.components.NoteActionButtons
 import com.leafy.features.note.ui.components.NoteDetailHeader
-import com.leafy.features.note.viewmodel.DetailViewModel
-import com.leafy.features.note.viewmodel.DetailUiState
-import com.leafy.features.note.viewmodel.DetailSideEffect
 import com.leafy.features.note.ui.sections.detail.BrewingRecipeSection
 import com.leafy.features.note.ui.sections.detail.FinalRatingSection
 import com.leafy.features.note.ui.sections.detail.PhotoDetailSection
 import com.leafy.features.note.ui.sections.detail.SensoryEvaluationSection
 import com.leafy.features.note.ui.sections.detail.TastingContextSection
 import com.leafy.features.note.ui.sections.detail.TeaInfoSection
+import com.leafy.features.note.viewmodel.DetailSideEffect
+import com.leafy.features.note.viewmodel.DetailUiState
+import com.leafy.features.note.viewmodel.DetailViewModel
 import com.leafy.shared.ui.component.LeafyDialog
 import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
@@ -98,8 +98,7 @@ fun NoteDetailScreen(
         onDeleteNote = { showDeleteDialog = true },
         onToggleLike = viewModel::toggleLike,
         onToggleBookmark = viewModel::toggleBookmark,
-        onRetry = viewModel::retry,
-        onShareClick = { /* TODO: 공유하기 구현 */ }
+        onRetry = viewModel::retry
     )
 }
 
@@ -111,8 +110,7 @@ fun NoteDetailContent(
     onDeleteNote: () -> Unit,
     onToggleLike: () -> Unit,
     onToggleBookmark: () -> Unit,
-    onRetry: () -> Unit,
-    onShareClick: () -> Unit
+    onRetry: () -> Unit
 ) {
     Scaffold(
     ) { paddingValues ->
@@ -122,101 +120,105 @@ fun NoteDetailContent(
                 .padding(bottom = paddingValues.calculateBottomPadding())
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (uiState.note == null && !uiState.isLoading) {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "노트를 불러오지 못했습니다.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Button(onClick = onRetry) {
-                        Text("다시 시도")
-                    }
-                    TextButton(onClick = onNavigateBack) {
-                        Text("뒤로 가기")
+
+            when {
+                uiState.note == null && !uiState.isLoading -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "노트를 불러오지 못했습니다.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Button(onClick = onRetry) {
+                            Text("다시 시도")
+                        }
+                        TextButton(onClick = onNavigateBack) {
+                            Text("뒤로 가기")
+                        }
                     }
                 }
-            }
-            else if (uiState.isLoading && uiState.note == null) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            else {
-                uiState.note?.let { note ->
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 32.dp),
-                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        item {
-                            NoteDetailHeader(
-                                teaName = note.teaInfo.name,
-                                teaType = note.teaInfo.type.label,
-                                imageUrl = note.metadata.imageUrls.firstOrNull(),
-                                isAuthor = uiState.isAuthor,
-                                isLiked = uiState.isLiked,
-                                isBookmarked = uiState.isBookmarked,
-                                onBackClick = onNavigateBack,
-                                onEditClick = { onNavigateToEdit(note.id) },
-                                onDeleteClick = onDeleteNote,
-                                onLikeClick = onToggleLike,
-                                onBookmarkClick = onToggleBookmark
-                            )
-                        }
 
-                        item {
-                            TeaInfoSection(
-                                teaInfo = note.teaInfo,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+                uiState.isLoading && uiState.note == null -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
 
-                        item {
-                            BrewingRecipeSection(
-                                recipe = note.recipe,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+                else -> {
+                    uiState.note?.let { note ->
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 32.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            item {
+                                NoteDetailHeader(
+                                    teaName = note.teaInfo.name,
+                                    teaType = note.teaInfo.type.label,
+                                    imageUrl = note.metadata.imageUrls.firstOrNull(),
+                                    isAuthor = uiState.isAuthor,
+                                    isLiked = uiState.isLiked,
+                                    isBookmarked = uiState.isBookmarked,
+                                    onBackClick = onNavigateBack,
+                                    onEditClick = { onNavigateToEdit(note.id) },
+                                    onDeleteClick = onDeleteNote,
+                                    onLikeClick = onToggleLike,
+                                    onBookmarkClick = onToggleBookmark
+                                )
+                            }
 
-                        item {
-                            TastingContextSection(
-                                createdTimestamp = note.date,
-                                metadata = note.metadata,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+                            item {
+                                TeaInfoSection(
+                                    teaInfo = note.teaInfo,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
 
-                        item {
-                            SensoryEvaluationSection(
-                                evaluation = note.evaluation,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+                            item {
+                                BrewingRecipeSection(
+                                    recipe = note.recipe,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
 
-                        item {
-                            PhotoDetailSection(
-                                imageUrls = note.metadata.imageUrls,
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                onPhotoClick = { /* TODO: 확대 보기 */ }
-                            )
-                        }
+                            item {
+                                TastingContextSection(
+                                    createdTimestamp = note.date,
+                                    metadata = note.metadata,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
 
-                        item {
-                            FinalRatingSection(
-                                rating = note.rating,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
+                            item {
+                                SensoryEvaluationSection(
+                                    evaluation = note.evaluation,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
 
-                        item {
-                            NoteActionButtons(
-                                isAuthor = uiState.isAuthor,
-                                onEditClick = { onNavigateToEdit(note.id) },
-                                onShareClick = onShareClick
-                            )
+                            item {
+                                PhotoDetailSection(
+                                    imageUrls = note.metadata.imageUrls,
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    onPhotoClick = { /* TODO: 확대 보기 */ }
+                                )
+                            }
+
+                            item {
+                                FinalRatingSection(
+                                    rating = note.rating,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
+
+                            item {
+                                NoteActionButtons(
+                                    isAuthor = uiState.isAuthor,
+                                    onEditClick = { onNavigateToEdit(note.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -292,7 +294,6 @@ fun NoteDetailScreenPreview() {
             onDeleteNote = {},
             onToggleLike = {},
             onToggleBookmark = {},
-            onShareClick = {},
             onRetry = {}
         )
     }

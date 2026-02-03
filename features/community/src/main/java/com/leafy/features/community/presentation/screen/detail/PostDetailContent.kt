@@ -103,7 +103,6 @@ fun PostDetailContent(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 is CommunityPostUiModel.General -> {
-                    // 일반 게시글일 때 추가할 레이아웃이 있다면 여기에 작성
                 }
             }
 
@@ -142,7 +141,7 @@ fun PostDetailContent(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RatingStars(rating = post.rating, size = 18.dp) // 스마트 캐스트 적용
+                    RatingStars(rating = post.rating, size = 18.dp)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "${post.rating}.0",

@@ -103,8 +103,12 @@ class TeaRepositoryImpl @Inject constructor(
     }
 
     override suspend fun scheduleTeaUpload(tea: TeaItem, imageUriString: String?) {
+
+        val myUid = authDataSource.getCurrentUserId() ?: return
+        val teaWithOwner = tea.copy(ownerId = myUid)
+
         val gson = Gson()
-        val teaJson = gson.toJson(tea)
+        val teaJson = gson.toJson(teaWithOwner)
 
         val inputData = Data.Builder()
             .putString(TeaUploadWorker.KEY_TEA_DATA, teaJson)
@@ -118,7 +122,6 @@ class TeaRepositoryImpl @Inject constructor(
         val uploadWorkRequest = OneTimeWorkRequestBuilder<TeaUploadWorker>()
             .setConstraints(constraints)
             .setInputData(inputData)
-            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setBackoffCriteria(
                 BackoffPolicy.LINEAR,
                 WorkRequest.MIN_BACKOFF_MILLIS,
