@@ -42,6 +42,12 @@ fun NavGraphBuilder.noteNavGraph(
             }
         }
 
+        LaunchedEffect(route.date) {
+            route.date?.let { dateString ->
+                viewModel.updateDateTime(dateString)
+            }
+        }
+
         val savedStateHandle = backStackEntry.savedStateHandle
         val brewingResult by savedStateHandle.getStateFlow<String?>("brewing_result", null)
             .collectAsStateWithLifecycle()
