@@ -25,6 +25,7 @@ sealed interface TeaAddEditSideEffect {
 
 data class TeaAddEditUiState(
     val isLoading: Boolean = false,
+    val isEditMode: Boolean = true,
     val teaId: String? = null,
     val selectedImageUri: Uri? = null,
     val currentImageUrl: String? = null,
@@ -56,6 +57,8 @@ class TeaAddEditViewModel @Inject constructor(
     init {
         if (!teaIdArg.isNullOrBlank() && teaIdArg != "null") {
             loadTeaDetail(teaIdArg)
+        } else {
+            _uiState.update { it.copy(isEditMode = true) }
         }
     }
 
@@ -69,6 +72,7 @@ class TeaAddEditViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
+                        isEditMode = false,
                         teaId = tea.id,
                         currentImageUrl = tea.imageUrl,
                         brand = tea.brand,
@@ -84,6 +88,10 @@ class TeaAddEditViewModel @Inject constructor(
                 sendEffect(TeaAddEditSideEffect.ShowToast(UiText.StringResource(R.string.msg_tea_load_failed)))
             }
         }
+    }
+
+    fun toggleEditMode() {
+        _uiState.update { it.copy(isEditMode = !it.isEditMode) }
     }
 
     fun onImageSelected(uri: Uri?) {

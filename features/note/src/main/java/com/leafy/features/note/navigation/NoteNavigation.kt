@@ -36,6 +36,12 @@ fun NavGraphBuilder.noteNavGraph(
             }
         }
 
+        LaunchedEffect(route.teaId) {
+            route.teaId?.let { id ->
+                viewModel.loadTeaInfo(id)
+            }
+        }
+
         val savedStateHandle = backStackEntry.savedStateHandle
         val brewingResult by savedStateHandle.getStateFlow<String?>("brewing_result", null)
             .collectAsStateWithLifecycle()

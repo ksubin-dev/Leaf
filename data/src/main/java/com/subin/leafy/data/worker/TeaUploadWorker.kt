@@ -37,7 +37,8 @@ class TeaUploadWorker @AssistedInject constructor(
 
             val finalImageUrl = if (imageUriString != null && !imageUriString.startsWith("http")) {
                 val compressedPath = imageCompressor.compressImage(imageUriString)
-                val uploadPath = "teas/${teaData.ownerId}/${teaData.id}"
+                val uploadPath = "teas/${teaData.ownerId}/${teaData.id}.jpg"
+
                 val result = imageUseCases.uploadImage(compressedPath, uploadPath)
 
                 if (result is DataResourceResult.Success) {

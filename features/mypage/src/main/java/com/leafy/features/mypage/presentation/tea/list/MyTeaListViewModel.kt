@@ -61,11 +61,6 @@ class MyTeaListViewModel @Inject constructor(
         }
     }
 
-    fun deleteTea(tea: TeaItem) {
-        viewModelScope.launch {
-            teaUseCases.deleteTea(tea.id)
-        }
-    }
 
     private fun sendEffect(effect: MyTeaListSideEffect) {
         viewModelScope.launch { _sideEffect.send(effect) }
