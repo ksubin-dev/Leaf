@@ -177,16 +177,19 @@ class TimerViewModel @Inject constructor(
 
     fun savePreset(preset: TimerPreset) {
         viewModelScope.launch {
-            val result = timerUseCases.savePreset(preset)
-            if (result is DataResourceResult.Success) {
-                selectPreset(preset)
-                sendEffect(TimerSideEffect.ShowToast(
-                    UiText.StringResource(R.string.msg_preset_saved, preset.name)
-                ))
-            } else if (result is DataResourceResult.Failure) {
-                sendEffect(TimerSideEffect.ShowToast(
-                    UiText.StringResource(R.string.msg_preset_save_fail)
-                ))
+            when (val result = timerUseCases.savePreset(preset)) {
+                is DataResourceResult.Success -> {
+                    selectPreset(preset)
+                    sendEffect(TimerSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_preset_saved, preset.name)
+                    ))
+                }
+                is DataResourceResult.Failure -> {
+                    sendEffect(TimerSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_preset_save_fail)
+                    ))
+                }
+                else -> {}
             }
         }
     }
@@ -202,20 +205,22 @@ class TimerViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val result = timerUseCases.deletePreset(presetId)
+            when (val result = timerUseCases.deletePreset(presetId)) {
+                is DataResourceResult.Success -> {
+                    sendEffect(TimerSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_preset_deleted)
+                    ))
 
-            if (result is DataResourceResult.Success) {
-                sendEffect(TimerSideEffect.ShowToast(
-                    UiText.StringResource(R.string.msg_preset_deleted)
-                ))
-
-                if (_internalState.value.selectedPresetId == presetId) {
-                    _internalState.update { it.copy(selectedPresetId = null, currentTeaName = "나만의 차") }
+                    if (_internalState.value.selectedPresetId == presetId) {
+                        _internalState.update { it.copy(selectedPresetId = null, currentTeaName = "나만의 차") }
+                    }
                 }
-            } else if (result is DataResourceResult.Failure) {
-                sendEffect(TimerSideEffect.ShowToast(
-                    UiText.StringResource(R.string.msg_preset_delete_fail)
-                ))
+                is DataResourceResult.Failure -> {
+                    sendEffect(TimerSideEffect.ShowToast(
+                        UiText.StringResource(R.string.msg_preset_delete_fail)
+                    ))
+                }
+                else -> {}
             }
         }
     }

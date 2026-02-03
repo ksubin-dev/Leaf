@@ -74,47 +74,53 @@ fun MyTeaListScreen(
         },
     ) { innerPadding ->
 
-        if (uiState.isLoading && uiState.teaList.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+        when {
+            uiState.isLoading && uiState.teaList.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-        } else if (uiState.teaList.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "아직 등록된 차가 없습니다",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = onAddTeaClick) {
-                        Text("첫 번째 차 등록하기")
+
+            uiState.teaList.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "아직 등록된 차가 없습니다",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = onAddTeaClick) {
+                            Text("첫 번째 차 등록하기")
+                        }
                     }
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .background(MaterialTheme.colorScheme.background),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = uiState.teaList.sortedByDescending { it.isFavorite },
-                    key = { it.id }
-                ) { tea ->
-                    TeaListItem(
-                        tea = tea,
-                        onClick = { onTeaClick(tea.id) },
-                        onFavoriteClick = { viewModel.toggleFavorite(tea) }
-                    )
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.background),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = uiState.teaList.sortedByDescending { it.isFavorite },
+                        key = { it.id }
+                    ) { tea ->
+                        TeaListItem(
+                            tea = tea,
+                            onClick = { onTeaClick(tea.id) },
+                            onFavoriteClick = { viewModel.toggleFavorite(tea) }
+                        )
+                    }
                 }
             }
         }

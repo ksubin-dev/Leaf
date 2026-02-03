@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -68,7 +69,8 @@ fun CommunityPostDetailRoute(
         onLikeClick = viewModel::toggleLike,
         onBookmarkClick = viewModel::toggleBookmark,
         onOriginNoteClick = onNavigateToNoteDetail,
-        onUserProfileClick = onNavigateToUserProfile
+        onUserProfileClick = onNavigateToUserProfile,
+        onDeletePost = viewModel::deletePost
     )
 }
 
@@ -84,7 +86,8 @@ fun CommunityPostDetailScreen(
     onLikeClick: () -> Unit,
     onBookmarkClick: () -> Unit,
     onOriginNoteClick: (String) -> Unit,
-    onUserProfileClick: (String) -> Unit
+    onUserProfileClick: (String) -> Unit,
+    onDeletePost: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -100,6 +103,10 @@ fun CommunityPostDetailScreen(
     }
 
     var commentIdToDelete by remember { mutableStateOf<String?>(null) }
+    var showDeletePostDialog by remember { mutableStateOf(false) }
+
+    var showReportDialog by remember { mutableStateOf(false) }
+    var isMenuExpanded by remember { mutableStateOf(false) }
 
     if (commentIdToDelete != null) {
         LeafyDialog(
@@ -115,6 +122,31 @@ fun CommunityPostDetailScreen(
         )
     }
 
+    if (showDeletePostDialog) {
+        LeafyDialog(
+            onDismissRequest = { showDeletePostDialog = false },
+            title = "게시글 삭제",
+            text = "정말 이 게시글을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+            confirmText = "삭제",
+            dismissText = "취소",
+            onConfirmClick = {
+                onDeletePost()
+                showDeletePostDialog = false
+            }
+        )
+    }
+
+    if (showReportDialog) {
+        LeafyDialog(
+            onDismissRequest = { showReportDialog = false },
+            title = "게시글 신고",
+            text = "신고 기능은 현재 준비 중입니다.\n부적절한 게시글은 관리자에게 문의 해주세요.",
+            confirmText = "확인",
+            onConfirmClick = { showReportDialog = false },
+            dismissText = ""
+        )
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -126,8 +158,38 @@ fun CommunityPostDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = singleClick { /* 더보기 로직 */ }) {
-                        Icon(Icons.Rounded.MoreVert, contentDescription = "더보기")
+                    Box {
+                        IconButton(onClick = singleClick { isMenuExpanded = true }) {
+                            Icon(Icons.Rounded.MoreVert, contentDescription = "더보기")
+                        }
+
+                        DropdownMenu(
+                            expanded = isMenuExpanded,
+                            onDismissRequest = { isMenuExpanded = false }
+                        ) {
+                            val isMyPost = uiState.currentUserId == uiState.post?.authorId
+
+                            if (isMyPost) {
+                                DropdownMenuItem(
+                                    text = { Text("삭제하기", color = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                                    },
+                                    onClick = {
+                                        isMenuExpanded = false
+                                        showDeletePostDialog = true
+                                    }
+                                )
+                            } else {
+                                DropdownMenuItem(
+                                    text = { Text("신고하기") },
+                                    onClick = {
+                                        isMenuExpanded = false
+                                        showReportDialog = true
+                                    }
+                                )
+                            }
+                        }
                     }
                 },
                 scrollBehavior = scrollBehavior,
@@ -152,66 +214,72 @@ fun CommunityPostDetailScreen(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
-        if (uiState.isLoading && uiState.post == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.post == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("게시글을 찾을 수 없습니다.")
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                item {
-                    PostDetailContent(
-                        post = uiState.post,
-                        onLikeClick = onLikeClick,
-                        onBookmarkClick = onBookmarkClick,
-                        onOriginNoteClick = onOriginNoteClick,
-                        onUserProfileClick = onUserProfileClick
-                    )
+        when {
+            uiState.isLoading && uiState.post == null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
+            }
 
-                item {
-                    HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    Text(
-                        text = "댓글 ${uiState.comments.size}",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-                    )
+            uiState.post == null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("게시글을 찾을 수 없습니다.")
                 }
+            }
 
-                if (uiState.comments.isEmpty()) {
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
                     item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(40.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("첫 댓글을 남겨주세요!", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        PostDetailContent(
+                            post = uiState.post!!,
+                            onLikeClick = onLikeClick,
+                            onBookmarkClick = onBookmarkClick,
+                            onOriginNoteClick = onOriginNoteClick,
+                            onUserProfileClick = onUserProfileClick
+                        )
                     }
-                } else {
-                    items(
-                        items = uiState.comments,
-                        key = { it.commentId }
-                    ) { comment ->
-                        CommentItem(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            comment = comment,
-                            onDeleteClick = { commentIdToDelete = comment.commentId },
-                            onProfileClick = onUserProfileClick
+
+                    item {
+                        HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        Text(
+                            text = "댓글 ${uiState.comments.size}",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
                         )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = 68.dp, end = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-                        )
+                    }
+
+                    if (uiState.comments.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(40.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("첫 댓글을 남겨주세요!", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    } else {
+                        items(
+                            items = uiState.comments,
+                            key = { it.commentId }
+                        ) { comment ->
+                            CommentItem(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                comment = comment,
+                                onDeleteClick = { commentIdToDelete = comment.commentId },
+                                onProfileClick = onUserProfileClick
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(start = 68.dp, end = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                            )
+                        }
                     }
                 }
             }

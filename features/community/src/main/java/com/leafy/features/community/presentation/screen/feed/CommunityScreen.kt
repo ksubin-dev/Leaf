@@ -82,44 +82,47 @@ fun CommunityScreen(
                     CommunityTab.FOLLOWING -> uiState.followingPosts.isEmpty()
                 }
 
-                if (uiState.isLoading && isDataEmpty) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                else if (uiState.errorMessage != null && isDataEmpty) {
-                    ErrorRetryView(
-                        message = "데이터를 불러오지 못했습니다.",
-                        onRetry = viewModel::refresh,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                else {
-                    when (uiState.selectedTab) {
-                        CommunityTab.TRENDING -> TrendingContent(
-                            uiState = uiState,
-                            onPostClick = { onPostClick(it.postId) },
-                            onMasterClick = { onMasterClick(it.userId) },
-                            onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
-                            onFollowToggle = { viewModel.toggleFollow(it.userId) },
-                            onMorePopularClick = onMorePopularClick,
-                            onMoreBookmarkClick = onMoreBookmarkClick,
-                            onMoreMasterClick = onMoreMasterClick,
-                            onProfileClick = onMasterClick,
+                when {
+                    uiState.isLoading && isDataEmpty -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+
+                    uiState.errorMessage != null && isDataEmpty -> {
+                        ErrorRetryView(
+                            message = "데이터를 불러오지 못했습니다.",
+                            onRetry = viewModel::refresh,
+                            modifier = Modifier.align(Alignment.Center)
                         )
-                        CommunityTab.FOLLOWING -> FollowingContent(
-                            uiState = uiState,
-                            onPostClick = { onPostClick(it.postId) },
-                            onLikeClick = { viewModel.toggleLike(it.postId) },
-                            onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
-                            onCommentClick = { onCommentClick(it.postId) },
-                            onProfileClick = onMasterClick
-                        )
+                    }
+
+                    else -> {
+                        when (uiState.selectedTab) {
+                            CommunityTab.TRENDING -> TrendingContent(
+                                uiState = uiState,
+                                onPostClick = { onPostClick(it.postId) },
+                                onMasterClick = { onMasterClick(it.userId) },
+                                onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
+                                onFollowToggle = { viewModel.toggleFollow(it.userId) },
+                                onMorePopularClick = onMorePopularClick,
+                                onMoreBookmarkClick = onMoreBookmarkClick,
+                                onMoreMasterClick = onMoreMasterClick,
+                                onProfileClick = onMasterClick,
+                            )
+                            CommunityTab.FOLLOWING -> FollowingContent(
+                                uiState = uiState,
+                                onPostClick = { onPostClick(it.postId) },
+                                onLikeClick = { viewModel.toggleLike(it.postId) },
+                                onBookmarkClick = { viewModel.toggleBookmark(it.postId) },
+                                onCommentClick = { onCommentClick(it.postId) },
+                                onProfileClick = onMasterClick
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 private fun TrendingContent(
     uiState: CommunityUiState,

@@ -51,6 +51,7 @@ fun TeaMasterListScreen(
         onFollowToggle = viewModel::toggleFollow
     )
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeaMasterListContent(
@@ -77,40 +78,51 @@ fun TeaMasterListContent(
             )
         }
     ) { padding ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        } else if (uiState.masters.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("추천할 티 마스터가 없습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                itemsIndexed(uiState.masters) { index, master ->
-                    CommunityTeaMasterCard(
-                        master = master,
-                        currentUserId = uiState.currentUserId,
-                        onClick = { onMasterClick(master.userId) },
-                        onFollowToggle = { onFollowToggle(master) }
-                    )
 
-                    if (index < uiState.masters.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(top = 12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            uiState.masters.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("추천할 티 마스터가 없습니다.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    itemsIndexed(uiState.masters) { index, master ->
+                        CommunityTeaMasterCard(
+                            master = master,
+                            currentUserId = uiState.currentUserId,
+                            onClick = { onMasterClick(master.userId) },
+                            onFollowToggle = { onFollowToggle(master) }
                         )
+
+                        if (index < uiState.masters.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(top = 12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
                     }
                 }
             }

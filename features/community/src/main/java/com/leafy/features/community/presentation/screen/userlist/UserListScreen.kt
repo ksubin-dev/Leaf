@@ -53,6 +53,7 @@ fun UserListRoute(
         onFollowToggle = viewModel::toggleFollow
     )
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserListScreen(
@@ -91,34 +92,40 @@ fun UserListScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.users.isEmpty()) {
-                Text(
-                    text = "아직 ${title}가 없습니다.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.Center),
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(uiState.users) { user ->
-                        CommunityTeaMasterCard(
-                            master = user,
-                            currentUserId = uiState.currentUserId,
-                            onClick = singleClick { onUserClick(user.userId) },
-                            onFollowToggle = { onFollowToggle(user) }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(top = 16.dp),
-                            thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                        )
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                uiState.users.isEmpty() -> {
+                    Text(
+                        text = "아직 ${title}가 없습니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.Center),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(uiState.users) { user ->
+                            CommunityTeaMasterCard(
+                                master = user,
+                                currentUserId = uiState.currentUserId,
+                                onClick = singleClick { onUserClick(user.userId) },
+                                onFollowToggle = { onFollowToggle(user) }
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(top = 16.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+                        }
                     }
                 }
             }

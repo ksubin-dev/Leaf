@@ -73,16 +73,21 @@ fun NotificationScreen(
     ) { innerPadding ->
 
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-            if (uiState.isLoading && uiState.notifications.isEmpty()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.notifications.isEmpty()) {
-                EmptyNotificationView()
-            } else {
-                NotificationListSection(
-                    notifications = uiState.notifications,
-                    onNotificationClick = viewModel::onNotificationClick,
-                    onDelete = viewModel::onDeleteNotification
-                )
+            when {
+                uiState.isLoading && uiState.notifications.isEmpty() -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                uiState.notifications.isEmpty() -> {
+                    EmptyNotificationView()
+                }
+
+                else -> {
+                    NotificationListSection(
+                        notifications = uiState.notifications,
+                        onNotificationClick = viewModel::onNotificationClick,
+                        onDelete = viewModel::onDeleteNotification
+                    )
+                }
             }
         }
     }

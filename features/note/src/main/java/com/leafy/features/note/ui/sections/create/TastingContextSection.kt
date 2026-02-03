@@ -29,11 +29,11 @@ import java.time.format.DateTimeFormatter
 fun TastingContextSection(
     modifier: Modifier = Modifier,
     dateTime: String,
-    withPeople: String,
+    mood: String,
     selectedWeather: WeatherType?,
     onDateTimeChange: (String) -> Unit,
     onWeatherSelected: (WeatherType) -> Unit,
-    onWithPeopleChange: (String) -> Unit
+    onMoodChange: (String) -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
@@ -117,10 +117,10 @@ fun TastingContextSection(
         Spacer(modifier = Modifier.height(16.dp))
 
         NoteInputTextField(
-            value = withPeople,
-            onValueChange = onWithPeopleChange,
-            label = "함께한 사람 (선택)",
-            placeholder = "친구, 가족, 혼자...",
+            value = mood,
+            onValueChange = onMoodChange,
+            label = "분위기 / 상황 (선택)",
+            placeholder = "나른한 오후, 새로운 도전, 친구와 수다...",
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -179,17 +179,17 @@ fun TastingContextSectionPreview() {
     LeafyTheme {
         var date by remember { mutableStateOf(LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)) }
         var weather by remember { mutableStateOf<WeatherType?>(WeatherType.SUNNY) }
-        var people by remember { mutableStateOf("") }
+        var mood by remember { mutableStateOf("") } 
 
         Box(modifier = Modifier.padding(16.dp)) {
             TastingContextSection(
                 modifier = Modifier.fillMaxWidth(),
-                withPeople = people,
                 dateTime = date,
+                mood = mood,
                 selectedWeather = weather,
-                onDateTimeChange = {date = it },
+                onDateTimeChange = { date = it },
                 onWeatherSelected = { weather = it },
-                onWithPeopleChange = { people = it }
+                onMoodChange = { mood = it }
             )
         }
     }

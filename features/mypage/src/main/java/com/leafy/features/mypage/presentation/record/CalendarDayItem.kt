@@ -2,7 +2,6 @@ package com.leafy.features.mypage.presentation.record
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -33,18 +32,41 @@ fun CalendarDayItem(
     hasRecord: Boolean,
     onClick: () -> Unit
 ) {
+    val backgroundColor = when {
+        isToday -> MaterialTheme.colorScheme.primary
+        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+        else -> Color.Transparent
+    }
+
+    val borderColor = when {
+        isSelected && !isToday -> MaterialTheme.colorScheme.primary
+        else -> Color.Transparent
+    }
+
+    val textColor = when {
+        isToday -> Color.White
+        isSelected -> MaterialTheme.colorScheme.primary
+        else -> Color.DarkGray
+    }
+
+    val fontWeight = when {
+        isToday || isSelected -> FontWeight.Bold
+        else -> FontWeight.Medium
+    }
+
+    val iconTint = when {
+        isToday -> Color.White.copy(alpha = 0.8f)
+        else -> MaterialTheme.colorScheme.primary
+    }
+
     Column(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (isToday) MaterialTheme.colorScheme.primary
-                else if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                else Color.Transparent
-            )
+            .background(backgroundColor)
             .border(
                 width = 1.dp,
-                color = if (isSelected && !isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
+                color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickableSingle { onClick() },
@@ -54,10 +76,8 @@ fun CalendarDayItem(
         Text(
             text = day.toString(),
             fontSize = 12.sp,
-            fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Medium,
-            color = if (isToday) Color.White
-            else if (isSelected) MaterialTheme.colorScheme.primary
-            else Color.DarkGray
+            fontWeight = fontWeight,
+            color = textColor
         )
 
         if (hasRecord) {
@@ -65,7 +85,7 @@ fun CalendarDayItem(
                 painter = painterResource(id = SharedR.drawable.ic_leaf),
                 contentDescription = null,
                 modifier = Modifier.size(10.dp),
-                tint = if (isToday) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary
+                tint = iconTint
             )
         } else {
             Spacer(modifier = Modifier.height(10.dp))

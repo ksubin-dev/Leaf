@@ -11,6 +11,7 @@ import com.leafy.shared.utils.UiText
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.*
 import com.subin.leafy.domain.usecase.NoteUseCases
+import com.subin.leafy.domain.usecase.TeaUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -29,7 +30,8 @@ sealed interface NoteSideEffect {
 @HiltViewModel
 class NoteViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
-    private val userUseCases: UserUseCases
+    private val userUseCases: UserUseCases,
+    private val teaUseCases: TeaUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -243,6 +245,27 @@ class NoteViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false) }
                 sendEffect(NoteSideEffect.ShowToast(UiText.StringResource(R.string.msg_note_load_error)))
             }
+        }
+    }
+
+    fun loadTeaInfo(teaId: String) {
+        viewModelScope.launch {
+             _uiState.update { it.copy(isLoading = true) }
+
+            val tea = teaUseCases.getTeaDetail(teaId)
+
+            if (tea != null) {
+                _uiState.update { state ->
+                    state.copy(
+                        teaName = tea.name,
+                        teaBrand = tea.brand,
+                        teaType = tea.type,
+                        teaOrigin = tea.origin,
+                        memo = if (tea.memo.isNotBlank()) "[차 메모]\n${tea.memo}\n\n" else state.memo
+                    )
+                }
+            }
+             _uiState.update { it.copy(isLoading = false) }
         }
     }
 

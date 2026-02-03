@@ -81,7 +81,7 @@ fun TastingContextSection(
             }
         }
 
-        val withWhom = metadata.mood.ifBlank { "혼자" }
+        val moodText = metadata.mood.ifBlank { "-" }
 
         Row(
             modifier = Modifier
@@ -91,12 +91,12 @@ fun TastingContextSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "함께한 사람",
+                text = "분위기 / 상황",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             LeafyChip(
-                text = withWhom,
+                text = moodText,
                 isSelected = true,
                 onClick = {},
                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -112,7 +112,7 @@ fun TastingContextSectionPreview() {
     LeafyTheme {
         val mockMetadata = NoteMetadata(
             weather = WeatherType.CLOUDY,
-            mood = "친구들",
+            mood = "조용히 쉬고 싶은 밤",
             imageUrls = emptyList()
         )
         TastingContextSection(
