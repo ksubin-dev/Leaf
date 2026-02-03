@@ -30,6 +30,7 @@ data class CommunityPostDetailUiState(
     val commentInput: String = "",
     val isSendingComment: Boolean = false,
     val currentUserProfileUrl: String? = null,
+    val currentUserId: String? = null,
     val errorMessage: UiText? = null
 )
 
@@ -110,11 +111,28 @@ class CommunityPostDetailViewModel @Inject constructor(
         val idResult = userUseCases.getCurrentUserId()
         if (idResult is DataResourceResult.Success) {
             val myId = idResult.data
+            _uiState.update { it.copy(currentUserId = myId) }
             val profileResult = userUseCases.getUserProfile(myId)
             if (profileResult is DataResourceResult.Success) {
                 _uiState.update {
                     it.copy(currentUserProfileUrl = profileResult.data.profileImageUrl)
                 }
+            }
+        }
+    }
+
+    fun deletePost() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            val result = postUseCases.deletePost(postId)
+
+            if (result is DataResourceResult.Success) {
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_post_deleted)))
+                sendEffect(PostDetailSideEffect.NavigateBack)
+            } else {
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(PostDetailSideEffect.ShowToast(UiText.StringResource(R.string.msg_delete_failed)))
             }
         }
     }

@@ -118,6 +118,17 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
             val postRef = firestore.collection(FirestoreConstants.COLLECTION_POSTS).document(noteId)
             val userRef = usersCollection.document(userId)
 
+            val commentsRef = postRef.collection(FirestoreConstants.COLLECTION_COMMENTS)
+            val commentsSnapshot = commentsRef.get().await()
+
+            if (!commentsSnapshot.isEmpty) {
+                val batch = firestore.batch()
+                commentsSnapshot.documents.forEach { doc ->
+                    batch.delete(doc.reference)
+                }
+                batch.commit().await()
+            }
+
             firestore.runTransaction { transaction ->
                 val noteSnapshot = transaction.get(noteRef)
                 if (!noteSnapshot.exists()) {
