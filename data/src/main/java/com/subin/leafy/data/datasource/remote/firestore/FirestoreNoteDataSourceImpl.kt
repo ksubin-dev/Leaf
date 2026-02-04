@@ -100,7 +100,7 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
                 "evaluation" to note.evaluation,
                 "rating" to note.rating,
                 "metadata" to note.metadata,
-                "isPublic" to note.isPublic,
+                "public" to note.isPublic,
                 "date" to note.date
             )
 
