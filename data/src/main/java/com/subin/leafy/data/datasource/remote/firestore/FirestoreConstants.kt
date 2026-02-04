@@ -24,7 +24,7 @@ object FirestoreConstants {
 
     const val COLLECTION_NOTES = "notes"
     const val FIELD_OWNER_ID = "ownerId"
-    const val FIELD_IS_PUBLIC = "isPublic"
+    const val FIELD_IS_PUBLIC = "public"
     const val FIELD_CREATED_AT = "createdAt"
 
     const val FIELD_DATE = "date"

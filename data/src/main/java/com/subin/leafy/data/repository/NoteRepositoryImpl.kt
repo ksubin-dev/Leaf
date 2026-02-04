@@ -51,15 +51,23 @@ class NoteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getNoteDetail(noteId: String): DataResourceResult<BrewingNote> {
-        var note = localNoteDataSource.getNote(noteId)
+        val remoteResult = remoteNoteDataSource.getNoteDetail(noteId)
+
+        var note: BrewingNote? = null
+
+        if (remoteResult is DataResourceResult.Success) {
+            note = remoteResult.data
+
+            try {
+                localNoteDataSource.insertNote(note)
+            } catch (e: Exception) {
+            }
+        } else {
+            note = localNoteDataSource.getNote(noteId)
+        }
 
         if (note == null) {
-            val remoteResult = remoteNoteDataSource.getNoteDetail(noteId)
-            if (remoteResult is DataResourceResult.Success) {
-                note = remoteResult.data
-            } else {
-                return remoteResult
-            }
+            return DataResourceResult.Failure(Exception("Note not found"))
         }
 
         val myUid = authDataSource.getCurrentUserId()
