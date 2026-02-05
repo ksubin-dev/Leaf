@@ -46,101 +46,6 @@
 
 ---
 
-## 🛠 기술 스택 (Tech Stack)
-
-| Category | Tech | Usage |
-| :--- | :--- | :--- |
-| Language | Kotlin | 프로젝트 전체 |
-| UI | Jetpack Compose (Material3) | 선언형 UI 및 상태 기반 렌더링 |
-| Architecture | MVVM + Clean Architecture | 계층 분리 및 확장성 확보 |
-| Async | Coroutines, Flow | 반응형 상태 스트림, `combine`, `stateIn` |
-| Data | Room (Local), Firestore (Remote) | 하이브리드 저장/동기화 |
-| Auth | Firebase Auth | 로그인/세션 관리 |
-| DI | Hilt | 의존성 주입 및 결합도 감소 |
-| Background | WorkManager | 백그라운드 작업 보장 |
-| Image | Coil | 이미지 로딩 및 캐싱 최적화 |
-| Chart | MPAndroidChart | 음용/활동 데이터 시각화 |
-
----
-
-## 🧱 아키텍처 & 모듈 구조 (Architecture & Modules)
-
-### MVVM + Clean Architecture
-- **구조**: `features(UI)` → `domain(UseCase/Model)` ← `data(Repository/DTO/DataSource)`
-- Domain은 **순수 Kotlin 모듈**로 구성하여 비즈니스 로직의 독립성을 보장했습니다.
-- Data는 DTO/Mapper/Repository를 통해 도메인 계층과의 결합도를 낮췄습니다.
-
-### Multi-module 구성
-- `app`: 엔트리 포인트 및 전체 조립
-- `features`: 화면/뷰모델/상태(UiState) 및 UI 로직
-- `domain`: Model, UseCase 등 비즈니스 규칙
-- `data`: Firestore/Room 연동, DTO/Mapper, Repository
-- `shared`: 공통 UI 및 유틸/네비게이션 등 재사용 모듈
-
-### Shared 모듈 설계 의도
-Shared 모듈은 여러 feature에서 공통으로 사용하는 요소를 모아 **중복 제거 및 재사용성**을 높였습니다.
-- `ui`: 공통 컴포넌트/테마/UiText 등 UI 기반 공통 자원
-- `navigation`: 라우트 정의 및 네비게이션 엔트리
-- `utils`: 이미지 압축, 시간/포맷, 화면 유지 등 공통 유틸리티
-- `common`: 자주 쓰는 확장/헬퍼
-
----
-
-## 📱 화면 구성
-
-### Community 탭
-- 트렌딩 / 팔로잉 피드 제공
-- 게시글 상호작용(좋아요/북마크/팔로우) 및 카운트 반영
-- 댓글 작성, 삭제 제공
-- 게시글 or 노트 기반 공유 게시글 작성
-
-### Brewing Note
-- 차 정보 / 레시피 / 감각 평가 / 별점 / 이미지 등 기록
-- 로컬 저장과 원격 동기화 지원
-- 노트 공유(게시글로 전환/연결) 흐름 제공
-
-### Timer
-- 프리셋 제공 및 커스텀 저장
-- 알림/진동 등 사용자 편의 설정
-- 브루잉 노트로 이어지는 작성 흐름 제공
-
-### My Page
-- 프로필 관리
-- 찻장(보유 차) 관리 및 브루잉 노트 작성 흐름 제공
-- 활동/음용 데이터 차트 분석
-
-
----
-
-## 🔥 핵심 구현 포인트 (Key Contributions)
-
-### 1) 반응형 상태 파이프라인 구축 (Flow 기반 UiState)
-- **문제**: 여러 데이터 소스(트렌딩/팔로잉/북마크/유저 상태 등)를 각각 구독하면서 로딩/상태 불일치 및 Race Condition 발생
-- **해결**: `combine`으로 데이터 스트림을 하나의 `UiState`로 병합하고 `stateIn`을 통해 Hot Stream으로 관리
-- **효과**: 데이터 로드 시점에 상관없이 동기화된 UI 상태 유지 + 불필요한 리렌더 감소
-
-### 2) Kotlin Flow `combine` 인자 제한(5개) 해결
-- **문제**: 화면 데이터 소스가 8개 이상으로 증가하며 기본 `combine` 오버로드 제한으로 컴파일 오류 발생
-- **해결**: Flow 리스트를 묶어 처리하는 **커스텀 combine 확장 함수(Arity-8)** 구현
-- **효과**: 구조 확장 시 라이브러리 제약에 묶이지 않는 상태 관리 기반 확보
-
-### 3) 낙관적 업데이트(Optimistic Update)로 UX 개선
-- **문제**: 좋아요/북마크 클릭 시 서버 응답 대기 동안 UI 반응이 늦어지는 문제
-- **해결**: 서버 응답을 기다리지 않고 로컬 상태를 즉시 갱신, 실패 시 롤백
-- **효과**: 네트워크 지연이 있어도 체감 반응이 빠른 인터랙션 제공
-
-### 4) WorkManager 도입 — 작성 흐름 안정화(백그라운드 저장/동기화)
-- **문제**: 게시글/기록 작성 도중 홈키 전환 등으로 앱이 백그라운드로 내려갈 때 저장이 끊기거나 유실되는 사용자 경험 이슈
-- **해결**: WorkManager로 저장/동기화 작업을 백그라운드로 분리하여 앱 상태 변화에도 작업을 보장
-- **효과**: 작성 흐름이 안정적으로 유지되어 사용자 편의성이 향상됨
-
-### 5) Firestore 데이터 매핑 안정화
-- **문제**: Firestore 필드명과 DTO 간 매핑 충돌 가능성 및 데이터 통신 오류
-- **해결**: `@PropertyName`을 활용해 필드명을 명시적으로 매핑하고 통신 안정성을 확보
-- **효과**: 데이터 정합성 개선 및 런타임 오류 리스크 감소
-
----
-
 ## 📱 주요 기능 시연
 
 ### 1️⃣ 시작하기 & 인증 (Auth)
@@ -219,6 +124,77 @@ Shared 모듈은 여러 feature에서 공통으로 사용하는 요소를 모아
 
 
 ---
+
+
+## 🛠 기술 스택 (Tech Stack)
+
+| Category | Tech | Usage |
+| :--- | :--- | :--- |
+| Language | Kotlin | 프로젝트 전체 |
+| UI | Jetpack Compose (Material3) | 선언형 UI 및 상태 기반 렌더링 |
+| Architecture | MVVM + Clean Architecture | 계층 분리 및 확장성 확보 |
+| Async | Coroutines, Flow | 반응형 상태 스트림, `combine`, `stateIn` |
+| Data | Room (Local), Firestore (Remote) | 하이브리드 저장/동기화 |
+| Auth | Firebase Auth | 로그인/세션 관리 |
+| DI | Hilt | 의존성 주입 및 결합도 감소 |
+| Background | WorkManager | 백그라운드 작업 보장 |
+| Image | Coil | 이미지 로딩 및 캐싱 최적화 |
+| Chart | MPAndroidChart | 음용/활동 데이터 시각화 |
+
+---
+
+## 🧱 아키텍처 & 모듈 구조 (Architecture & Modules)
+
+### MVVM + Clean Architecture
+- **구조**: `features(UI)` → `domain(UseCase/Model)` ← `data(Repository/DTO/DataSource)`
+- Domain은 **순수 Kotlin 모듈**로 구성하여 비즈니스 로직의 독립성을 보장했습니다.
+- Data는 DTO/Mapper/Repository를 통해 도메인 계층과의 결합도를 낮췄습니다.
+
+### Multi-module 구성
+- `app`: 엔트리 포인트 및 전체 조립
+- `features`: 화면/뷰모델/상태(UiState) 및 UI 로직
+- `domain`: Model, UseCase 등 비즈니스 규칙
+- `data`: Firestore/Room 연동, DTO/Mapper, Repository
+- `shared`: 공통 UI 및 유틸/네비게이션 등 재사용 모듈
+
+### Shared 모듈 설계 의도
+Shared 모듈은 여러 feature에서 공통으로 사용하는 요소를 모아 **중복 제거 및 재사용성**을 높였습니다.
+- `ui`: 공통 컴포넌트/테마/UiText 등 UI 기반 공통 자원
+- `navigation`: 라우트 정의 및 네비게이션 엔트리
+- `utils`: 이미지 압축, 시간/포맷, 화면 유지 등 공통 유틸리티
+- `common`: 자주 쓰는 확장/헬퍼
+
+---
+
+## 🔥 핵심 구현 포인트 (Key Contributions)
+
+### 1) 반응형 상태 파이프라인 구축 (Flow 기반 UiState)
+- **문제**: 여러 데이터 소스(트렌딩/팔로잉/북마크/유저 상태 등)를 각각 구독하면서 로딩/상태 불일치 및 Race Condition 발생
+- **해결**: `combine`으로 데이터 스트림을 하나의 `UiState`로 병합하고 `stateIn`을 통해 Hot Stream으로 관리
+- **효과**: 데이터 로드 시점에 상관없이 동기화된 UI 상태 유지 + 불필요한 리렌더 감소
+
+### 2) Kotlin Flow `combine` 인자 제한(5개) 해결
+- **문제**: 화면 데이터 소스가 8개 이상으로 증가하며 기본 `combine` 오버로드 제한으로 컴파일 오류 발생
+- **해결**: Flow 리스트를 묶어 처리하는 **커스텀 combine 확장 함수(Arity-8)** 구현
+- **효과**: 구조 확장 시 라이브러리 제약에 묶이지 않는 상태 관리 기반 확보
+
+### 3) 낙관적 업데이트(Optimistic Update)로 UX 개선
+- **문제**: 좋아요/북마크 클릭 시 서버 응답 대기 동안 UI 반응이 늦어지는 문제
+- **해결**: 서버 응답을 기다리지 않고 로컬 상태를 즉시 갱신, 실패 시 롤백
+- **효과**: 네트워크 지연이 있어도 체감 반응이 빠른 인터랙션 제공
+
+### 4) WorkManager 도입 — 작성 흐름 안정화(백그라운드 저장/동기화)
+- **문제**: 게시글/기록 작성 도중 홈키 전환 등으로 앱이 백그라운드로 내려갈 때 저장이 끊기거나 유실되는 사용자 경험 이슈
+- **해결**: WorkManager로 저장/동기화 작업을 백그라운드로 분리하여 앱 상태 변화에도 작업을 보장
+- **효과**: 작성 흐름이 안정적으로 유지되어 사용자 편의성이 향상됨
+
+### 5) Firestore 데이터 매핑 안정화
+- **문제**: Firestore 필드명과 DTO 간 매핑 충돌 가능성 및 데이터 통신 오류
+- **해결**: `@PropertyName`을 활용해 필드명을 명시적으로 매핑하고 통신 안정성을 확보
+- **효과**: 데이터 정합성 개선 및 런타임 오류 리스크 감소
+
+---
+
 
 ## 🧯 트러블 슈팅 (Troubleshooting)
 
