@@ -1,6 +1,9 @@
 package com.leafy.features.community.presentation.screen.feed.section
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,8 +28,14 @@ fun CommunityTeaMasterSection(
     Column(modifier = modifier.fillMaxWidth()) {
         LeafySectionHeader(
             title = "이번 달 티 마스터 추천",
-            showMore = true,
-            onMoreClick = singleClick { onMoreClick() }
+            trailingContent = {
+                Text(
+                    text = "더보기 →",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.clickable(onClick = singleClick { onMoreClick() })
+                )
+            }
         )
 
         Spacer(modifier = Modifier.height(4.dp))

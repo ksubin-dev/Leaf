@@ -1,36 +1,27 @@
 package com.leafy.shared.ui.component
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.theme.LeafyTheme
-
 
 @Composable
 fun LeafySectionHeader(
-    title: String,
     modifier: Modifier = Modifier,
+    title: String,
     titleStyle: TextStyle = MaterialTheme.typography.titleMedium.copy(
         fontWeight = FontWeight.Bold
     ),
-    showMore: Boolean = true,
-    moreLabel: String = "더보기 →",
-    onMoreClick: () -> Unit = {}
+    trailingContent: @Composable (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
-
-    val safeOnMoreClick = singleClick { onMoreClick() }
 
     Row(
         modifier = modifier
@@ -46,28 +37,29 @@ fun LeafySectionHeader(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        if (showMore) {
-            Text(
-                text = moreLabel,
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.secondary,
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = safeOnMoreClick
-                    )
-            )
-        }
+        trailingContent?.invoke()
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun ExploreSectionHeaderPreview() {
+private fun LeafySectionHeaderPreview() {
     LeafyTheme {
-        LeafySectionHeader(
-            title = "이번 주 인기 노트"
-        )
+        Column {
+            LeafySectionHeader(
+                title = "이번 주 인기 노트"
+            )
+
+            LeafySectionHeader(
+                title = "새로운 블렌딩",
+                trailingContent = {
+                    Text(
+                        text = "더보기 →",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            )
+        }
     }
 }

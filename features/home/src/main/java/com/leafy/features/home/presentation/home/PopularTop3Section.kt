@@ -1,5 +1,6 @@
 package com.leafy.features.home.presentation.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,8 +45,14 @@ fun PopularTop3Section(
             titleStyle = MaterialTheme.typography.titleMedium.copy(
                 fontSize = 20.sp
             ),
-            showMore = true,
-            onMoreClick = singleClick { onMoreClick() },
+            trailingContent = {
+                Text(
+                    text = "더보기 →",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.clickable(onClick = singleClick { onMoreClick() })
+                )
+            }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
