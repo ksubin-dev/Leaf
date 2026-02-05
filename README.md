@@ -48,6 +48,8 @@
 
 ## 📱 주요 기능 시연
 
+<div id="auth-start"></div>
+
 ### 1️⃣ 시작하기 & 인증 (Auth)
 앱의 첫인상인 스플래시 화면과 안전한 사용자 인증 과정입니다.
 
@@ -55,6 +57,8 @@
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/05533a19-07b5-44ab-8a7c-735232ec1791" width="280"> | <img src="https://github.com/user-attachments/assets/abe3e01f-824e-4ef5-a174-dc6d0405de6c" width="280"> |
 | 앱 실행 및 이메일 회원가입 프로세스 | 로그인 및 홈 화면 전환 |
+
+<div id="tea-cabinet"></div>
 
 ### 2️⃣ 나만의 찻장 (Tea Cabinet)
 보유한 차를 등록하고 찻장에서 바로 시음 노트를 작성할 수 있습니다.
@@ -64,6 +68,8 @@
 | <img src="https://github.com/user-attachments/assets/d5b52b83-c191-41da-8f58-1b6b14d85830" width="280"> |
 | 차의 상세 정보 등록 및 바로 기록 |
 
+<div id="tea-timer"></div>
+
 ### 3️⃣ 티 타이머 & 다회 우림 (Tea Timer)
 차의 맛을 위한 최적의 시간을 제공하며 여러 번 우린 기록을 한 번에 저장합니다.
 
@@ -72,6 +78,8 @@
 | <img src="https://github.com/user-attachments/assets/5737f1b8-856f-4bc7-90a5-6665a2622fef" width="280"> | <img src="https://github.com/user-attachments/assets/15187a6c-2e82-405c-9aee-1260a0e32275" width="280"> |
 | 온도/시간 프리셋 설정 및 타이머 작동 | 재우림(Infusion) 횟수 반영 및 노트 작성 연동 |
 
+<div id="brewing-note"></div>
+
 ### 4️⃣ 브루잉 노트 작성 및 관리 (Brewing Note)
 하단 네비게이션을 통해 언제든 기록을 시작하고 작성된 노트를 수정하여 관리할 수 있습니다.
 
@@ -79,6 +87,8 @@
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/b77faf7b-ab4e-4da7-a7e3-1129c0f6d59a" width="280"> | <img src="https://github.com/user-attachments/assets/cd88b196-9fa0-4659-9978-84c404d53701" width="280"> |
 | 네비게이션 '노트' 탭을 통해 즉시 기록 작성 진입 | 기존 데이터를 유지한 채 수정 모드 전환 및 업데이트 |
+
+<div id="community-feed"></div>
 
 ### 5️⃣ 커뮤니티 피드 & 탐색 (Community Feed)
 트렌드에 맞는 인기 노트를 구경하고 취향이 맞는 티 마스터를 팔로우하여 모아볼 수 있습니다.
@@ -93,6 +103,8 @@
 | <img src="https://github.com/user-attachments/assets/1654587f-61fc-4884-b07a-bfc713408047" width="280"> | <img src="https://github.com/user-attachments/assets/3fb2aa29-ca43-4a3b-ba71-cf7727238466" width="280"> |
 | 추천 유저 팔로우 및 팔로잉 피드 모아보기 | 낙관적 UI 적용 및 원본 노트-게시글 간 상태 동기화 |
 
+<div id="social-actions"></div>
+
 ### 6️⃣ 게시글 작성 & 관리 (Social Actions)
 나의 시음 노트를 커뮤니티에 공유하거나 댓글로 소통하며 작성한 글을 관리할 수 있습니다.
 
@@ -106,6 +118,8 @@
 | <img src="https://github.com/user-attachments/assets/e99d3650-5512-4b96-9f12-000a9ed41bfc" width="280"> | <img src="https://github.com/user-attachments/assets/22a5ba2c-ba74-4d58-b302-f3206d9dbb33" width="280"> |
 | 원본 노트 삭제 시 공유된 게시글도 함께 정리 | 커뮤니티에 작성한 게시글 단독 삭제 처리 |
 
+<div id="my-page"></div>
+
 ### 7️⃣ 마이페이지 (My Page)
 나의 티 라이프를 한눈에 모아보고 데이터를 통해 나의 취향을 발견합니다.
 
@@ -113,6 +127,8 @@
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/e8491df8-beda-40c0-83f2-f68ba50e2baa" width="280"> | <img src="https://github.com/user-attachments/assets/29a54de9-ab76-4b5f-bc0d-a3193e73c65a" width="280"> |
 | 캘린더 기록 조회, 취향 분석 리포트, 내 노트 검색, 좋아요/북마크 보관함 기능을 한 번에 확인 | 닉네임, 프로필 사진 변경 및 앱 설정 관리 |
+
+<div id="home-search"></div>
 
 ### 8️⃣ 홈 (Home)
 통합 검색을 통해 원하는 정보를 찾고 내 소식을 빠르게 확인합니다.
