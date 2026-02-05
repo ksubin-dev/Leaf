@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -41,10 +42,17 @@ fun QuickBrewingGuideSection(
             titleStyle = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
-                color = colors.primary
+                color = MaterialTheme.colorScheme.primary
             ),
-            onMoreClick = onClick,
-            modifier = Modifier.padding(horizontal = 0.dp)
+            modifier = Modifier.padding(horizontal = 0.dp),
+            trailingContent = {
+                Text(
+                    text = "더보기 →",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.clickable { onClick() }
+                )
+            }
         )
 
         Spacer(modifier = Modifier.height(8.dp))

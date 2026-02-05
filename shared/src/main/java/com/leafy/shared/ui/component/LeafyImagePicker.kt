@@ -29,8 +29,8 @@ import coil3.compose.AsyncImage
 fun LeafyImagePicker(
     modifier: Modifier = Modifier,
     maxItems: Int = 5,
-    onImageRemoved: (Uri) -> Unit,
     selectedImages: List<Uri>,
+    onImageRemoved: (Uri) -> Unit,
     onImagesSelected: (List<Uri>) -> Unit
 ) {
     val launcher = rememberLauncherForActivityResult(
