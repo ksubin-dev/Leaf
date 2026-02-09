@@ -18,6 +18,23 @@
 
 ---
 
+## 🛠 기술 스택 (Tech Stack)
+
+| Category | Tech | Usage |
+| :--- | :--- | :--- |
+| Language | Kotlin | 프로젝트 전체 |
+| UI | Jetpack Compose (Material3) | 선언형 UI 및 상태 기반 렌더링 |
+| Architecture | MVVM + Clean Architecture | 계층 분리 및 확장성 확보 |
+| Async | Coroutines, Flow | 반응형 상태 스트림, `combine`, `stateIn` |
+| Data | Room (Local), Firestore (Remote) | 하이브리드 저장/동기화 |
+| Auth | Firebase Auth | 로그인/세션 관리 |
+| DI | Hilt | 의존성 주입 및 결합도 감소 |
+| Background | WorkManager | 백그라운드 작업 보장 |
+| Image | Coil | 이미지 로딩 및 캐싱 최적화 |
+| Chart | MPAndroidChart | 음용/활동 데이터 시각화 |
+
+---
+
 ## ✨ 주요 기능 (Key Features)
 
 ### 1. 브루잉 노트 기록 (Brewing Note)
@@ -141,24 +158,6 @@
 
 ---
 
-
-## 🛠 기술 스택 (Tech Stack)
-
-| Category | Tech | Usage |
-| :--- | :--- | :--- |
-| Language | Kotlin | 프로젝트 전체 |
-| UI | Jetpack Compose (Material3) | 선언형 UI 및 상태 기반 렌더링 |
-| Architecture | MVVM + Clean Architecture | 계층 분리 및 확장성 확보 |
-| Async | Coroutines, Flow | 반응형 상태 스트림, `combine`, `stateIn` |
-| Data | Room (Local), Firestore (Remote) | 하이브리드 저장/동기화 |
-| Auth | Firebase Auth | 로그인/세션 관리 |
-| DI | Hilt | 의존성 주입 및 결합도 감소 |
-| Background | WorkManager | 백그라운드 작업 보장 |
-| Image | Coil | 이미지 로딩 및 캐싱 최적화 |
-| Chart | MPAndroidChart | 음용/활동 데이터 시각화 |
-
----
-
 ## 🧱 아키텍처 & 모듈 구조 (Architecture & Modules)
 
 ### MVVM + Clean Architecture
@@ -244,7 +243,6 @@ Shared 모듈은 여러 feature에서 공통으로 사용하는 요소를 모아
 ---
 
 ## 🌱 향후 도입
-- FCM 도입
-- 신고하기 기능
-- 뱃지 시스템 제공
-- 테스트 코드 작성
+- ai 챗봇 및 기능 구현
+- 테스트 코드 80 % 이상 작성
+- 런칭하기
