@@ -210,38 +210,6 @@ Shared 모듈은 여러 feature에서 공통으로 사용하는 요소를 모아
 
 ---
 
-
-## 🧯 트러블 슈팅 (Troubleshooting)
-
-<details>
-<summary><b>1. 앱을 닫아도 끊김 없는 업로드 (WorkManager)</b></summary>
-<br>
-
-* **문제:** 기존에는 업로드 작업이 UI 생명주기(`viewModelScope`)에 종속되어 있어 사용자가 업로드 중 **앱을 이탈하거나(홈키) 화면을 닫으면 작업이 강제 취소되어 데이터가 유실**되는 치명적인 문제가 있었습니다.
-* **해결:** `WorkManager`를 도입하여, 업로드 작업을 백그라운드로 옮겼습니다. 이제 화면이 꺼지거나 다른 앱을 켜도 작업이 멈추지 않습니다.
-* **결과:** 사용자는 로딩 화면에서 기다릴 필요 없이 자유롭게 다른 일을 할 수 있고 업로드 성공률도 보장됩니다.
-
-| ❌ 개선 전 (앱 이탈 시 업로드 실패) | ✅ 개선 후 (백그라운드 업로드 보장) |
-| :---: | :---: |
-| <img src="https://github.com/user-attachments/assets/ffa7e58e-709f-41af-be19-3834e3485442" width="300"> | <img src="https://github.com/user-attachments/assets/9d583a15-5ebc-4ce7-ade9-1efc5728a768" width="300"> |
-
-</details>
-
-<details>
-<summary><b>2. 삭제 피드백 UX 개선 (Snackbar → Toast)</b></summary>
-<br>
-
-* **문제:** 게시글 삭제 시 `Snackbar`를 사용하면 메시지가 떠 있는 동안 삭제된 게시글 화면이 계속 유지되어, 사용자에게 "정말 삭제된 것이 맞나?" 하는 혼란을 줄 수 있었습니다.
-* **해결:** 화면 종속적인 `Snackbar` 대신 `Toast` 메시지를 사용하여, 삭제 즉시 화면을 닫고 목록으로 이동시켜 삭제가 완료되었음을 직관적으로 인지하도록 개선했습니다.
-
-| ❌ 개선 전 (삭제 후에도 화면 유지) | ✅ 개선 후 (즉시 이동 및 피드백) |
-| :---: | :---: |
-| <img src="https://github.com/user-attachments/assets/5cddd323-4d9f-470b-b2ab-f2b4bee74448" width="300"> | <img src="https://github.com/user-attachments/assets/1774c592-d19b-4e38-b7ca-20d778bc99af" width="300"> |
-
-</details>
-
----
-
 ## 🌱 향후 도입
 - ai 챗봇 및 기능 구현
 - 테스트 코드 80 % 이상 작성
