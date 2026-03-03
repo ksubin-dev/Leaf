@@ -116,13 +116,10 @@ class SignInViewModel @Inject constructor(
         settingUseCases.manageLoginSetting.saveEmail(state.email)
 
         try {
-            val myProfileResult = userUseCases.getMyProfile().first()
-            if (myProfileResult is DataResourceResult.Success) {
-                val user = myProfileResult.data
-                val isServerAgreed = user.isNotificationAgreed
-                settingUseCases.updateNotificationSetting.setNotificationAgreed(isServerAgreed)
-                userUseCases.updateFcmToken(isServerAgreed)
-            }
+            val appSettings = settingUseCases.getAppSettings().first()
+            val isLocalAgreed = appSettings.isNotificationAgreed
+            userUseCases.updateFcmToken(isLocalAgreed)
+
         } catch (e: Exception) {
             Log.e("SignIn", "FCM 동기화 오류: ${e.message}")
         }

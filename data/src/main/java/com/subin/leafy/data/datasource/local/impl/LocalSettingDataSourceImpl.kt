@@ -1,5 +1,6 @@
 package com.subin.leafy.data.datasource.local.impl
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -87,8 +88,8 @@ class LocalSettingDataSourceImpl @Inject constructor(
 
     override suspend fun clearSettings() {
         dataStore.edit { prefs ->
-            prefs.remove(KEY_IS_DARK_THEME)
-            prefs.remove(KEY_NOTI_AGREED)
+            //prefs.remove(KEY_IS_DARK_THEME)
+            //prefs.remove(KEY_NOTI_AGREED)
             prefs.remove(KEY_AUTO_LOGIN)
 
         }
