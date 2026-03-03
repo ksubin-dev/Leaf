@@ -46,7 +46,6 @@ class MainViewModel @Inject constructor(
             val isAutoLoginEnabled = settingUseCases.manageLoginSetting.getAutoLogin().first()
 
             if (userResult is DataResourceResult.Success && isAutoLoginEnabled) {
-                Log.d("SYNC_LOG", "자동 로그인 유저 발견 -> WorkManager 동기화 예약 (기다리지 않음)")
 
                 val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -58,7 +57,6 @@ class MainViewModel @Inject constructor(
             }
             else {
                 if (userResult is DataResourceResult.Success) {
-                    Log.d("SYNC_LOG", "자동 로그인 꺼짐 -> 로그아웃 처리")
                     authUseCases.logout()
                 }
                 _startDestination.value = MainNavigationRoute.Auth
@@ -72,6 +70,20 @@ class MainViewModel @Inject constructor(
             }
 
             _isSplashLoading.value = false
+        }
+    }
+
+    fun syncNotificationSetting(isGranted: Boolean) {
+        viewModelScope.launch {
+            settingUseCases.updateNotificationSetting.setNotificationAgreed(isGranted)
+
+            if (isGranted) {
+                try {
+                    userUseCases.updateFcmToken(true)
+                } catch (e: Exception) {
+                    Log.e("FCM_LOG", "토큰 동기화 실패", e)
+                }
+            }
         }
     }
 }
