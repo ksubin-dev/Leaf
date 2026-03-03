@@ -1,11 +1,13 @@
 package com.subin.leafy.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,41 +35,52 @@ import com.subin.leafy.ui.component.WriteSelectionBottomSheet
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryPointScreen(
-    startDestination: Any
+    startDestination: Any,
+    pendingDeepLink: Any? = null,
+    onDeepLinkConsumed: () -> Unit = {}
 ) {
     LeafyTheme {
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
-        val allItems = remember { LeafyBottomAppBarItem.fetchBottomAppBarItems() }
+        var savedDeepLink by remember { mutableStateOf<Any?>(null) }
 
+        LaunchedEffect(pendingDeepLink) {
+            if (pendingDeepLink != null) {
+                val isAuthScreen = startDestination == MainNavigationRoute.Auth ||
+                        currentDestination?.hierarchy?.any { it.route?.contains("Auth") == true } == true
+
+                if (isAuthScreen) {
+                    savedDeepLink = pendingDeepLink
+                    onDeepLinkConsumed()
+                } else {
+                    kotlinx.coroutines.delay(500L)
+                    try {
+                        navController.navigate(pendingDeepLink)
+                    } catch (e: Exception) {
+                        Log.e("FCM_NAV", "화면 이동 실패 (에러 발생): ${e.message}", e)
+                    } finally {
+                        onDeepLinkConsumed()
+                        Log.d("FCM_NAV", "DeepLink 처리 완료 (초기화)")
+                    }
+                }
+            }
+        }
+
+
+        val allItems = remember { LeafyBottomAppBarItem.fetchBottomAppBarItems() }
         var showWriteSheet by remember { mutableStateOf(false) }
 
         val shouldHideBottomBar = currentDestination?.hierarchy?.any { destination ->
             val route = destination.route ?: return@any false
             listOf(
-                "Auth",
-                "Search",
-                "TimerTab",
-                "NoteTab",
-                "NoteDetail",
-                "CommunityWrite",
-                "CommunityDetail",
-                "PopularPostList",
-                "TeaMasterList",
-                "HallOfFameList",
-                "UserProfile",
-                "DailyRecords",
-                "AnalysisReport",
-                "TeaAddEdit",
-                "Notification",
-                "Settings",
-                "BookmarkedPosts",
-                "LikedPosts",
-                "MyTeaCabinet",
-                "FollowerList",
-                "FollowingList"
+                "Auth", "Search", "TimerTab", "NoteTab", "NoteDetail",
+                "CommunityWrite", "CommunityDetail", "PopularPostList",
+                "TeaMasterList", "HallOfFameList", "UserProfile",
+                "DailyRecords", "AnalysisReport", "TeaAddEdit",
+                "Notification", "Settings", "BookmarkedPosts",
+                "LikedPosts", "MyTeaCabinet", "FollowerList", "FollowingList"
             ).any { route.contains(it) }
         } == true
 
@@ -112,29 +125,20 @@ fun EntryPointScreen(
                     authNavGraph(
                         navController = navController,
                         onAuthSuccess = {
-                            navController.navigate(MainNavigationRoute.HomeTab) {
+                            val destination = savedDeepLink ?: MainNavigationRoute.HomeTab
+
+                            navController.navigate(destination) {
                                 popUpTo<MainNavigationRoute.Auth> { inclusive = true }
                             }
+                            savedDeepLink = null
                         }
                     )
-                    homeNavGraph(
-                        navController = navController
-                    )
-                    noteNavGraph(
-                        navController = navController,
-                    )
-                    communityNavGraph(
-                        navController = navController,
-                    )
-                    timerNavGraph(
-                        navController = navController,
-                    )
-                    searchNavGraph(
-                        navController = navController,
-                    )
-                    mypageNavGraph(
-                        navController = navController,
-                    )
+                    homeNavGraph(navController = navController)
+                    noteNavGraph(navController = navController)
+                    communityNavGraph(navController = navController)
+                    timerNavGraph(navController = navController)
+                    searchNavGraph(navController = navController)
+                    mypageNavGraph(navController = navController)
                 }
             }
 
