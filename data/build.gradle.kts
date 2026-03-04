@@ -33,6 +33,13 @@ android {
 
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+        unitTests.all {
+            it.jvmArgs("-XX:+EnableDynamicAgentLoading")
+        }
+    }
+
 }
 kotlin{
     jvmToolchain(21)
@@ -58,6 +65,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
+
+    testImplementation(libs.bundles.unit.test.libraries)
 
     implementation(libs.material)
     testImplementation(libs.junit)

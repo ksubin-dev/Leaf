@@ -55,6 +55,10 @@ javaxInject = "1"
 work = "2.9.0"
 hiltWork = "1.2.0"
 
+# Test Tools
+mockk = "1.13.10"
+turbine = "1.1.0"
+truth = "1.4.2"
 
 [libraries]
 # AndroidX & Appcompat
@@ -125,6 +129,12 @@ androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx"
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWork" }
 androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltWork" }
 
+# Unit Test
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesCore" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -159,4 +169,11 @@ firebase-libraries = [
 room-libraries = [
     "androidx-room-ktx",
     "androidx-room-runtime"
+]
+unit-test-libraries = [
+    "junit",
+    "kotlinx-coroutines-test",
+    "mockk",
+    "turbine",
+    "truth"
 ]
