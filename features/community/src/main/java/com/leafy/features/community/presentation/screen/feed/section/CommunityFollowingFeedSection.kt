@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.leafy.shared.ui.component.CommunityFeedCard
 import com.leafy.shared.ui.model.CommunityPostUiModel
+import androidx.compose.ui.platform.testTag
 
 @Composable
 fun CommunityFollowingFeedSection(
@@ -24,7 +25,7 @@ fun CommunityFollowingFeedSection(
     onProfileClick: (String) -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.testTag("following_feed_list"),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 24.dp, bottom = 80.dp)
     ) {
