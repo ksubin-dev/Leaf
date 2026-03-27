@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.leafy.shared.common.clickableSingle
 import com.leafy.shared.ui.theme.LeafyTheme
+import androidx.compose.ui.platform.testTag
 
 @Composable
 fun CustomExploreTabRow(
@@ -48,7 +49,8 @@ fun CustomExploreTabRow(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .clickableSingle { onTabSelected(tab) },
+                        .clickableSingle { onTabSelected(tab) }
+                        .testTag(if (tab == CommunityTab.FOLLOWING) "tab_following" else "tab_${tab.name}"),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {

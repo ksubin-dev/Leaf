@@ -59,6 +59,12 @@ hiltWork = "1.2.0"
 mockk = "1.13.10"
 turbine = "1.1.0"
 truth = "1.4.2"
+uiautomator = "2.2.0"
+benchmarkMacroJunit4 = "1.2.0-beta01"
+
+#Benchmark
+androidx-benchmark-macro-junit4 = "1.4.1"
+androidx-profileinstaller = "1.4.1"
 
 [libraries]
 # AndroidX & Appcompat
@@ -134,6 +140,13 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+
+
+
+#benchmark
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-benchmark-macro-junit4" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "androidx-profileinstaller" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -146,6 +159,12 @@ google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin"}
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsServices" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+
+# 벤치마크 및 Baseline Profile 플러그인
+androidx-benchmark = { id = "androidx.benchmark", version.ref = "androidx-benchmark-macro-junit4" }
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-benchmark-macro-junit4" }
+
 
 [bundles]
 compose-libraries = [

@@ -2,7 +2,7 @@ package com.subin.leafy.ui.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -61,6 +61,7 @@ fun BottomBar(
                     )
                 } else {
                     NavigationBarItem(
+                        modifier = Modifier.testTag(if (item.tabName == "Community") "tab_community" else "tab_${item.tabName}"),
                         selected = isSelected,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,

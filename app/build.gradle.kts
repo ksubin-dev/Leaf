@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.ksp)
+
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 android {
@@ -23,11 +25,24 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
+    }
+
+    baselineProfile {
+        filter {
+            include("com.subin.leafy.**")
         }
     }
     compileOptions {
@@ -37,6 +52,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -58,6 +74,11 @@ dependencies {
     implementation(project(":features:community"))
     implementation(project(":features:timer"))
     implementation(project(":features:mypage"))
+
+    baselineProfile(project(":benchmark"))
+
+
+    implementation(libs.androidx.profileinstaller)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
