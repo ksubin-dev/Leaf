@@ -10,10 +10,6 @@ class UpdateNoteUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(note: BrewingNote): DataResourceResult<Unit> {
 
-        if (note.metadata.imageUrls.isEmpty()) {
-            return DataResourceResult.Failure(Exception("노트 이미지를 최소 1장 등록해주세요."))
-        }
-
         val rawTeaName = note.teaInfo.name.trim()
         if (rawTeaName.isBlank()) {
             return DataResourceResult.Failure(Exception("차 이름을 입력해주세요."))
