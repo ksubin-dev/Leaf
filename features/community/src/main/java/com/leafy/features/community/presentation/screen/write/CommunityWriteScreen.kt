@@ -5,17 +5,20 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +35,8 @@ import com.leafy.shared.R
 import com.leafy.shared.common.singleClick
 import com.leafy.shared.ui.component.LoadingOverlay
 import com.leafy.shared.ui.theme.LeafyTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun CommunityWriteRoute(
@@ -75,7 +80,7 @@ fun CommunityWriteRoute(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityWriteContent(
     uiState: CommunityWriteUiState,
@@ -91,9 +96,27 @@ fun CommunityWriteContent(
     onSelectNote: (String) -> Unit,
     onClearNote: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
-    val sheetState = rememberModalBottomSheetState()
+    val coroutineScope = rememberCoroutineScope()
+    val titleBringIntoViewRequester = remember { BringIntoViewRequester() }
+    val contentBringIntoViewRequester = remember { BringIntoViewRequester() }
+    var isTitleFocused by remember { mutableStateOf(false) }
+    var isContentFocused by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showBottomSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.title, isTitleFocused) {
+        if (isTitleFocused) {
+            delay(80L)
+            titleBringIntoViewRequester.bringIntoView()
+        }
+    }
+
+    LaunchedEffect(uiState.content, isContentFocused) {
+        if (isContentFocused) {
+            delay(80L)
+            contentBringIntoViewRequester.bringIntoView()
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(5),
@@ -155,103 +178,138 @@ fun CommunityWriteContent(
         Box(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .imePadding()
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                PostImageSection(
-                    selectedUris = uiState.selectedImageUris,
-                    onAddImage = singleClick {
-                        photoPickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                    onRemoveImage = onRemoveImage
-                )
+                item {
+                    PostImageSection(
+                        selectedUris = uiState.selectedImageUris,
+                        onAddImage = singleClick {
+                            photoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        onRemoveImage = onRemoveImage
+                    )
+                }
 
-                Box(modifier = Modifier.padding(16.dp)) {
-                    if (uiState.linkedNoteId == null) {
-                        OutlinedButton(
-                            onClick = singleClick { showBottomSheet = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                item {
+                    Box(modifier = Modifier.padding(16.dp)) {
+                        if (uiState.linkedNoteId == null) {
+                            OutlinedButton(
+                                onClick = singleClick { showBottomSheet = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_nav_note),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("작성한 시음 노트 불러오기")
+                            }
+                        } else {
+                            LinkedNoteCard(
+                                title = uiState.linkedNoteTitle ?: "",
+                                teaType = uiState.linkedTeaType ?: "",
+                                date = uiState.linkedDate ?: "",
+                                thumbnailUri = uiState.linkedThumbnailUri,
+                                rating = uiState.linkedRating,
+                                onClear = onClearNote
                             )
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_nav_note),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text("작성한 시음 노트 불러오기")
                         }
-                    } else {
-                        LinkedNoteCard(
-                            title = uiState.linkedNoteTitle ?: "",
-                            teaType = uiState.linkedTeaType ?: "",
-                            date = uiState.linkedDate ?: "",
-                            thumbnailUri = uiState.linkedThumbnailUri,
-                            rating = uiState.linkedRating,
-                            onClear = onClearNote
+                    }
+                }
+
+                item {
+                    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                }
+
+                item {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        BasicTextField(
+                            value = uiState.title,
+                            onValueChange = { if (it.length <= 50) onUpdateTitle(it) },
+                            textStyle = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .bringIntoViewRequester(titleBringIntoViewRequester)
+                                .onFocusEvent { focusState ->
+                                    isTitleFocused = focusState.isFocused
+                                    if (focusState.isFocused) {
+                                        coroutineScope.launch {
+                                            delay(250L)
+                                            titleBringIntoViewRequester.bringIntoView()
+                                        }
+                                    }
+                                },
+                            decorationBox = { innerTextField ->
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    if (uiState.title.isEmpty()) {
+                                        Text(
+                                            "제목을 입력하세요",
+                                            style = MaterialTheme.typography.titleLarge.copy(color = Color.LightGray)
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            }
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+
+                        BasicTextField(
+                            value = uiState.content,
+                            onValueChange = onUpdateContent,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 150.dp)
+                                .bringIntoViewRequester(contentBringIntoViewRequester)
+                                .onFocusEvent { focusState ->
+                                    isContentFocused = focusState.isFocused
+                                    if (focusState.isFocused) {
+                                        coroutineScope.launch {
+                                            delay(250L)
+                                            contentBringIntoViewRequester.bringIntoView()
+                                        }
+                                    }
+                                },
+                            decorationBox = { innerTextField ->
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    if (uiState.content.isEmpty()) {
+                                        Text(
+                                            "어떤 맛과 향을 느끼셨나요? 자유롭게 기록해주세요.",
+                                            style = MaterialTheme.typography.bodyLarge.copy(color = Color.LightGray)
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            }
                         )
                     }
                 }
 
-                HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-
-                Column(modifier = Modifier.padding(16.dp)) {
-                    BasicTextField(
-                        value = uiState.title,
-                        onValueChange = { if (it.length <= 50) onUpdateTitle(it) },
-                        textStyle = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        decorationBox = { innerTextField ->
-                            if (uiState.title.isEmpty()) {
-                                Text(
-                                    "제목을 입력하세요",
-                                    style = MaterialTheme.typography.titleLarge.copy(color = Color.LightGray)
-                                )
-                            }
-                            innerTextField()
-                        }
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    BasicTextField(
-                        value = uiState.content,
-                        onValueChange = onUpdateContent,
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.heightIn(min = 150.dp),
-                        decorationBox = { innerTextField ->
-                            if (uiState.content.isEmpty()) {
-                                Text(
-                                    "어떤 맛과 향을 느끼셨나요? 자유롭게 기록해주세요.",
-                                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.LightGray)
-                                )
-                            }
-                            innerTextField()
-                        }
+                item {
+                    TagInputSection(
+                        tags = uiState.tags,
+                        currentInput = uiState.currentTagInput,
+                        onValueChange = onUpdateTagInput,
+                        onRemoveTag = onRemoveTag
                     )
                 }
-
-                TagInputSection(
-                    tags = uiState.tags,
-                    currentInput = uiState.currentTagInput,
-                    onValueChange = onUpdateTagInput,
-                    onRemoveTag = onRemoveTag
-                )
-
-                Spacer(Modifier.height(50.dp))
             }
 
             LoadingOverlay(
