@@ -6,11 +6,10 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
-import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
-import com.leafy.shared.utils.ImageCompressor
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +22,6 @@ class UploadWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val noteUseCases: NoteUseCases,
-    private val imageUseCases: ImageUseCases,
     private val imageCompressor: ImageCompressor
 ) : CoroutineWorker(appContext, workerParams) {
 
@@ -47,15 +45,11 @@ class UploadWorker @AssistedInject constructor(
                     if (uriString.startsWith("http")) {
                         uriString
                     } else {
-                        val compressedPath = imageCompressor.compressImage(uriString)
-                        val uploadPath = "notes/${noteData.ownerId}/${noteData.id}"
-                        val result = imageUseCases.uploadImage(compressedPath, uploadPath)
-
-                        if (result is DataResourceResult.Success) {
-                            result.data
-                        } else {
-                            throw Exception("이미지 업로드 실패")
-                        }
+                        imageCompressor.saveImageToInternalStorage(
+                            imageUriString = uriString,
+                            folderName = "notes/${noteData.id}",
+                            filePrefix = "note"
+                        )
                     }
                 }
             }.awaitAll()

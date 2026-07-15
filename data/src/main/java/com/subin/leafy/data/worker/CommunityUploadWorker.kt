@@ -13,7 +13,6 @@ import androidx.work.WorkerParameters
 import com.leafy.shared.R
 import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.common.DataResourceResult
-import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import dagger.assisted.Assisted
@@ -30,7 +29,6 @@ class CommunityUploadWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val postUseCases: PostUseCases,
-    private val imageUseCases: ImageUseCases,
     private val userUseCases: UserUseCases,
     private val imageCompressor: ImageCompressor
 ) : CoroutineWorker(appContext, workerParams) {
@@ -56,11 +54,10 @@ class CommunityUploadWorker @AssistedInject constructor(
             if (userIdResult !is DataResourceResult.Success) {
                 return@withContext Result.failure()
             }
-            val userId = userIdResult.data
             val imageFolderId = UUID.randomUUID().toString()
 
             val finalImageUrls = try {
-                processImages(userId, imageFolderId, imageUriStrings)
+                processImages(imageFolderId, imageUriStrings)
             } catch (e: Exception) {
                 e.printStackTrace()
                 return@withContext Result.retry()
@@ -102,7 +99,6 @@ class CommunityUploadWorker @AssistedInject constructor(
     }
 
     private suspend fun processImages(
-        userId: String,
         folderId: String,
         uriStrings: List<String>
     ): List<String> = coroutineScope {
@@ -111,18 +107,11 @@ class CommunityUploadWorker @AssistedInject constructor(
                 if (uriString.startsWith("http")) {
                     uriString
                 } else {
-                    val compressedUri = withContext(Dispatchers.Default) {
-                        imageCompressor.compressImage(uriString)
-                    }
-                    val uploadPath = "posts/$userId/$folderId"
-
-                    val uploadResult = imageUseCases.uploadImage(compressedUri, uploadPath)
-
-                    if (uploadResult is DataResourceResult.Success) {
-                        uploadResult.data
-                    } else {
-                        throw Exception("Image upload failed")
-                    }
+                    imageCompressor.saveImageToInternalStorage(
+                        imageUriString = uriString,
+                        folderName = "posts/$folderId",
+                        filePrefix = "post"
+                    )
                 }
             }
         }.awaitAll()
