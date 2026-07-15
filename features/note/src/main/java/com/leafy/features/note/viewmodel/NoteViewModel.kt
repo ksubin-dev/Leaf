@@ -298,7 +298,7 @@ class NoteViewModel @Inject constructor(
                 _uiState.update { state ->
                     state.copy(
                         teaName = state.teaName.ifBlank { args.teaName },
-                        teaType = if (state.teaType == TeaType.UNKNOWN) teaTypeEnum else state.teaType,
+                        teaType = if (teaTypeEnum != TeaType.UNKNOWN) teaTypeEnum else state.teaType,
 
                         waterTemp = args.waterTemp.toString(),
                         leafAmount = args.leafAmount.toString(),
