@@ -51,7 +51,20 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run JVM unit tests
-        run: ./gradlew testDebugUnitTest --no-daemon
+        run: |
+          ./gradlew \
+            :domain:test \
+            :data:testDebugUnitTest \
+            :shared:testDebugUnitTest \
+            :features:testDebugUnitTest \
+            :features:auth:testDebugUnitTest \
+            :features:community:testDebugUnitTest \
+            :features:home:testDebugUnitTest \
+            :features:mypage:testDebugUnitTest \
+            :features:note:testDebugUnitTest \
+            :features:search:testDebugUnitTest \
+            :features:timer:testDebugUnitTest \
+            --no-daemon
 
   main-smoke:
     name: Lightweight check for main PR
