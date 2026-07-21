@@ -4,6 +4,8 @@ PR이 생성되거나 업데이트되면 `Android CI` workflow가 JVM unit test�
 
 생성된 HTML 리포트는 GitHub Actions artifact로 업로드된다.
 
+CI 환경에서는 보안상 실제 `app/google-services.json`을 커밋하지 않고, 테스트/리포트 생성에 필요한 placeholder 파일을 workflow 실행 중에 생성한다.
+
 ## 확인 순서
 
 1. PR 화면에서 `Checks` 탭을 연다.

@@ -50,6 +50,39 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Create google-services.json for CI
+        run: |
+          cat > app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "leafy-ci",
+              "storage_bucket": "leafy-ci.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                  "android_client_info": {
+                    "package_name": "com.subin.leafy"
+                  }
+                },
+                "api_key": [
+                  {
+                    "current_key": "ci-placeholder-api-key"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
       - name: Run unit tests and generate JaCoCo report
         run: ./gradlew jacocoTestReport --no-daemon
 
