@@ -3,6 +3,7 @@ package com.subin.leafy
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
@@ -51,7 +52,11 @@ class MainViewModel @Inject constructor(
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .build()
 
-                workManager.enqueue(syncRequest)
+                workManager.enqueueUniqueWork(
+                    "initial_sync_${userResult.data}",
+                    ExistingWorkPolicy.KEEP,
+                    syncRequest
+                )
 
                 _startDestination.value = MainNavigationRoute.HomeTab
             }

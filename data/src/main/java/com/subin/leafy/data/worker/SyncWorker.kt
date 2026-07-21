@@ -32,7 +32,7 @@ class SyncWorker @AssistedInject constructor(
             Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.retry()
+            retryOrFailure()
         }
     }
 }
