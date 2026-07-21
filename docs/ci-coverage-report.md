@@ -1,6 +1,6 @@
 # CI 커버리지 리포트 확인 방법
 
-PR이 생성되거나 업데이트되면 `Android CI` workflow가 JVM unit test와 `jacocoTestReport`를 실행한다.
+PR이 생성되거나 업데이트되면 `Android CI` workflow가 JVM unit test와 root `:jacocoTestReport`를 실행한다.
 
 생성된 HTML 리포트는 GitHub Actions artifact로 업로드된다.
 
