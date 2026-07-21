@@ -153,9 +153,9 @@ tasks.register("jacocoCoverageSummary") {
         }
 
         val markdown = buildString {
-            appendLine("## Coverage Summary")
+            appendLine("## 커버리지 요약")
             appendLine()
-            appendLine("| Metric | Coverage | Covered | Missed |")
+            appendLine("| 지표 | 커버리지 | 커버됨 | 누락 |")
             appendLine("|---|---:|---:|---:|")
 
             metrics.forEach { (label, prefix) ->
@@ -165,16 +165,16 @@ tasks.register("jacocoCoverageSummary") {
             }
 
             appendLine()
-            appendLine("## Low Coverage Areas")
+            appendLine("## 커버리지가 낮은 영역")
             appendLine()
-            appendLine("- Classes with 0% line coverage: $zeroCoverageCount")
-            appendLine("- Generated Room/Hilt/Compose helper classes are excluded from this list.")
+            appendLine("- 라인 커버리지 0% 클래스 수: $zeroCoverageCount")
+            appendLine("- Room/Hilt/Compose generated helper class는 목록에서 제외했습니다.")
             appendLine()
-            appendLine("| Class | Line Coverage | Covered Lines | Missed Lines |")
+            appendLine("| 클래스 | 라인 커버리지 | 커버된 라인 | 누락 라인 |")
             appendLine("|---|---:|---:|---:|")
 
             if (lowCoverageRows.isEmpty()) {
-                appendLine("| No line coverage data | - | - | - |")
+                appendLine("| 라인 커버리지 데이터 없음 | - | - | - |")
             } else {
                 lowCoverageRows.forEach { area ->
                     appendLine(
@@ -184,11 +184,11 @@ tasks.register("jacocoCoverageSummary") {
             }
 
             appendLine()
-            appendLine("## Report Files")
+            appendLine("## 리포트 파일")
             appendLine()
-            appendLine("- HTML report artifact: `jacoco-html-report`")
-            appendLine("- Markdown summary artifact: `jacoco-coverage-summary`")
-            appendLine("- Source CSV: `build/reports/jacoco/jacocoTestReport/jacocoTestReport.csv`")
+            appendLine("- HTML 리포트 artifact: `jacoco-html-report`")
+            appendLine("- Markdown 요약 artifact: `jacoco-coverage-summary`")
+            appendLine("- 원본 CSV: `build/reports/jacoco/jacocoTestReport/jacocoTestReport.csv`")
         }
 
         val summaryFile = summaryReport.get().asFile

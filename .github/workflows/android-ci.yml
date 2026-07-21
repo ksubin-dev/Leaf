@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   unit-test:
-    name: Unit tests and coverage report
+    name: 단위 테스트 및 커버리지 리포트
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -83,12 +83,12 @@ jobs:
           }
           EOF
 
-      - name: Run unit tests and generate coverage summary
+      - name: 단위 테스트 실행 및 커버리지 요약 생성
         run: |
           ./gradlew :jacocoCoverageSummary --no-daemon
           cat build/reports/jacoco/jacocoTestReport/coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload coverage Markdown summary
+      - name: 커버리지 Markdown 요약 업로드
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-coverage-summary
@@ -96,7 +96,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload JaCoCo HTML report
+      - name: JaCoCo HTML 리포트 업로드
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-html-report
