@@ -83,8 +83,18 @@ jobs:
           }
           EOF
 
-      - name: Run unit tests and generate JaCoCo report
-        run: ./gradlew :jacocoTestReport --no-daemon
+      - name: Run unit tests and generate coverage summary
+        run: |
+          ./gradlew :jacocoCoverageSummary --no-daemon
+          cat build/reports/jacoco/jacocoTestReport/coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage Markdown summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-summary
+          path: build/reports/jacoco/jacocoTestReport/coverage-summary.md
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload JaCoCo HTML report
         uses: actions/upload-artifact@v4
