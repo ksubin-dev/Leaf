@@ -1,7 +1,9 @@
 package com.subin.leafy.data.repository
 
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.Operation
 import androidx.work.WorkManager
-import androidx.work.WorkRequest
 import com.google.common.truth.Truth.assertThat
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
 import com.subin.leafy.data.datasource.remote.AuthDataSource
@@ -142,10 +144,22 @@ class NoteRepositoryImplTest {
     @Test
     fun `백그라운드 업로드 예약 시 - WorkManager에 올바르게 작업이 큐(Enqueue)에 추가되어야 한다`() = runTest {
         val imageUris = listOf("uri1", "uri2")
-        every { workManager.enqueue(any<WorkRequest>()) } returns mockk(relaxed = true)
+        every {
+            workManager.enqueueUniqueWork(
+                any(),
+                any<ExistingWorkPolicy>(),
+                any<OneTimeWorkRequest>()
+            )
+        } returns mockk<Operation>(relaxed = true)
 
         repository.scheduleNoteUpload(dummyNote, imageUris, isEditMode = false)
 
-        verify(exactly = 1) { workManager.enqueue(any<WorkRequest>()) }
+        verify(exactly = 1) {
+            workManager.enqueueUniqueWork(
+                "upload_note_${dummyNote.id}",
+                ExistingWorkPolicy.REPLACE,
+                any<OneTimeWorkRequest>()
+            )
+        }
     }
 }

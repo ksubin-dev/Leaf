@@ -53,6 +53,5 @@ data class NoteUiState(
                 waterTemp.toIntOrNull() != null &&
                 brewTime.toIntOrNull() != null &&
                 leafAmount.toFloatOrNull() != null &&
-                waterAmount.toIntOrNull() != null &&
-                selectedImages.isNotEmpty()
+                waterAmount.toIntOrNull() != null
 }

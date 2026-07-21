@@ -6,16 +6,14 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
-import com.leafy.shared.utils.ImageCompressor
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 
 @HiltWorker
@@ -42,23 +40,14 @@ class UploadWorker @AssistedInject constructor(
             val typeToken = object : TypeToken<List<String>>() {}.type
             val imageUriStrings: List<String> = gson.fromJson(imageUrisJson, typeToken)
 
-            val finalImageUrls = imageUriStrings.map { uriString ->
-                async {
-                    if (uriString.startsWith("http")) {
-                        uriString
-                    } else {
-                        val compressedPath = imageCompressor.compressImage(uriString)
-                        val uploadPath = "notes/${noteData.ownerId}/${noteData.id}"
-                        val result = imageUseCases.uploadImage(compressedPath, uploadPath)
-
-                        if (result is DataResourceResult.Success) {
-                            result.data
-                        } else {
-                            throw Exception("이미지 업로드 실패")
-                        }
-                    }
+            val finalImageUrls = try {
+                imageUriStrings.mapIndexed { index, uriString ->
+                    uploadNoteImageIfNeeded(uriString, noteData, index)
                 }
-            }.awaitAll()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return@withContext resultForException(e)
+            }
 
             val updatedMetadata = noteData.metadata.copy(imageUrls = finalImageUrls)
             val finalNote = noteData.copy(metadata = updatedMetadata)
@@ -69,15 +58,28 @@ class UploadWorker @AssistedInject constructor(
                 noteUseCases.saveNote(finalNote)
             }
 
-            if (saveResult is DataResourceResult.Success) {
-                Result.success()
-            } else {
-                Result.retry()
-            }
+            resultFor(saveResult)
 
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure()
+        }
+    }
+
+    private suspend fun uploadNoteImageIfNeeded(
+        uriString: String,
+        note: BrewingNote,
+        index: Int
+    ): String {
+        if (uriString.startsWith("http")) return uriString
+
+        val compressedPath = imageCompressor.compressImage(uriString)
+        val uploadPath = "notes/${note.ownerId}/${note.id}/image_$index.jpg"
+
+        return when (val result = imageUseCases.uploadImage(compressedPath, uploadPath)) {
+            is DataResourceResult.Success -> result.data
+            is DataResourceResult.Failure -> throw result.exception
+            else -> throw IllegalStateException("Image upload did not complete")
         }
     }
 

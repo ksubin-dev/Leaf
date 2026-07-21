@@ -19,19 +19,15 @@ import com.subin.leafy.domain.usecase.UserUseCases
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
 @HiltWorker
 class CommunityUploadWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val postUseCases: PostUseCases,
-    private val imageUseCases: ImageUseCases,
     private val userUseCases: UserUseCases,
+    private val imageUseCases: ImageUseCases,
     private val imageCompressor: ImageCompressor
 ) : CoroutineWorker(appContext, workerParams) {
 
@@ -47,6 +43,7 @@ class CommunityUploadWorker @AssistedInject constructor(
             val content = inputData.getString(KEY_CONTENT) ?: ""
             val tags = inputData.getStringArray(KEY_TAGS)?.toList() ?: emptyList()
             val imageUriStrings = inputData.getStringArray(KEY_IMAGE_URIS)?.toList() ?: emptyList()
+            val postId = inputData.getString(KEY_POST_ID) ?: return@withContext Result.failure()
 
             val linkedNoteId = inputData.getString(KEY_LINKED_NOTE_ID)
             val linkedTeaType = inputData.getString(KEY_LINKED_TEA_TYPE)
@@ -57,13 +54,12 @@ class CommunityUploadWorker @AssistedInject constructor(
                 return@withContext Result.failure()
             }
             val userId = userIdResult.data
-            val imageFolderId = UUID.randomUUID().toString()
 
             val finalImageUrls = try {
-                processImages(userId, imageFolderId, imageUriStrings)
+                processImages(userId, postId, imageUriStrings)
             } catch (e: Exception) {
                 e.printStackTrace()
-                return@withContext Result.retry()
+                return@withContext resultForException(e)
             }
 
             setForeground(createForegroundInfo("게시글 등록 중..."))
@@ -77,7 +73,7 @@ class CommunityUploadWorker @AssistedInject constructor(
                 )
             } else {
                 postUseCases.createPost(
-                    postId = UUID.randomUUID().toString(),
+                    postId = postId,
                     title = title,
                     content = content,
                     imageUrls = finalImageUrls,
@@ -91,41 +87,35 @@ class CommunityUploadWorker @AssistedInject constructor(
 
             return@withContext when (result) {
                 is DataResourceResult.Success -> Result.success()
-                is DataResourceResult.Failure -> Result.retry()
-                else -> Result.failure()
+                is DataResourceResult.Failure -> retryOrFailure()
+                else -> retryOrFailure()
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
-            return@withContext Result.failure()
+            return@withContext retryOrFailure()
         }
     }
 
     private suspend fun processImages(
         userId: String,
-        folderId: String,
+        postId: String,
         uriStrings: List<String>
-    ): List<String> = coroutineScope {
-        uriStrings.map { uriString ->
-            async {
-                if (uriString.startsWith("http")) {
-                    uriString
-                } else {
-                    val compressedUri = withContext(Dispatchers.Default) {
-                        imageCompressor.compressImage(uriString)
-                    }
-                    val uploadPath = "posts/$userId/$folderId"
+    ): List<String> {
+        return uriStrings.mapIndexed { index, uriString ->
+            if (uriString.startsWith("http")) {
+                uriString
+            } else {
+                val compressedPath = imageCompressor.compressImage(uriString)
+                val uploadPath = "posts/$userId/$postId/image_$index.jpg"
 
-                    val uploadResult = imageUseCases.uploadImage(compressedUri, uploadPath)
-
-                    if (uploadResult is DataResourceResult.Success) {
-                        uploadResult.data
-                    } else {
-                        throw Exception("Image upload failed")
-                    }
+                when (val result = imageUseCases.uploadImage(compressedPath, uploadPath)) {
+                    is DataResourceResult.Success -> result.data
+                    is DataResourceResult.Failure -> throw result.exception
+                    else -> throw IllegalStateException("Image upload did not complete")
                 }
             }
-        }.awaitAll()
+        }
     }
 
     private fun createForegroundInfo(progress: String): ForegroundInfo {
@@ -167,6 +157,7 @@ class CommunityUploadWorker @AssistedInject constructor(
         const val KEY_CONTENT = "content"
         const val KEY_TAGS = "tags"
         const val KEY_IMAGE_URIS = "image_uris"
+        const val KEY_POST_ID = "post_id"
         const val KEY_LINKED_NOTE_ID = "linked_note_id"
         const val KEY_LINKED_TEA_TYPE = "linked_tea_type"
         const val KEY_LINKED_RATING = "linked_rating"

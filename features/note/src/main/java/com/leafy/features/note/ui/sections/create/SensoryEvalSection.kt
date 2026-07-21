@@ -10,17 +10,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,8 +40,9 @@ import com.leafy.shared.ui.component.LeafyChip
 import com.leafy.shared.ui.theme.LeafyTheme
 import com.subin.leafy.domain.model.BodyType
 import com.subin.leafy.domain.model.FlavorTag
+import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun SensoryEvalSection(
     flavorTags: List<FlavorTag>,
@@ -60,6 +66,15 @@ fun SensoryEvalSection(
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
+    val memoBringIntoViewRequester = remember { BringIntoViewRequester() }
+    var isMemoFocused by remember { mutableStateOf(false) }
+
+    LaunchedEffect(memo, isMemoFocused) {
+        if (isMemoFocused) {
+            delay(80L)
+            memoBringIntoViewRequester.bringIntoView()
+        }
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         NoteSectionHeader(
@@ -144,6 +159,10 @@ fun SensoryEvalSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 80.dp)
+                .bringIntoViewRequester(memoBringIntoViewRequester)
+                .onFocusEvent { focusState ->
+                    isMemoFocused = focusState.isFocused
+                }
         )
     }
 }
