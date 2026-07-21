@@ -16,6 +16,7 @@ import javax.inject.Inject
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -250,7 +251,10 @@ class UserRepositoryImpl @Inject constructor(
             .addTag("update_profile")
             .build()
 
-        workManager.cancelAllWorkByTag("update_profile")
-        workManager.enqueue(workRequest)
+        workManager.enqueueUniqueWork(
+            "update_profile_$userId",
+            ExistingWorkPolicy.REPLACE,
+            workRequest
+        )
     }
 }

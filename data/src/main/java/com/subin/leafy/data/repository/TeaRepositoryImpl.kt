@@ -13,6 +13,7 @@ import javax.inject.Inject
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -130,6 +131,10 @@ class TeaRepositoryImpl @Inject constructor(
             .addTag("upload_tea_${tea.id}")
             .build()
 
-        workManager.enqueue(uploadWorkRequest)
+        workManager.enqueueUniqueWork(
+            "upload_tea_${tea.id}",
+            ExistingWorkPolicy.REPLACE,
+            uploadWorkRequest
+        )
     }
 }

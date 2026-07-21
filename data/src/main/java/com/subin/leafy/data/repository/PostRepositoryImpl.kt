@@ -1,6 +1,11 @@
 package com.subin.leafy.data.repository
 
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkRequest
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.subin.leafy.data.worker.CommunityUploadWorker
@@ -22,6 +27,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -269,22 +276,52 @@ class PostRepositoryImpl @Inject constructor(
         linkedTeaType: String?,
         linkedRating: Int?
     ) {
+        val postId = UUID.randomUUID().toString()
+        val imageFolderId = UUID.randomUUID().toString()
+        val draftKey = listOf(
+            title,
+            content,
+            tags.joinToString(separator = ","),
+            imageUriStrings.joinToString(separator = ","),
+            linkedNoteId.orEmpty(),
+            linkedTeaType.orEmpty(),
+            linkedRating?.toString().orEmpty()
+        ).joinToString(separator = "|").hashCode().toUInt().toString(16)
+
         val inputData = workDataOf(
             CommunityUploadWorker.KEY_TITLE to title,
             CommunityUploadWorker.KEY_CONTENT to content,
             CommunityUploadWorker.KEY_TAGS to tags.toTypedArray(),
             CommunityUploadWorker.KEY_IMAGE_URIS to imageUriStrings.toTypedArray(),
+            CommunityUploadWorker.KEY_POST_ID to postId,
+            CommunityUploadWorker.KEY_IMAGE_FOLDER_ID to imageFolderId,
 
             CommunityUploadWorker.KEY_LINKED_NOTE_ID to linkedNoteId,
             CommunityUploadWorker.KEY_LINKED_TEA_TYPE to linkedTeaType,
             CommunityUploadWorker.KEY_LINKED_RATING to (linkedRating ?: -1)
         )
 
-        val uploadRequest = OneTimeWorkRequestBuilder<CommunityUploadWorker>()
-            .setInputData(inputData)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        workManager.enqueue(uploadRequest)
+        val uploadRequest = OneTimeWorkRequestBuilder<CommunityUploadWorker>()
+            .setConstraints(constraints)
+            .setInputData(inputData)
+            .setBackoffCriteria(
+                BackoffPolicy.LINEAR,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag("upload_community")
+            .addTag("upload_post_$postId")
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "upload_post_draft_$draftKey",
+            ExistingWorkPolicy.KEEP,
+            uploadRequest
+        )
     }
 
     private fun mapPostsWithMyStateInternal(

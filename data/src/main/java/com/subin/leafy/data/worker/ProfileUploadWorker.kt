@@ -38,22 +38,14 @@ class ProfileUploadWorker @AssistedInject constructor(
                 val uploadPath = "profile_images/$userId"
                 val result = imageUseCases.uploadImage(compressedPath, uploadPath)
 
-                if (result is DataResourceResult.Success) {
-                    result.data
-                } else {
-                    throw Exception("이미지 업로드 실패")
-                }
+                if (result is DataResourceResult.Success) result.data else return@withContext retryOrFailure()
             } else {
                 imageUriString
             }
 
             val updateResult = userUseCases.updateProfile(userId, nickname, bio, finalImageUrl)
 
-            if (updateResult is DataResourceResult.Success) {
-                Result.success()
-            } else {
-                Result.retry()
-            }
+            resultFor(updateResult)
 
         } catch (e: Exception) {
             Result.failure()

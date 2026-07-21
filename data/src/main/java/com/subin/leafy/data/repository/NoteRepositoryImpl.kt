@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -196,7 +197,11 @@ class NoteRepositoryImpl @Inject constructor(
             .addTag("upload_note_${note.id}")
             .build()
 
-        workManager.enqueue(uploadWorkRequest)
+        workManager.enqueueUniqueWork(
+            "upload_note_${note.id}",
+            ExistingWorkPolicy.REPLACE,
+            uploadWorkRequest
+        )
     }
 
     private suspend fun checkAndGrantBadges(userId: String) {

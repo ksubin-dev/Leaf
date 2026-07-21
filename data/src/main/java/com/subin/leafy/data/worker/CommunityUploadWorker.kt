@@ -22,7 +22,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
 @HiltWorker
 class CommunityUploadWorker @AssistedInject constructor(
@@ -45,6 +44,8 @@ class CommunityUploadWorker @AssistedInject constructor(
             val content = inputData.getString(KEY_CONTENT) ?: ""
             val tags = inputData.getStringArray(KEY_TAGS)?.toList() ?: emptyList()
             val imageUriStrings = inputData.getStringArray(KEY_IMAGE_URIS)?.toList() ?: emptyList()
+            val postId = inputData.getString(KEY_POST_ID) ?: return@withContext Result.failure()
+            val imageFolderId = inputData.getString(KEY_IMAGE_FOLDER_ID) ?: return@withContext Result.failure()
 
             val linkedNoteId = inputData.getString(KEY_LINKED_NOTE_ID)
             val linkedTeaType = inputData.getString(KEY_LINKED_TEA_TYPE)
@@ -54,13 +55,12 @@ class CommunityUploadWorker @AssistedInject constructor(
             if (userIdResult !is DataResourceResult.Success) {
                 return@withContext Result.failure()
             }
-            val imageFolderId = UUID.randomUUID().toString()
 
             val finalImageUrls = try {
                 processImages(imageFolderId, imageUriStrings)
             } catch (e: Exception) {
                 e.printStackTrace()
-                return@withContext Result.retry()
+                return@withContext retryOrFailure()
             }
 
             setForeground(createForegroundInfo("게시글 등록 중..."))
@@ -74,7 +74,7 @@ class CommunityUploadWorker @AssistedInject constructor(
                 )
             } else {
                 postUseCases.createPost(
-                    postId = UUID.randomUUID().toString(),
+                    postId = postId,
                     title = title,
                     content = content,
                     imageUrls = finalImageUrls,
@@ -88,13 +88,13 @@ class CommunityUploadWorker @AssistedInject constructor(
 
             return@withContext when (result) {
                 is DataResourceResult.Success -> Result.success()
-                is DataResourceResult.Failure -> Result.retry()
-                else -> Result.failure()
+                is DataResourceResult.Failure -> retryOrFailure()
+                else -> retryOrFailure()
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
-            return@withContext Result.failure()
+            return@withContext retryOrFailure()
         }
     }
 
@@ -156,6 +156,8 @@ class CommunityUploadWorker @AssistedInject constructor(
         const val KEY_CONTENT = "content"
         const val KEY_TAGS = "tags"
         const val KEY_IMAGE_URIS = "image_uris"
+        const val KEY_POST_ID = "post_id"
+        const val KEY_IMAGE_FOLDER_ID = "image_folder_id"
         const val KEY_LINKED_NOTE_ID = "linked_note_id"
         const val KEY_LINKED_TEA_TYPE = "linked_tea_type"
         const val KEY_LINKED_RATING = "linked_rating"

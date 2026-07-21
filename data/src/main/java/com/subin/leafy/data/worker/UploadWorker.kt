@@ -63,11 +63,7 @@ class UploadWorker @AssistedInject constructor(
                 noteUseCases.saveNote(finalNote)
             }
 
-            if (saveResult is DataResourceResult.Success) {
-                Result.success()
-            } else {
-                Result.retry()
-            }
+            resultFor(saveResult)
 
         } catch (e: Exception) {
             e.printStackTrace()

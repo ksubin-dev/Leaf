@@ -41,11 +41,7 @@ class TeaUploadWorker @AssistedInject constructor(
 
                 val result = imageUseCases.uploadImage(compressedPath, uploadPath)
 
-                if (result is DataResourceResult.Success) {
-                    result.data
-                } else {
-                    throw Exception("이미지 업로드 실패")
-                }
+                if (result is DataResourceResult.Success) result.data else return@withContext retryOrFailure()
             } else {
                 imageUriString
             }
@@ -54,11 +50,7 @@ class TeaUploadWorker @AssistedInject constructor(
 
             val saveResult = teaUseCases.saveTea(finalTea)
 
-            if (saveResult is DataResourceResult.Success) {
-                Result.success()
-            } else {
-                Result.retry()
-            }
+            resultFor(saveResult)
 
         } catch (e: Exception) {
             e.printStackTrace()
