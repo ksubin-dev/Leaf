@@ -1,6 +1,8 @@
+import org.gradle.api.GradleException
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import java.util.Locale
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
@@ -36,6 +38,55 @@ val coverageExclusions = listOf(
     "**/*Preview*.*"
 )
 
+data class CoverageArea(
+    val name: String,
+    val missed: Int,
+    val covered: Int
+) {
+    val coverage: Double
+        get() = coveragePercent(missed, covered)
+}
+
+fun coveragePercent(missed: Int, covered: Int): Double {
+    val total = missed + covered
+    return if (total == 0) 100.0 else covered.toDouble() / total * 100
+}
+
+fun formatCoverage(value: Double): String = String.format(Locale.US, "%.2f%%", value)
+
+fun Map<String, String>.metric(key: String): Int = this[key]?.toIntOrNull() ?: 0
+
+fun displayCoverageName(row: Map<String, String>): String {
+    val packageName = row["PACKAGE"].orEmpty().replace("/", ".")
+    val className = row["CLASS"].orEmpty()
+    return if (packageName.isBlank()) className else "$packageName.$className"
+}
+
+fun isGeneratedCoverageName(name: String): Boolean {
+    return name.contains(".dao.") && name.endsWith("_Impl") ||
+        name.contains("Database_Impl") ||
+        name.contains("RoomOpenDelegate") ||
+        name.contains("_Factory") ||
+        name.contains("_MembersInjector") ||
+        name.contains("_ComponentTreeDeps") ||
+        name.contains("ComposableSingletons")
+}
+
+fun readJacocoCsvRows(csvFile: File): List<Map<String, String>> {
+    val lines = csvFile.readLines()
+    if (lines.isEmpty()) return emptyList()
+
+    val headers = lines.first().split(",")
+    return lines.drop(1)
+        .filter { it.isNotBlank() }
+        .map { line ->
+            val values = line.split(",")
+            headers.mapIndexed { index, header ->
+                header to values.getOrElse(index) { "" }
+            }.toMap()
+        }
+}
+
 subprojects {
     apply(plugin = "jacoco")
 
@@ -44,6 +95,106 @@ subprojects {
             isIncludeNoLocationClasses = true
             excludes = listOf("jdk.internal.*")
         }
+    }
+}
+
+tasks.register("jacocoCoverageSummary") {
+    group = "verification"
+    description = "Generates a Markdown summary from the aggregate JaCoCo CSV report."
+
+    dependsOn(tasks.named("jacocoTestReport"))
+
+    val csvReport = layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.csv")
+    val summaryReport = layout.buildDirectory.file("reports/jacoco/jacocoTestReport/coverage-summary.md")
+
+    inputs.file(csvReport)
+    outputs.file(summaryReport)
+
+    doLast {
+        val csvFile = csvReport.get().asFile
+        if (!csvFile.exists()) {
+            throw GradleException("JaCoCo CSV report not found: ${csvFile.absolutePath}")
+        }
+
+        val rows = readJacocoCsvRows(csvFile)
+        val metrics = listOf(
+            "Instruction" to "INSTRUCTION",
+            "Branch" to "BRANCH",
+            "Line" to "LINE",
+            "Method" to "METHOD"
+        )
+
+        val lowCoverageRows = rows.mapNotNull { row ->
+            val missed = row.metric("LINE_MISSED")
+            val covered = row.metric("LINE_COVERED")
+            val name = displayCoverageName(row)
+            if (missed + covered == 0) {
+                null
+            } else if (isGeneratedCoverageName(name)) {
+                null
+            } else {
+                CoverageArea(
+                    name = name,
+                    missed = missed,
+                    covered = covered
+                )
+            }
+        }.sortedWith(
+            compareBy<CoverageArea> { it.coverage }
+                .thenByDescending { it.missed }
+                .thenBy { it.name }
+        ).take(10)
+
+        val zeroCoverageCount = rows.count { row ->
+            val missed = row.metric("LINE_MISSED")
+            val covered = row.metric("LINE_COVERED")
+            val name = displayCoverageName(row)
+            missed + covered > 0 && covered == 0 && !isGeneratedCoverageName(name)
+        }
+
+        val markdown = buildString {
+            appendLine("## 커버리지 요약")
+            appendLine()
+            appendLine("| 지표 | 커버리지 | 커버됨 | 누락 |")
+            appendLine("|---|---:|---:|---:|")
+
+            metrics.forEach { (label, prefix) ->
+                val missed = rows.sumOf { it.metric("${prefix}_MISSED") }
+                val covered = rows.sumOf { it.metric("${prefix}_COVERED") }
+                appendLine("| $label | ${formatCoverage(coveragePercent(missed, covered))} | $covered | $missed |")
+            }
+
+            appendLine()
+            appendLine("## 커버리지가 낮은 영역")
+            appendLine()
+            appendLine("- 라인 커버리지 0% 클래스 수: $zeroCoverageCount")
+            appendLine("- Room/Hilt/Compose generated helper class는 목록에서 제외했습니다.")
+            appendLine()
+            appendLine("| 클래스 | 라인 커버리지 | 커버된 라인 | 누락 라인 |")
+            appendLine("|---|---:|---:|---:|")
+
+            if (lowCoverageRows.isEmpty()) {
+                appendLine("| 라인 커버리지 데이터 없음 | - | - | - |")
+            } else {
+                lowCoverageRows.forEach { area ->
+                    appendLine(
+                        "| `${area.name}` | ${formatCoverage(area.coverage)} | ${area.covered} | ${area.missed} |"
+                    )
+                }
+            }
+
+            appendLine()
+            appendLine("## 리포트 파일")
+            appendLine()
+            appendLine("- HTML 리포트 artifact: `jacoco-html-report`")
+            appendLine("- Markdown 요약 artifact: `jacoco-coverage-summary`")
+            appendLine("- 원본 CSV: `build/reports/jacoco/jacocoTestReport/jacocoTestReport.csv`")
+        }
+
+        val summaryFile = summaryReport.get().asFile
+        summaryFile.parentFile.mkdirs()
+        summaryFile.writeText(markdown)
+        logger.lifecycle("JaCoCo coverage summary generated: ${summaryFile.absolutePath}")
     }
 }
 
