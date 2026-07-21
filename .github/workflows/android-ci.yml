@@ -26,8 +26,8 @@ concurrency:
 
 jobs:
   unit-test:
-    name: Unit tests for develop PR
-    if: github.event_name == 'workflow_dispatch' || github.base_ref == 'develop'
+    name: Unit tests and coverage report
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
@@ -50,46 +50,13 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Run JVM unit tests
-        run: |
-          ./gradlew \
-            :domain:test \
-            :data:testDebugUnitTest \
-            :shared:testDebugUnitTest \
-            :features:testDebugUnitTest \
-            :features:auth:testDebugUnitTest \
-            :features:community:testDebugUnitTest \
-            :features:home:testDebugUnitTest \
-            :features:mypage:testDebugUnitTest \
-            :features:note:testDebugUnitTest \
-            :features:search:testDebugUnitTest \
-            :features:timer:testDebugUnitTest \
-            --no-daemon
+      - name: Run unit tests and generate JaCoCo report
+        run: ./gradlew jacocoTestReport --no-daemon
 
-  main-smoke:
-    name: Lightweight check for main PR
-    if: github.base_ref == 'main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Upload JaCoCo HTML report
+        uses: actions/upload-artifact@v4
         with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
-
-      - name: Validate Gradle project configuration
-        run: ./gradlew help --no-daemon
+          name: jacoco-html-report
+          path: build/reports/jacoco/jacocoTestReport/html
+          if-no-files-found: error
+          retention-days: 14
