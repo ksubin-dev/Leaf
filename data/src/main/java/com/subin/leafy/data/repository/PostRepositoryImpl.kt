@@ -277,7 +277,6 @@ class PostRepositoryImpl @Inject constructor(
         linkedRating: Int?
     ) {
         val postId = UUID.randomUUID().toString()
-        val imageFolderId = UUID.randomUUID().toString()
         val draftKey = listOf(
             title,
             content,
@@ -294,7 +293,6 @@ class PostRepositoryImpl @Inject constructor(
             CommunityUploadWorker.KEY_TAGS to tags.toTypedArray(),
             CommunityUploadWorker.KEY_IMAGE_URIS to imageUriStrings.toTypedArray(),
             CommunityUploadWorker.KEY_POST_ID to postId,
-            CommunityUploadWorker.KEY_IMAGE_FOLDER_ID to imageFolderId,
 
             CommunityUploadWorker.KEY_LINKED_NOTE_ID to linkedNoteId,
             CommunityUploadWorker.KEY_LINKED_TEA_TYPE to linkedTeaType,

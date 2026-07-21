@@ -94,17 +94,7 @@ class FirestoreNoteDataSourceImpl @Inject constructor(
 
     override suspend fun updateNote(note: BrewingNote): DataResourceResult<Unit> {
         return try {
-            val updateMap = mapOf(
-                "teaInfo" to note.teaInfo,
-                "recipe" to note.recipe,
-                "evaluation" to note.evaluation,
-                "rating" to note.rating,
-                "metadata" to note.metadata,
-                "public" to note.isPublic,
-                "date" to note.date
-            )
-
-            notesCollection.document(note.id).update(updateMap).await()
+            notesCollection.document(note.id).set(note.toDto()).await()
 
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {

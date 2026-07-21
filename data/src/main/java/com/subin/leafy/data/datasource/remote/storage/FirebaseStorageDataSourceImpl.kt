@@ -2,6 +2,7 @@ package com.subin.leafy.data.datasource.remote.storage
 
 import androidx.core.net.toUri
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import com.subin.leafy.data.datasource.remote.StorageDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import kotlinx.coroutines.tasks.await
@@ -14,11 +15,13 @@ class FirebaseStorageDataSourceImpl @Inject constructor(
     override suspend fun uploadImage(uriString: String, folderPath: String): DataResourceResult<String> {
         return try {
             val uri = uriString.toUri()
-            val fileName = UUID.randomUUID().toString()
-            val storageRef = firebaseStorage.reference
-                .child(folderPath)
-                .child(fileName)
-            storageRef.putFile(uri).await()
+            val storageRef = firebaseStorage.reference.child(
+                if (folderPath.hasFileName()) folderPath else "$folderPath/${UUID.randomUUID()}"
+            )
+            val metadata = StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build()
+            storageRef.putFile(uri, metadata).await()
             val downloadUrl = storageRef.downloadUrl.await().toString()
             DataResourceResult.Success(downloadUrl)
 
@@ -35,5 +38,9 @@ class FirebaseStorageDataSourceImpl @Inject constructor(
         } catch (e: Exception) {
             DataResourceResult.Failure(e)
         }
+    }
+
+    private fun String.hasFileName(): Boolean {
+        return substringAfterLast('/').contains('.')
     }
 }
