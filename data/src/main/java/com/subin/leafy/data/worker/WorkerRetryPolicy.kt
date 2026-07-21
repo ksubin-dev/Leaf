@@ -28,6 +28,14 @@ internal fun CoroutineWorker.resultFor(resourceResult: DataResourceResult<*>): L
     }
 }
 
+internal fun CoroutineWorker.resultForException(exception: Throwable): ListenableWorker.Result {
+    return if (exception.isRetryableWorkerFailure()) {
+        retryOrFailure()
+    } else {
+        ListenableWorker.Result.failure()
+    }
+}
+
 private fun Throwable.isRetryableWorkerFailure(): Boolean {
     val text = listOfNotNull(message, cause?.message)
         .joinToString(separator = " ")
