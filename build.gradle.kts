@@ -2,6 +2,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import java.time.Instant
 import java.util.Locale
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
@@ -73,6 +74,31 @@ fun isGeneratedCoverageName(name: String): Boolean {
         name.contains("_MembersInjector") ||
         name.contains("_ComponentTreeDeps") ||
         name.contains("ComposableSingletons")
+}
+
+fun githubPullRequestNumber(): String {
+    val githubRef = System.getenv("GITHUB_REF").orEmpty()
+    val match = Regex("""refs/pull/(\d+)/""").find(githubRef)
+    return match?.groupValues?.get(1) ?: "정보 없음"
+}
+
+fun reportContextRows(): List<Pair<String, String>> {
+    val branch = System.getenv("GITHUB_HEAD_REF")
+        ?: System.getenv("GITHUB_REF_NAME")
+        ?: "local"
+    val commit = System.getenv("GITHUB_SHA") ?: "local"
+    val comparedWith = System.getenv("GITHUB_BASE_REF") ?: "정보 없음"
+
+    return listOf(
+        "Repository" to (System.getenv("GITHUB_REPOSITORY") ?: "ksubin-dev/Leaf"),
+        "Branch" to branch,
+        "Commit" to commit,
+        "Pull Request" to githubPullRequestNumber(),
+        "Generated At" to Instant.now().toString(),
+        "Test Scope" to "JVM and Android debug unit tests",
+        "Compared With" to comparedWith,
+        "Coverage Exclusions" to "Android generated classes, test classes, Hilt/Dagger generated classes, Compose singleton/preview classes"
+    )
 }
 
 fun readJacocoCsvRows(csvFile: File): List<Map<String, String>> {
@@ -156,6 +182,14 @@ tasks.register("jacocoCoverageSummary") {
         }
 
         val markdown = buildString {
+            appendLine("## Report Context")
+            appendLine()
+            appendLine("| 항목 | 값 |")
+            appendLine("|---|---|")
+            reportContextRows().forEach { (label, value) ->
+                appendLine("| $label | $value |")
+            }
+            appendLine()
             appendLine("## 커버리지 요약")
             appendLine()
             appendLine("| 지표 | 커버리지 | 커버됨 | 누락 |")
@@ -199,6 +233,39 @@ tasks.register("jacocoCoverageSummary") {
         summaryFile.writeText(markdown)
         logger.lifecycle("JaCoCo coverage summary generated: ${summaryFile.absolutePath}")
     }
+}
+
+tasks.register<Exec>("generateCustomCoverageReport") {
+    group = "verification"
+    description = "Generates a shareable custom HTML report from the JaCoCo coverage summary."
+
+    dependsOn(tasks.named("jacocoCoverageSummary"))
+
+    val summaryReport = layout.buildDirectory.file("reports/jacoco/jacocoTestReport/coverage-summary.md")
+    val csvReport = layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.csv")
+    val aiAnalysisReport = layout.projectDirectory.file("docs/ai-coverage-analysis-result.json")
+    val outputDirectory = layout.buildDirectory.dir("reports/leafy-test-report")
+
+    inputs.file(summaryReport)
+    inputs.file(csvReport)
+    if (aiAnalysisReport.asFile.exists()) {
+        inputs.file(aiAnalysisReport)
+    }
+    inputs.file(layout.projectDirectory.file("scripts/generate-coverage-report.mjs"))
+    outputs.dir(outputDirectory)
+
+    commandLine(
+        "node",
+        "scripts/generate-coverage-report.mjs",
+        "--summary",
+        summaryReport.get().asFile.absolutePath,
+        "--csv",
+        csvReport.get().asFile.absolutePath,
+        "--ai-json",
+        aiAnalysisReport.asFile.absolutePath,
+        "--out",
+        outputDirectory.get().asFile.absolutePath
+    )
 }
 
 tasks.register<JacocoReport>("jacocoTestReport") {
