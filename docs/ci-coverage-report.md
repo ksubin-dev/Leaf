@@ -15,6 +15,7 @@ CI 환경에서는 보안상 실제 `app/google-services.json`을 커밋하지 �
 3. Summary 화면의 `커버리지 요약`과 `커버리지가 낮은 영역`을 먼저 확인한다.
 4. 세부 리포트가 필요하면 workflow run 화면의 `Artifacts` 영역에서 `jacoco-html-report`를 다운로드한다.
 5. 압축을 풀고 `index.html`을 브라우저에서 열어 커버리지 리포트를 확인한다.
+6. 테스트 우선순위 분석이 필요하면 `coverage-summary.md` 내용을 `docs/ai-coverage-analysis-prompt.md` 프롬프트에 붙여넣어 AI 분석을 받는다.
 
 ## 현재 범위
 
