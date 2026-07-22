@@ -14,6 +14,7 @@ on:
       - "gradle/**"
       - "gradlew"
       - "gradlew.bat"
+      - "scripts/**"
       - ".github/workflows/android-ci.yml"
   workflow_dispatch:
 
@@ -87,7 +88,7 @@ jobs:
 
       - name: 단위 테스트 실행 및 커버리지 요약 생성
         run: |
-          ./gradlew :jacocoCoverageSummary --build-cache --parallel --no-daemon
+          ./gradlew :generateCustomCoverageReport --build-cache --parallel --no-daemon
           cat build/reports/jacoco/jacocoTestReport/coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: 커버리지 Markdown 요약 업로드
@@ -104,6 +105,15 @@ jobs:
         with:
           name: jacoco-html-report
           path: build/reports/jacoco/jacocoTestReport/html
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 1
+
+      - name: Leafy 커스텀 커버리지 리포트 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: leafy-custom-coverage-report
+          path: build/reports/leafy-test-report
           if-no-files-found: error
           retention-days: 14
           compression-level: 1

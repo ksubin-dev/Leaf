@@ -4,6 +4,8 @@ PR이 생성되거나 업데이트되면 `Android CI` workflow가 JVM unit test�
 
 생성된 HTML 리포트는 GitHub Actions artifact로 업로드된다.
 
+기본 JaCoCo HTML 리포트는 클래스별 세부 커버리지를 확인하기 위한 개발자용 리포트이고, Leafy 커스텀 HTML 리포트는 회의나 PR에서 커버리지 상태를 빠르게 공유하기 위한 요약 리포트다.
+
 JaCoCo CSV 리포트를 기반으로 생성한 Markdown 요약은 GitHub Actions Summary에 표시되고, `jacoco-coverage-summary` artifact로도 업로드된다.
 
 CI 환경에서는 보안상 실제 `app/google-services.json`을 커밋하지 않고, 테스트/리포트 생성에 필요한 placeholder 파일을 workflow 실행 중에 생성한다.
@@ -13,9 +15,11 @@ CI 환경에서는 보안상 실제 `app/google-services.json`을 커밋하지 �
 1. PR 화면에서 `Checks` 탭을 연다.
 2. `Android CI / 단위 테스트 및 커버리지 리포트` 실행 결과를 선택한다.
 3. Summary 화면의 `커버리지 요약`과 `커버리지가 낮은 영역`을 먼저 확인한다.
-4. 세부 리포트가 필요하면 workflow run 화면의 `Artifacts` 영역에서 `jacoco-html-report`를 다운로드한다.
-5. 압축을 풀고 `index.html`을 브라우저에서 열어 커버리지 리포트를 확인한다.
-6. 테스트 우선순위 분석이 필요하면 `coverage-summary.md` 내용을 `docs/ai-coverage-analysis-prompt.md` 프롬프트에 붙여넣어 AI 분석을 받는다.
+4. 공유용 요약 화면이 필요하면 `Artifacts` 영역에서 `leafy-custom-coverage-report`를 다운로드한다.
+5. 압축을 풀고 `index.html`을 브라우저에서 열어 커스텀 리포트를 확인한다.
+6. 클래스별 세부 리포트가 필요하면 `jacoco-html-report`를 다운로드해 기본 JaCoCo HTML을 확인한다.
+7. 테스트 우선순위 분석이 필요하면 `coverage-summary.md` 내용을 `docs/ai-coverage-analysis-prompt.md` 프롬프트에 붙여넣어 AI 분석을 받는다.
+8. AI 응답의 JSON을 `docs/ai-coverage-analysis-result.json`에 저장하면 커스텀 HTML 리포트의 `AI 분석 요약` 영역에 함께 표시된다.
 
 ## 현재 범위
 
@@ -45,6 +49,7 @@ PR 커버리지 리포트 CI 실행 시간: 약 5분 15초
 
 - `jacoco-coverage-summary` artifact 생성 유지
 - `jacoco-html-report` artifact 생성 유지
+- `leafy-custom-coverage-report` artifact 생성 확인
 - GitHub Actions Summary의 커버리지 요약 표시 유지
 - 개선 전후 CI 실행 시간 비교
 
@@ -58,4 +63,11 @@ PR 커버리지 리포트 CI 실행 시간: 약 5분 15초
 
 ```text
 build/reports/jacoco/jacocoTestReport/coverage-summary.md
+build/reports/leafy-test-report/index.html
+```
+
+선택 입력:
+
+```text
+docs/ai-coverage-analysis-result.json
 ```
