@@ -62,7 +62,7 @@ class UploadWorker @AssistedInject constructor(
 
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure()
+            resultForException(e)
         }
     }
 
