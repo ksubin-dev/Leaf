@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.TeaUseCases
 import dagger.assisted.Assisted
@@ -11,6 +12,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 
 @HiltWorker
@@ -23,16 +25,26 @@ class SyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val jobs = listOf(
-                async { noteUseCases.syncNotes() },
-                async { teaUseCases.syncTeas() }
-            )
-            jobs.awaitAll()
+            val syncResults = supervisorScope {
+                val jobs = listOf(
+                    async { noteUseCases.syncNotes() },
+                    async { teaUseCases.syncTeas() }
+                )
+                jobs.awaitAll()
+            }
+
+            val incompleteResult = syncResults.firstOrNull { result ->
+                result !is DataResourceResult.Success
+            }
+
+            if (incompleteResult != null) {
+                return@withContext resultFor(incompleteResult)
+            }
 
             Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
-            retryOrFailure()
+            resultForException(e)
         }
     }
 }
