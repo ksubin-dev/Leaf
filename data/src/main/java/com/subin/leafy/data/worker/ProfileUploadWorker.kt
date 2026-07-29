@@ -36,9 +36,12 @@ class ProfileUploadWorker @AssistedInject constructor(
             val finalImageUrl = if (imageUriString != null && !imageUriString.startsWith("http")) {
                 val compressedPath = imageCompressor.compressImage(imageUriString)
                 val uploadPath = "profile_images/$userId"
-                val result = imageUseCases.uploadImage(compressedPath, uploadPath)
 
-                if (result is DataResourceResult.Success) result.data else return@withContext retryOrFailure()
+                when (val result = imageUseCases.uploadImage(compressedPath, uploadPath)) {
+                    is DataResourceResult.Success -> result.data
+                    is DataResourceResult.Failure -> return@withContext resultForException(result.exception)
+                    DataResourceResult.Loading -> return@withContext retryOrFailure()
+                }
             } else {
                 imageUriString
             }
@@ -48,7 +51,8 @@ class ProfileUploadWorker @AssistedInject constructor(
             resultFor(updateResult)
 
         } catch (e: Exception) {
-            Result.failure()
+            e.printStackTrace()
+            resultForException(e)
         }
     }
 

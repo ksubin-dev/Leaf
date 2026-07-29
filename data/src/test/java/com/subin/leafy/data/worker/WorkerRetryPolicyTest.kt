@@ -85,6 +85,33 @@ class WorkerRetryPolicyTest {
     }
 
     @Test
+    fun `재시도 가능한 예외는 최대 재시도 전까지 retry로 변환한다`() {
+        val worker = testWorker(runAttemptCount = 0)
+
+        val result = worker.resultForException(Exception("Firebase Storage timeout"))
+
+        assertThat(result).isInstanceOf(ListenableWorker.Result.retry()::class.java)
+    }
+
+    @Test
+    fun `재시도 가능한 예외도 최대 재시도 횟수에 도달하면 failure로 변환한다`() {
+        val worker = testWorker(runAttemptCount = MAX_RETRY_COUNT)
+
+        val result = worker.resultForException(Exception("Firestore unavailable"))
+
+        assertThat(result).isInstanceOf(ListenableWorker.Result.failure()::class.java)
+    }
+
+    @Test
+    fun `cause 메시지의 non retryable 신호도 failure로 변환한다`() {
+        val worker = testWorker(runAttemptCount = 0)
+
+        val result = worker.resultForException(Exception("Upload failed", IllegalStateException("login required")))
+
+        assertThat(result).isInstanceOf(ListenableWorker.Result.failure()::class.java)
+    }
+
+    @Test
     fun `Loading 상태는 retry 정책을 따른다`() {
         val retryWorker = testWorker(runAttemptCount = 0)
         val failureWorker = testWorker(runAttemptCount = MAX_RETRY_COUNT)
