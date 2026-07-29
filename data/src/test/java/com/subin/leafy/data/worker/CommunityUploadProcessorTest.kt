@@ -247,13 +247,15 @@ class CommunityUploadProcessorTest {
         inputData: Data,
         userUseCases: UserUseCases = mockk(relaxed = true),
         uploadProcessor: CommunityUploadProcessor = mockk(relaxed = true),
+        foregroundInfoProvider: CommunityUploadForegroundInfoProvider = mockk(relaxed = true),
         runAttemptCount: Int = 0
     ): CommunityUploadWorker {
         return CommunityUploadWorker(
             appContext = mockk(relaxed = true),
             workerParams = workerParameters(inputData, runAttemptCount),
             userUseCases = userUseCases,
-            uploadProcessor = uploadProcessor
+            uploadProcessor = uploadProcessor,
+            foregroundInfoProvider = foregroundInfoProvider
         )
     }
 
