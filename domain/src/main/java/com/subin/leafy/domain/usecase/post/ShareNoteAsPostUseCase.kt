@@ -3,7 +3,6 @@ package com.subin.leafy.domain.usecase.post
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.repository.NoteRepository
 import com.subin.leafy.domain.repository.PostRepository
-import java.util.UUID
 import javax.inject.Inject
 
 class ShareNoteAsPostUseCase @Inject constructor(
@@ -14,7 +13,8 @@ class ShareNoteAsPostUseCase @Inject constructor(
         noteId: String,
         content: String,
         tags: List<String>,
-        imageUrls: List<String>
+        imageUrls: List<String>,
+        postId: String? = null
     ): DataResourceResult<Unit> {
 
         val noteResult = noteRepository.getNoteDetail(noteId)
@@ -32,7 +32,7 @@ class ShareNoteAsPostUseCase @Inject constructor(
             }
         }
 
-        val newPostId = note.id
+        val newPostId = postId ?: note.id
 
         return postRepository.createPost(
             postId = newPostId,
