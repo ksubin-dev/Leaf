@@ -39,9 +39,11 @@ class TeaUploadWorker @AssistedInject constructor(
                 val compressedPath = imageCompressor.compressImage(imageUriString)
                 val uploadPath = "teas/${teaData.ownerId}/${teaData.id}.jpg"
 
-                val result = imageUseCases.uploadImage(compressedPath, uploadPath)
-
-                if (result is DataResourceResult.Success) result.data else return@withContext retryOrFailure()
+                when (val result = imageUseCases.uploadImage(compressedPath, uploadPath)) {
+                    is DataResourceResult.Success -> result.data
+                    is DataResourceResult.Failure -> return@withContext resultForException(result.exception)
+                    DataResourceResult.Loading -> return@withContext retryOrFailure()
+                }
             } else {
                 imageUriString
             }
@@ -54,7 +56,7 @@ class TeaUploadWorker @AssistedInject constructor(
 
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure()
+            resultForException(e)
         }
     }
 

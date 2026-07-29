@@ -93,7 +93,7 @@ class CommunityUploadWorker @AssistedInject constructor(
 
         } catch (e: Exception) {
             e.printStackTrace()
-            return@withContext retryOrFailure()
+            return@withContext resultForException(e)
         }
     }
 
