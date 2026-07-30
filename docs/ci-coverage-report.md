@@ -19,7 +19,26 @@ CI 환경에서는 보안상 실제 `app/google-services.json`을 커밋하지 �
 5. 압축을 풀고 `index.html`을 브라우저에서 열어 커스텀 리포트를 확인한다.
 6. 클래스별 세부 리포트가 필요하면 `jacoco-html-report`를 다운로드해 기본 JaCoCo HTML을 확인한다.
 7. 테스트 우선순위 분석이 필요하면 `coverage-summary.md` 내용을 `docs/ai-coverage-analysis-prompt.md` 프롬프트에 붙여넣어 AI 분석을 받는다.
-8. AI 응답의 JSON을 `docs/ai-coverage-analysis-result.json`에 저장하면 커스텀 HTML 리포트의 `AI 분석 요약` 영역에 함께 표시된다.
+8. AI 응답의 JSON은 `docs/ai-coverage-analysis-result.example.json` 구조를 참고해 `docs/ai-coverage-analysis-result.json`에 저장한다.
+9. 커스텀 HTML 리포트를 다시 생성하면 `AI 분석 요약` 영역에 위험 영역, 다음 테스트 후보, 보류 영역, 분석 한계가 함께 표시된다.
+
+## AI 분석 결과 연결 방식
+
+커스텀 HTML 리포트는 외부 AI API를 직접 호출하지 않는다.
+
+대신 `coverage-summary.md`와 `docs/ai-coverage-analysis-prompt.md`를 사용해 받은 AI 응답 JSON을 입력 파일로 받아 HTML에 표시한다.
+
+파일 역할은 다음과 같다.
+
+| 파일 | 역할 | 커밋 여부 |
+| --- | --- | --- |
+| `docs/ai-coverage-analysis-prompt.md` | 커버리지 요약을 분석할 때 사용하는 프롬프트 | 커밋 |
+| `docs/ai-coverage-analysis-result.example.json` | HTML 삽입용 AI 분석 JSON 예시 스키마 | 커밋 |
+| `docs/ai-coverage-analysis-result.json` | 실행 시점마다 달라지는 실제 AI 분석 결과 입력 파일 | 커밋하지 않음 |
+
+`docs/ai-coverage-analysis-result.json`은 `.gitignore`에 포함되어 있다. 이 파일은 특정 실행 시점의 분석 결과이므로, 저장소에 고정하지 않고 로컬 또는 CI 실행 중 입력으로만 사용한다.
+
+AI 분석 결과 JSON이 없으면 커스텀 HTML 리포트는 안내 placeholder를 표시한다. JSON 형식이 잘못되어도 리포트 생성은 중단되지 않고 placeholder로 돌아간다.
 
 ## 현재 범위
 
@@ -56,7 +75,7 @@ PR 커버리지 리포트 CI 실행 시간: 약 5분 15초
 ## 로컬 생성 명령
 
 ```bash
-./gradlew :jacocoCoverageSummary --build-cache --parallel
+./gradlew :generateCustomCoverageReport --build-cache --parallel
 ```
 
 생성 위치:
@@ -70,4 +89,18 @@ build/reports/leafy-test-report/index.html
 
 ```text
 docs/ai-coverage-analysis-result.json
+```
+
+예시 JSON을 기준으로 실제 입력 파일을 만들고 싶다면 다음 순서로 진행한다.
+
+```bash
+cp docs/ai-coverage-analysis-result.example.json docs/ai-coverage-analysis-result.json
+./gradlew :generateCustomCoverageReport --build-cache --parallel
+```
+
+Windows PowerShell에서는 다음 명령을 사용할 수 있다.
+
+```powershell
+Copy-Item docs/ai-coverage-analysis-result.example.json docs/ai-coverage-analysis-result.json
+.\gradlew.bat :generateCustomCoverageReport --build-cache --parallel
 ```
