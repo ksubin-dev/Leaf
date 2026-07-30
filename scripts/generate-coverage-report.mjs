@@ -293,6 +293,7 @@ function renderHtml({ context, metrics, lowCoverageAreas, layerSummary, aiAnalys
       font-weight: 800;
       font-size: 0.78rem;
     }
+    .p0 { background: #7f1d1d; }
     .p1 { background: var(--red); }
     .p2 { background: var(--amber); }
     .p3 { background: #475467; }
@@ -316,11 +317,51 @@ function renderHtml({ context, metrics, lowCoverageAreas, layerSummary, aiAnalys
       padding: 18px;
     }
     .ai-placeholder ul { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
+    .ai-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0 18px;
+    }
+    .ai-summary-item {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-soft);
+    }
+    .ai-summary-item b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .section-subtitle {
+      margin: 26px 0 10px;
+      font-size: 1rem;
+    }
+    .simple-list {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .simple-list li { margin: 6px 0; }
+    .issue-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .issue-item {
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+    .issue-item:first-child { border-top: 0; }
+    .issue-item b { display: block; margin-bottom: 6px; }
+    .empty-row { color: var(--muted); text-align: center; }
 
     footer { margin-top: 28px; color: var(--muted); font-size: 0.9rem; }
 
     @media (max-width: 900px) {
-      .summary-grid, .two-col, .context { grid-template-columns: 1fr; }
+      .summary-grid, .two-col, .context, .ai-summary { grid-template-columns: 1fr; }
       .wrap { padding: 28px 16px 44px; }
       table { font-size: 0.86rem; }
     }
@@ -404,7 +445,7 @@ function renderAiSection(aiAnalysis) {
         <strong>#117 프롬프트 결과를 여기에 연결할 수 있습니다.</strong>
         <ul>
           <li><code>coverage-summary.md</code>를 <code>docs/ai-coverage-analysis-prompt.md</code>에 붙여넣어 테스트 후보를 정리합니다.</li>
-          <li>AI 응답의 JSON을 <code>docs/ai-coverage-analysis-result.json</code>에 저장하면 이 영역에 요약과 테스트 후보가 표시됩니다.</li>
+          <li><code>docs/ai-coverage-analysis-result.example.json</code> 구조를 참고해 AI 응답 JSON을 <code>docs/ai-coverage-analysis-result.json</code>에 저장합니다.</li>
           <li>현재 리포트는 AI API를 직접 호출하지 않고, 커버리지 수치와 보수적 계층 분류만 표시합니다.</li>
         </ul>
       </div>
@@ -414,31 +455,49 @@ function renderAiSection(aiAnalysis) {
   const summary = aiAnalysis.overallSummary ?? {};
   const riskAreas = Array.isArray(aiAnalysis.riskAreas) ? aiAnalysis.riskAreas : [];
   const testCandidates = Array.isArray(aiAnalysis.testCandidates) ? aiAnalysis.testCandidates : [];
+  const deferredAreas = Array.isArray(aiAnalysis.deferredAreas) ? aiAnalysis.deferredAreas : [];
+  const requiredContext = Array.isArray(aiAnalysis.requiredContext) ? aiAnalysis.requiredContext : [];
+  const limitations = Array.isArray(aiAnalysis.limitations) ? aiAnalysis.limitations : [];
+  const suggestedIssues = Array.isArray(aiAnalysis.suggestedIssues) ? aiAnalysis.suggestedIssues : [];
 
   return `<section class="panel">
       <h2>AI 분석 요약</h2>
       <p class="note">${escapeHtml(summary.plainLanguageSummary ?? "요약 정보 없음")}</p>
+      <div class="ai-summary">
+        <div class="ai-summary-item">
+          <b>기술 요약</b>
+          <span>${escapeHtml(summary.technicalSummary ?? "정보 없음")}</span>
+        </div>
+        <div class="ai-summary-item">
+          <b>공유용 한 줄 요약</b>
+          <span>${escapeHtml(summary.oneLineSummary ?? "정보 없음")}</span>
+        </div>
+      </div>
+
+      <h3 class="section-subtitle">위험 영역</h3>
       <table>
         <thead>
           <tr>
             <th>우선순위</th>
             <th>영역</th>
+            <th>기술 대상</th>
             <th>근거 수준</th>
             <th>사용자 영향</th>
           </tr>
         </thead>
         <tbody>
-          ${riskAreas.slice(0, 5).map((area) => `
+          ${riskAreas.length ? riskAreas.slice(0, 5).map((area) => `
           <tr>
             <td><span class="badge ${String(area.priority ?? "P3").toLowerCase()}">${escapeHtml(area.priority ?? "P3")}</span></td>
             <td>${escapeHtml(area.featureArea ?? area.technicalTarget ?? "정보 없음")}</td>
+            <td><code>${escapeHtml(area.technicalTarget ?? "정보 없음")}</code></td>
             <td>${escapeHtml(area.evidenceLevel ?? "정보 없음")}</td>
             <td>${escapeHtml(area.plainLanguageImpact ?? "정보 없음")}</td>
-          </tr>`).join("\n")}
+          </tr>`).join("\n") : emptyRow(5, "AI 분석 위험 영역 정보가 없습니다.")}
         </tbody>
       </table>
 
-      <h2 style="margin-top: 28px;">다음 테스트 후보</h2>
+      <h3 class="section-subtitle">다음 테스트 후보</h3>
       <table>
         <thead>
           <tr>
@@ -446,19 +505,70 @@ function renderAiSection(aiAnalysis) {
             <th>대상</th>
             <th>테스트 시나리오</th>
             <th>기대 결과</th>
+            <th>유형</th>
           </tr>
         </thead>
         <tbody>
-          ${testCandidates.slice(0, 5).map((candidate) => `
+          ${testCandidates.length ? testCandidates.slice(0, 5).map((candidate) => `
           <tr>
             <td>${escapeHtml(candidate.rank ?? "")}</td>
             <td>${escapeHtml(candidate.target ?? "정보 없음")}</td>
             <td>${escapeHtml(candidate.scenario ?? "정보 없음")}</td>
             <td>${escapeHtml(candidate.expectedResult ?? "정보 없음")}</td>
-          </tr>`).join("\n")}
+            <td>${escapeHtml(candidate.testType ?? "정보 없음")}</td>
+          </tr>`).join("\n") : emptyRow(5, "AI 분석 테스트 후보 정보가 없습니다.")}
         </tbody>
       </table>
+
+      <h3 class="section-subtitle">보류 영역</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>대상</th>
+            <th>보류 이유</th>
+            <th>다시 검토할 조건</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${deferredAreas.length ? deferredAreas.slice(0, 5).map((area) => `
+          <tr>
+            <td>${escapeHtml(area.target ?? "정보 없음")}</td>
+            <td>${escapeHtml(area.reason ?? "정보 없음")}</td>
+            <td>${escapeHtml(area.revisitCondition ?? "정보 없음")}</td>
+          </tr>`).join("\n") : emptyRow(3, "보류 영역 정보가 없습니다.")}
+        </tbody>
+      </table>
+
+      <h3 class="section-subtitle">분석 한계와 추가로 필요한 정보</h3>
+      <div class="ai-summary">
+        <div class="ai-summary-item">
+          <b>분석 한계</b>
+          ${simpleList(limitations, "분석 한계 정보가 없습니다.")}
+        </div>
+        <div class="ai-summary-item">
+          <b>추가로 필요한 정보</b>
+          ${simpleList(requiredContext, "추가 입력 정보가 없습니다.")}
+        </div>
+      </div>
+
+      <h3 class="section-subtitle">다음 이슈 후보</h3>
+      <div class="issue-list">
+        ${suggestedIssues.length ? suggestedIssues.slice(0, 3).map((issue) => `
+        <div class="issue-item">
+          <b>${escapeHtml(issue.title ?? "제목 없음")}</b>
+          ${simpleList(issue.acceptanceCriteria, "완료 조건 정보가 없습니다.")}
+        </div>`).join("\n") : `<p class="note">AI 분석 기반 다음 이슈 후보가 없습니다.</p>`}
+      </div>
     </section>`;
+}
+
+function emptyRow(colspan, message) {
+  return `<tr><td class="empty-row" colspan="${colspan}">${escapeHtml(message)}</td></tr>`;
+}
+
+function simpleList(items, fallback) {
+  if (!Array.isArray(items) || !items.length) return `<p class="note">${escapeHtml(fallback)}</p>`;
+  return `<ul class="simple-list">${items.slice(0, 5).map((item) => `<li>${escapeHtml(item)}</li>`).join("\n")}</ul>`;
 }
 
 function metricCard(metric) {

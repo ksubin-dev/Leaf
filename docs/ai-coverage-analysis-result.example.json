@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "promptVersion": "1.0",
+  "overallSummary": {
+    "plainLanguageSummary": "커버리지 리포트에서 저장, 백그라운드 작업, 데이터 변환 계층의 테스트 보강 필요성이 확인되었습니다. 낮은 커버리지는 곧바로 버그를 의미하지 않지만, 사용자 데이터 저장과 업로드 흐름은 먼저 확인할 가치가 있습니다. 다음 작업에서는 WorkManager와 Repository 계층의 실패/재시도 시나리오를 우선 검증합니다.",
+    "technicalSummary": "Line/Branch 커버리지와 낮은 커버리지 클래스 목록을 기준으로 Worker, Repository, Mapper 계층을 우선 검토 대상으로 분류했습니다. 실제 구현 코드와 최근 변경 파일이 함께 제공되지 않은 영역은 추정으로 표시했습니다.",
+    "oneLineSummary": "커버리지 요약을 기준으로 저장/업로드/동기화 흐름의 테스트 보강 후보를 우선 정리했습니다."
+  },
+  "metrics": {
+    "instruction": {
+      "coveragePercent": 42.3,
+      "covered": 1200,
+      "missed": 1640
+    },
+    "branch": {
+      "coveragePercent": 28.5,
+      "covered": 114,
+      "missed": 286
+    },
+    "line": {
+      "coveragePercent": 46.8,
+      "covered": 540,
+      "missed": 614
+    },
+    "method": {
+      "coveragePercent": 39.2,
+      "covered": 98,
+      "missed": 152
+    },
+    "zeroLineCoverageClassCount": 24
+  },
+  "riskAreas": [
+    {
+      "rank": 1,
+      "priority": "P1",
+      "featureArea": "백그라운드 업로드",
+      "technicalTarget": "CommunityUploadWorker",
+      "layer": "Worker",
+      "lineCoveragePercent": 0,
+      "coveredLines": 0,
+      "missedLines": 42,
+      "riskSignal": "WorkManager retry/failure 흐름이 사용자 업로드 안정성과 연결됩니다.",
+      "plainLanguageImpact": "업로드 실패나 재시도 정책이 어긋나면 사용자가 작성한 게시글이 저장되지 않거나 중복 처리될 수 있습니다.",
+      "evidenceLevel": "medium",
+      "assumptions": [
+        "클래스명과 패키지명을 기준으로 Worker 계층으로 분류했습니다.",
+        "실제 최근 장애 로그는 입력되지 않았습니다."
+      ]
+    },
+    {
+      "rank": 2,
+      "priority": "P1",
+      "featureArea": "데이터 저장",
+      "technicalTarget": "NoteRepositoryImpl",
+      "layer": "Repository",
+      "lineCoveragePercent": 12.5,
+      "coveredLines": 8,
+      "missedLines": 56,
+      "riskSignal": "Repository 계층은 로컬/원격 데이터 흐름의 성공과 실패를 전달합니다.",
+      "plainLanguageImpact": "저장 결과가 잘못 전달되면 화면의 저장 상태와 실제 데이터 상태가 달라질 수 있습니다.",
+      "evidenceLevel": "low",
+      "assumptions": [
+        "클래스명으로 Repository 역할을 추정했습니다."
+      ]
+    }
+  ],
+  "testCandidates": [
+    {
+      "rank": 1,
+      "target": "CommunityUploadWorker",
+      "scenario": "이미지 업로드가 일시적으로 실패했을 때 최대 재시도 전까지 retry가 반환되는지 검증",
+      "expectedResult": "재시도 가능한 실패는 Result.retry()로 변환되고, 최대 재시도 이후에는 Result.failure()가 반환됩니다.",
+      "testType": "Worker Test",
+      "reason": "사용자 작성 데이터 저장과 백그라운드 재시도 정책에 직접 연결됩니다."
+    },
+    {
+      "rank": 2,
+      "target": "NoteRepositoryImpl",
+      "scenario": "로컬 저장 성공 후 원격 저장이 실패했을 때 실패 상태가 호출자에게 전달되는지 검증",
+      "expectedResult": "실패 원인이 DataResourceResult.Failure로 전달되고, 성공으로 오인되지 않습니다.",
+      "testType": "Repository Test",
+      "reason": "저장 상태 전달 오류는 여러 화면과 동기화 흐름에 영향을 줄 수 있습니다."
+    }
+  ],
+  "deferredAreas": [
+    {
+      "target": "Compose UI 렌더링 전용 컴포넌트",
+      "reason": "현재 입력만으로 복잡한 상태 분기나 저장 트리거가 확인되지 않았습니다.",
+      "revisitCondition": "사용자 입력 검증, 저장/삭제 트리거, 내비게이션 분기가 확인될 때 다시 검토합니다."
+    }
+  ],
+  "requiredContext": [
+    "이번 PR 변경 파일",
+    "기존 테스트 목록",
+    "이전 커버리지 리포트"
+  ],
+  "limitations": [
+    "coverage-summary.md만으로는 실제 코드 경로와 예외 흐름을 모두 확인할 수 없습니다.",
+    "최근 장애 로그나 사용자 문의가 제공되지 않았으므로 위험도는 커버리지와 클래스명 기반 추정입니다.",
+    "테스트 결과 XML이 제공되지 않으면 테스트 통과 여부는 별도로 확인해야 합니다."
+  ],
+  "suggestedIssues": [
+    {
+      "title": "[Test] Community 업로드 - 재시도 가능한 이미지 업로드 실패 검증",
+      "acceptanceCriteria": [
+        "이미지 업로드 실패가 Result.retry()로 변환된다.",
+        "최대 재시도 도달 시 Result.failure()가 반환된다.",
+        "게시글 저장 use case가 불필요하게 호출되지 않는다."
+      ]
+    },
+    {
+      "title": "[Test] Note Repository - 로컬/원격 저장 실패 전달 검증",
+      "acceptanceCriteria": [
+        "원격 저장 실패가 Failure로 전달된다.",
+        "로컬 저장 성공만으로 전체 성공 처리되지 않는다.",
+        "호출자가 재시도 또는 오류 표시를 판단할 수 있는 결과가 유지된다."
+      ]
+    }
+  ]
+}
