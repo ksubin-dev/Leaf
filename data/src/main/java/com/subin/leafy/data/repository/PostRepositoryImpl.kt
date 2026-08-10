@@ -2,13 +2,14 @@ package com.subin.leafy.data.repository
 
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
+import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkRequest
 import androidx.work.WorkManager
-import androidx.work.workDataOf
 import com.google.gson.Gson
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.worker.CommunityUploadWorker
 import com.subin.leafy.data.datasource.remote.AuthDataSource
@@ -40,8 +41,11 @@ class PostRepositoryImpl @Inject constructor(
     private val postDataSource: PostDataSource,
     private val userDataSource: UserDataSource,
     private val teaMasterDataSource: TeaMasterDataSource,
+    private val imageCompressor: ImageCompressor,
     private val workManager: WorkManager
 ) : PostRepository {
+
+    private val gson = Gson()
 
     private val _postChangeFlow = MutableSharedFlow<PostChangeEvent>()
     override val postChangeFlow: Flow<PostChangeEvent> = _postChangeFlow.asSharedFlow()
@@ -170,6 +174,9 @@ class PostRepositoryImpl @Inject constructor(
         val myUid = authDataSource.getCurrentUserId() ?: return DataResourceResult.Failure(Exception("로그인 필요"))
         val userResult = userDataSource.getUser(myUid)
         if (userResult !is DataResourceResult.Success) return DataResourceResult.Failure(Exception("유저 정보 오류"))
+        if (imageUrls.hasLocalImageUris()) {
+            return DataResourceResult.Failure(Exception("원격 저장 전 이미지 업로드가 필요합니다."))
+        }
         val me = userResult.data
 
         val newPost = CommunityPost(
@@ -290,15 +297,17 @@ class PostRepositoryImpl @Inject constructor(
         )
         val postId = "post_$draftKey"
         val queueId = uploadQueueId(UploadTargetType.COMMUNITY, postId)
-        val payload = mapOf(
-            "postId" to postId,
-            "title" to title,
-            "content" to content,
-            "tags" to tags,
-            "imageUriStrings" to imageUriStrings,
-            "linkedNoteId" to linkedNoteId,
-            "linkedTeaType" to linkedTeaType,
-            "linkedRating" to linkedRating
+        val durableImageUriStrings = imageUriStrings.toDurableCommunityImageUris(postId)
+        val payload = CommunityUploadPayload(
+            postId = postId,
+            draftKey = draftKey,
+            title = title,
+            content = content,
+            tags = tags,
+            imageUriStrings = durableImageUriStrings,
+            linkedNoteId = linkedNoteId,
+            linkedTeaType = linkedTeaType,
+            linkedRating = linkedRating
         )
 
         uploadQueueDataSource.upsert(
@@ -307,24 +316,72 @@ class PostRepositoryImpl @Inject constructor(
                 targetType = UploadTargetType.COMMUNITY,
                 targetId = postId,
                 status = UploadStatus.PENDING,
-                payload = Gson().toJson(payload),
+                payload = gson.toJson(payload),
                 message = "백그라운드 업로드 대기 중입니다."
             )
         )
 
-        val inputData = workDataOf(
-            CommunityUploadWorker.KEY_UPLOAD_QUEUE_ID to queueId,
-            CommunityUploadWorker.KEY_TITLE to title,
-            CommunityUploadWorker.KEY_CONTENT to content,
-            CommunityUploadWorker.KEY_TAGS to tags.toTypedArray(),
-            CommunityUploadWorker.KEY_IMAGE_URIS to imageUriStrings.toTypedArray(),
-            CommunityUploadWorker.KEY_POST_ID to postId,
+        enqueueCommunityUpload(
+            queueId = queueId,
+            payload = payload,
+            existingWorkPolicy = ExistingWorkPolicy.KEEP
+        )
+    }
 
-            CommunityUploadWorker.KEY_LINKED_NOTE_ID to linkedNoteId,
-            CommunityUploadWorker.KEY_LINKED_TEA_TYPE to linkedTeaType,
-            CommunityUploadWorker.KEY_LINKED_RATING to (linkedRating ?: -1)
+    override suspend fun recoverQueuedCommunityUploads(): Int {
+        val queues = uploadQueueDataSource.getByTargetTypeAndStatuses(
+            targetType = UploadTargetType.COMMUNITY,
+            statuses = COMMUNITY_AUTO_RECOVERY_STATUSES
         )
 
+        var recoveredCount = 0
+        queues.forEach { queue ->
+            val payload = queue.toCommunityUploadPayload()
+            if (payload == null) {
+                uploadQueueDataSource.updateStatus(
+                    id = queue.id,
+                    status = UploadStatus.FAILED,
+                    attempt = queue.attempt,
+                    message = "업로드 요청 정보가 올바르지 않습니다.",
+                    lastError = "Invalid community upload payload"
+                )
+                return@forEach
+            }
+
+            uploadQueueDataSource.updateStatus(
+                id = queue.id,
+                status = UploadStatus.PENDING,
+                attempt = 0,
+                message = "업로드 대기 중입니다.",
+                lastError = queue.lastError
+            )
+            enqueueCommunityUpload(
+                queueId = queue.id,
+                payload = payload,
+                existingWorkPolicy = ExistingWorkPolicy.KEEP
+            )
+            recoveredCount++
+        }
+
+        return recoveredCount
+    }
+
+    private fun enqueueCommunityUpload(
+        queueId: String,
+        payload: CommunityUploadPayload,
+        existingWorkPolicy: ExistingWorkPolicy
+    ) {
+        val inputData = Data.Builder()
+            .putString(CommunityUploadWorker.KEY_UPLOAD_QUEUE_ID, queueId)
+            .putString(CommunityUploadWorker.KEY_TITLE, payload.title)
+            .putString(CommunityUploadWorker.KEY_CONTENT, payload.content)
+            .putStringArray(CommunityUploadWorker.KEY_TAGS, payload.tags.toTypedArray())
+            .putStringArray(CommunityUploadWorker.KEY_IMAGE_URIS, payload.imageUriStrings.toTypedArray())
+            .putString(CommunityUploadWorker.KEY_POST_ID, payload.postId)
+            .putString(CommunityUploadWorker.KEY_LINKED_NOTE_ID, payload.linkedNoteId)
+            .putString(CommunityUploadWorker.KEY_LINKED_TEA_TYPE, payload.linkedTeaType)
+            .putInt(CommunityUploadWorker.KEY_LINKED_RATING, payload.linkedRating ?: -1)
+            .build()
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
@@ -338,18 +395,42 @@ class PostRepositoryImpl @Inject constructor(
                 TimeUnit.MILLISECONDS
             )
             .addTag("upload_community")
-            .addTag("upload_post_$postId")
+            .addTag("upload_post_${payload.postId}")
             .build()
 
         workManager.enqueueUniqueWork(
-            "upload_post_draft_$draftKey",
-            ExistingWorkPolicy.KEEP,
+            payload.uniqueWorkName(),
+            existingWorkPolicy,
             uploadRequest
         )
     }
 
     private fun uploadQueueId(targetType: UploadTargetType, targetId: String): String {
         return "${targetType.name}_$targetId"
+    }
+
+    private fun UploadQueue.toCommunityUploadPayload(): CommunityUploadPayload? {
+        return payload?.let {
+            runCatching { gson.fromJson(it, CommunityUploadPayload::class.java) }.getOrNull()
+        }
+    }
+
+    private suspend fun List<String>.toDurableCommunityImageUris(postId: String): List<String> {
+        return mapIndexed { index, uriString ->
+            if (uriString.startsWith("http")) {
+                uriString
+            } else {
+                imageCompressor.saveImageToInternalStorage(
+                    imageUriString = uriString,
+                    folderName = "posts/$postId",
+                    filePrefix = "post_$index"
+                )
+            }
+        }
+    }
+
+    private fun List<String>.hasLocalImageUris(): Boolean {
+        return any { !it.startsWith("http") }
     }
 
     private fun createDraftKey(
@@ -421,5 +502,29 @@ class PostRepositoryImpl @Inject constructor(
         } else {
             post
         }
+    }
+
+    private data class CommunityUploadPayload(
+        val postId: String,
+        val draftKey: String? = null,
+        val title: String,
+        val content: String,
+        val tags: List<String> = emptyList(),
+        val imageUriStrings: List<String> = emptyList(),
+        val linkedNoteId: String? = null,
+        val linkedTeaType: String? = null,
+        val linkedRating: Int? = null
+    ) {
+        fun uniqueWorkName(): String {
+            val key = draftKey ?: postId.removePrefix("post_")
+            return "upload_post_draft_$key"
+        }
+    }
+
+    private companion object {
+        val COMMUNITY_AUTO_RECOVERY_STATUSES = listOf(
+            UploadStatus.PENDING,
+            UploadStatus.RETRYING
+        )
     }
 }

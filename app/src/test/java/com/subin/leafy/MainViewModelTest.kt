@@ -12,6 +12,7 @@ import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import com.subin.leafy.domain.usecase.note.RecoverQueuedNoteUploadsUseCase
+import com.subin.leafy.domain.usecase.post.RecoverQueuedCommunityUploadsUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -36,11 +37,14 @@ class MainViewModelTest {
             val workManager = mockk<WorkManager>()
             val captured = captureUniqueWork(workManager)
             val recoverQueuedNoteUploads = mockk<RecoverQueuedNoteUploadsUseCase>(relaxed = true)
+            val recoverQueuedCommunityUploads = mockk<RecoverQueuedCommunityUploadsUseCase>(relaxed = true)
             coEvery { recoverQueuedNoteUploads() } returns 2
+            coEvery { recoverQueuedCommunityUploads() } returns 1
             val viewModel = mainViewModel(
                 userIdResult = DataResourceResult.Success("user-123"),
                 isAutoLoginEnabled = true,
                 recoverQueuedNoteUploads = recoverQueuedNoteUploads,
+                recoverQueuedCommunityUploads = recoverQueuedCommunityUploads,
                 workManager = workManager
             )
 
@@ -50,6 +54,7 @@ class MainViewModelTest {
             assertThat(captured.policies).containsExactly(ExistingWorkPolicy.KEEP)
             assertThat(captured.singleRequest().tags).contains(SyncWorker::class.java.name)
             coVerify(exactly = 1) { recoverQueuedNoteUploads() }
+            coVerify(exactly = 1) { recoverQueuedCommunityUploads() }
             assertThat(viewModel.startDestination.value).isEqualTo(MainNavigationRoute.HomeTab)
             assertThat(viewModel.isSplashLoading.value).isFalse()
         }
@@ -104,6 +109,7 @@ class MainViewModelTest {
         isAutoLoginEnabled: Boolean,
         authUseCases: AuthUseCases = mockk(relaxed = true),
         recoverQueuedNoteUploads: RecoverQueuedNoteUploadsUseCase = mockk(relaxed = true),
+        recoverQueuedCommunityUploads: RecoverQueuedCommunityUploadsUseCase = mockk(relaxed = true),
         workManager: WorkManager = mockk(relaxed = true)
     ): MainViewModel {
         val userUseCases = mockk<UserUseCases>(relaxed = true)
@@ -117,6 +123,7 @@ class MainViewModelTest {
             authUseCases = authUseCases,
             settingUseCases = settingUseCases,
             recoverQueuedNoteUploads = recoverQueuedNoteUploads,
+            recoverQueuedCommunityUploads = recoverQueuedCommunityUploads,
             workManager = workManager
         )
     }
