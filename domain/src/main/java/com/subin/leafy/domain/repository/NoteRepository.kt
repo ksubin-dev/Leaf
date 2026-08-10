@@ -20,4 +20,5 @@ interface NoteRepository {
     suspend fun clearLocalCache(): DataResourceResult<Unit>
 
     suspend fun scheduleNoteUpload(note: BrewingNote, imageUriStrings: List<String>, isEditMode: Boolean)
+    suspend fun recoverQueuedNoteUploads(): Int
 }

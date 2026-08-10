@@ -27,6 +27,18 @@ class UploadQueueDataSourceImpl @Inject constructor(
         return dao.getByTarget(targetType.name, targetId)?.toDomain()
     }
 
+    override suspend fun getByTargetTypeAndStatuses(
+        targetType: UploadTargetType,
+        statuses: List<UploadStatus>
+    ): List<UploadQueue> {
+        if (statuses.isEmpty()) return emptyList()
+
+        return dao.getByTargetTypeAndStatuses(
+            targetType = targetType.name,
+            statuses = statuses.map { it.name }
+        ).map { it.toDomain() }
+    }
+
     override suspend fun upsert(queue: UploadQueue) {
         dao.upsert(queue.toEntity())
     }
