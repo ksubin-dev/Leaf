@@ -88,4 +88,6 @@ interface PostRepository {
         linkedTeaType: String?,
         linkedRating: Int?
     )
+
+    suspend fun recoverQueuedCommunityUploads(): Int
 }

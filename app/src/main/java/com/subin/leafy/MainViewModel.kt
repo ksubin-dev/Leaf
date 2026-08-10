@@ -14,6 +14,7 @@ import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import com.subin.leafy.domain.usecase.note.RecoverQueuedNoteUploadsUseCase
+import com.subin.leafy.domain.usecase.post.RecoverQueuedCommunityUploadsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,7 @@ class MainViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
     private val settingUseCases: SettingUseCases,
     private val recoverQueuedNoteUploads: RecoverQueuedNoteUploadsUseCase,
+    private val recoverQueuedCommunityUploads: RecoverQueuedCommunityUploadsUseCase,
     private val workManager: WorkManager
 ) : ViewModel() {
 
@@ -61,6 +63,7 @@ class MainViewModel @Inject constructor(
                 )
 
                 runCatching { recoverQueuedNoteUploads() }
+                runCatching { recoverQueuedCommunityUploads() }
 
                 _startDestination.value = MainNavigationRoute.HomeTab
             }

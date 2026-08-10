@@ -33,6 +33,7 @@ import com.subin.leafy.domain.model.TeaInfo
 import com.subin.leafy.domain.model.TeaItem
 import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.TeawareType
+import com.subin.leafy.domain.model.UploadQueue
 import com.subin.leafy.domain.model.UploadStatus
 import com.subin.leafy.domain.model.UploadTargetType
 import io.mockk.coEvery
@@ -180,7 +181,11 @@ class WorkManagerEnqueuePolicyTest {
         val workManager = mockk<WorkManager>()
         val captured = captureUniqueWork(workManager)
         val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
-        val repository = postRepository(workManager, uploadQueueDataSource)
+        val imageCompressor = mockk<ImageCompressor>()
+        val repository = postRepository(workManager, uploadQueueDataSource, imageCompressor)
+        coEvery {
+            imageCompressor.saveImageToInternalStorage(any(), any(), any())
+        } returnsMany listOf("file://internal-post-0.jpg", "file://internal-post-1.jpg")
 
         repository.schedulePostUpload(
             title = "가끔 먹는 커피",
@@ -208,7 +213,7 @@ class WorkManagerEnqueuePolicyTest {
             .containsExactly("#가끔먹는커피", "#커피")
             .inOrder()
         assertThat(request.workSpec.input.getStringArray(CommunityUploadWorker.KEY_IMAGE_URIS)?.toList())
-            .containsExactly("file://post_0.jpg", "file://post_1.jpg")
+            .containsExactly("file://internal-post-0.jpg", "file://internal-post-1.jpg")
             .inOrder()
         assertThat(request.workSpec.input.getString(CommunityUploadWorker.KEY_LINKED_TEA_TYPE)).isEqualTo(TeaType.ETC.name)
         assertThat(request.workSpec.input.getInt(CommunityUploadWorker.KEY_LINKED_RATING, -1)).isEqualTo(4)
@@ -219,6 +224,7 @@ class WorkManagerEnqueuePolicyTest {
                         it.targetType == UploadTargetType.COMMUNITY &&
                         it.targetId == postId &&
                         it.status == UploadStatus.PENDING &&
+                        it.payload?.contains("file://internal-post-0.jpg") == true &&
                         it.message == "백그라운드 업로드 대기 중입니다."
                 }
             )
@@ -229,7 +235,11 @@ class WorkManagerEnqueuePolicyTest {
     fun `Community 업로드는 같은 draft 요청이면 같은 uniqueName으로 예약한다`() = runTest {
         val workManager = mockk<WorkManager>()
         val captured = captureUniqueWork(workManager)
-        val repository = postRepository(workManager)
+        val imageCompressor = mockk<ImageCompressor>()
+        val repository = postRepository(workManager, imageCompressor = imageCompressor)
+        coEvery {
+            imageCompressor.saveImageToInternalStorage("file://same.jpg", any(), "post_0")
+        } returns "file://internal-same.jpg"
 
         repeat(2) {
             repository.schedulePostUpload(
@@ -257,6 +267,95 @@ class WorkManagerEnqueuePolicyTest {
         assertThat(secondRequest.tags).contains("upload_post_$secondPostId")
     }
 
+    @Test
+    fun `Community 앱 재실행 복구는 PENDING 또는 RETRYING 큐를 KEEP 정책으로 재등록한다`() = runTest {
+        val workManager = mockk<WorkManager>()
+        val captured = captureUniqueWork(workManager)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        val repository = postRepository(workManager, uploadQueueDataSource)
+        val queue = UploadQueue(
+            id = "COMMUNITY_post-draft-123",
+            targetType = UploadTargetType.COMMUNITY,
+            targetId = "post-draft-123",
+            status = UploadStatus.RETRYING,
+            payload = gson.toJson(
+                mapOf(
+                    "postId" to "post-draft-123",
+                    "draftKey" to "draft-123",
+                    "title" to "복구할 글",
+                    "content" to "앱 재실행 후 업로드",
+                    "tags" to listOf("복구"),
+                    "imageUriStrings" to listOf("file://internal-post.jpg"),
+                    "linkedNoteId" to null,
+                    "linkedTeaType" to TeaType.OOLONG.name,
+                    "linkedRating" to 4
+                )
+            )
+        )
+        coEvery {
+            uploadQueueDataSource.getByTargetTypeAndStatuses(
+                UploadTargetType.COMMUNITY,
+                listOf(UploadStatus.PENDING, UploadStatus.RETRYING)
+            )
+        } returns listOf(queue)
+
+        val recoveredCount = repository.recoverQueuedCommunityUploads()
+
+        assertThat(recoveredCount).isEqualTo(1)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "COMMUNITY_post-draft-123",
+                status = UploadStatus.PENDING,
+                attempt = 0,
+                message = "업로드 대기 중입니다.",
+                lastError = null
+            )
+        }
+        assertThat(captured.names).containsExactly("upload_post_draft_draft-123")
+        assertThat(captured.policies).containsExactly(ExistingWorkPolicy.KEEP)
+        val request = captured.singleRequest()
+        assertThat(request.workSpec.input.getString(CommunityUploadWorker.KEY_POST_ID)).isEqualTo("post-draft-123")
+        assertThat(request.workSpec.input.getStringArray(CommunityUploadWorker.KEY_IMAGE_URIS)?.toList())
+            .containsExactly("file://internal-post.jpg")
+    }
+
+    @Test
+    fun `Community 앱 재실행 복구는 깨진 payload를 FAILED로 남기고 재등록하지 않는다`() = runTest {
+        val workManager = mockk<WorkManager>(relaxed = true)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        val repository = postRepository(workManager, uploadQueueDataSource)
+        coEvery {
+            uploadQueueDataSource.getByTargetTypeAndStatuses(
+                UploadTargetType.COMMUNITY,
+                listOf(UploadStatus.PENDING, UploadStatus.RETRYING)
+            )
+        } returns listOf(
+            UploadQueue(
+                id = "COMMUNITY_broken",
+                targetType = UploadTargetType.COMMUNITY,
+                targetId = "broken",
+                status = UploadStatus.PENDING,
+                payload = "{"
+            )
+        )
+
+        val recoveredCount = repository.recoverQueuedCommunityUploads()
+
+        assertThat(recoveredCount).isEqualTo(0)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "COMMUNITY_broken",
+                status = UploadStatus.FAILED,
+                attempt = 0,
+                message = "업로드 요청 정보가 올바르지 않습니다.",
+                lastError = "Invalid community upload payload"
+            )
+        }
+        verify(exactly = 0) {
+            workManager.enqueueUniqueWork(any(), any<ExistingWorkPolicy>(), any<OneTimeWorkRequest>())
+        }
+    }
+
     private fun captureUniqueWork(workManager: WorkManager): CapturedUniqueWork {
         val captured = CapturedUniqueWork()
         val operation = mockk<Operation>(relaxed = true)
@@ -274,7 +373,8 @@ class WorkManagerEnqueuePolicyTest {
 
     private fun postRepository(
         workManager: WorkManager,
-        uploadQueueDataSource: UploadQueueDataSource = mockk(relaxed = true)
+        uploadQueueDataSource: UploadQueueDataSource = mockk(relaxed = true),
+        imageCompressor: ImageCompressor = mockk(relaxed = true)
     ): PostRepositoryImpl {
         return PostRepositoryImpl(
             authDataSource = mockk(),
@@ -282,6 +382,7 @@ class WorkManagerEnqueuePolicyTest {
             postDataSource = mockk(),
             userDataSource = mockk(),
             teaMasterDataSource = mockk(),
+            imageCompressor = imageCompressor,
             workManager = workManager
         )
     }
