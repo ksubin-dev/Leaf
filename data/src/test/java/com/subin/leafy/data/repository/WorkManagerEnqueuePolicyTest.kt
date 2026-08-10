@@ -46,6 +46,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -416,6 +417,52 @@ class WorkManagerEnqueuePolicyTest {
         assertThat((result as DataResourceResult.Failure).exception.message)
             .isEqualTo("원격 저장 전 이미지 업로드가 필요합니다.")
         coVerify(exactly = 0) { postDataSource.createPost(any()) }
+    }
+
+    @Test
+    fun `Community 수동 재시도는 FAILED 큐를 PENDING으로 되돌리고 기존 payload로 REPLACE 재등록한다`() = runTest {
+        val workManager = mockk<WorkManager>()
+        val captured = captureUniqueWork(workManager)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        val repository = postRepository(workManager, uploadQueueDataSource)
+        val queue = UploadQueue(
+            id = "COMMUNITY_post-retry-123",
+            targetType = UploadTargetType.COMMUNITY,
+            targetId = "post-retry-123",
+            status = UploadStatus.FAILED,
+            attempt = 3,
+            payload = gson.toJson(
+                mapOf(
+                    "postId" to "post-retry-123",
+                    "draftKey" to "draft-retry-123",
+                    "title" to "다시 올릴 글",
+                    "content" to "수동 재시도",
+                    "tags" to listOf("#재시도"),
+                    "imageUriStrings" to listOf("file://internal-post.jpg"),
+                    "linkedNoteId" to null,
+                    "linkedTeaType" to TeaType.OOLONG.name,
+                    "linkedRating" to 4
+                )
+            )
+        )
+        every { uploadQueueDataSource.observeById("COMMUNITY_post-retry-123") } returns flowOf(queue)
+
+        val result = repository.retryFailedCommunityUpload("COMMUNITY_post-retry-123")
+
+        assertThat(result).isInstanceOf(DataResourceResult.Success::class.java)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "COMMUNITY_post-retry-123",
+                status = UploadStatus.PENDING,
+                attempt = 0,
+                message = "업로드 대기 중입니다.",
+                lastError = null
+            )
+        }
+        assertThat(captured.names).containsExactly("upload_post_draft_draft-retry-123")
+        assertThat(captured.policies).containsExactly(ExistingWorkPolicy.REPLACE)
+        assertThat(captured.singleRequest().workSpec.input.getString(CommunityUploadWorker.KEY_POST_ID))
+            .isEqualTo("post-retry-123")
     }
 
     private fun captureUniqueWork(workManager: WorkManager): CapturedUniqueWork {

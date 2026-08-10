@@ -78,10 +78,13 @@ class MainActivity : ComponentActivity() {
                     }
                 ) {
                     val startDestination by mainViewModel.startDestination.collectAsStateWithLifecycle()
+                    val latestUploadQueue by mainViewModel.latestUploadQueue.collectAsStateWithLifecycle()
 
                     if (startDestination != null) {
                         EntryPointScreen(
                             startDestination = startDestination!!,
+                            latestUploadQueue = latestUploadQueue,
+                            onRetryUpload = mainViewModel::retryUpload,
                             pendingDeepLink = pendingDeepLink,
                             onDeepLinkConsumed = { pendingDeepLink = null }
                         )

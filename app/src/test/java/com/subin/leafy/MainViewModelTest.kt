@@ -6,13 +6,19 @@ import androidx.work.Operation
 import androidx.work.WorkManager
 import com.google.common.truth.Truth.assertThat
 import com.leafy.shared.navigation.MainNavigationRoute
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.worker.SyncWorker
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.model.UploadQueue
+import com.subin.leafy.domain.model.UploadStatus
+import com.subin.leafy.domain.model.UploadTargetType
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import com.subin.leafy.domain.usecase.note.RecoverQueuedNoteUploadsUseCase
+import com.subin.leafy.domain.usecase.note.RetryFailedNoteUploadUseCase
 import com.subin.leafy.domain.usecase.post.RecoverQueuedCommunityUploadsUseCase
+import com.subin.leafy.domain.usecase.post.RetryFailedCommunityUploadUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -104,12 +110,47 @@ class MainViewModelTest {
             assertThat(viewModel.isSplashLoading.value).isFalse()
         }
 
+    @Test
+    fun `업로드 수동 재시도는 targetType에 맞는 재시도 UseCase를 호출한다`() =
+        runTest(mainDispatcherRule.testDispatcher) {
+            val retryFailedNoteUpload = mockk<RetryFailedNoteUploadUseCase>(relaxed = true)
+            val retryFailedCommunityUpload = mockk<RetryFailedCommunityUploadUseCase>(relaxed = true)
+            val uploadQueueDataSource = mockk<UploadQueueDataSource>()
+            every { uploadQueueDataSource.observeLatestVisible() } returns flowOf(
+                UploadQueue(
+                    id = "NOTE_note-1",
+                    targetType = UploadTargetType.NOTE,
+                    targetId = "note-1",
+                    status = UploadStatus.FAILED
+                )
+            )
+            coEvery { retryFailedNoteUpload("NOTE_note-1") } returns DataResourceResult.Success(Unit)
+            coEvery { retryFailedCommunityUpload("COMMUNITY_post-1") } returns DataResourceResult.Success(Unit)
+            val viewModel = mainViewModel(
+                userIdResult = DataResourceResult.Failure(Exception("로그인된 사용자가 없습니다.")),
+                isAutoLoginEnabled = true,
+                uploadQueueDataSource = uploadQueueDataSource,
+                retryFailedNoteUpload = retryFailedNoteUpload,
+                retryFailedCommunityUpload = retryFailedCommunityUpload
+            )
+
+            viewModel.retryUpload("NOTE_note-1", UploadTargetType.NOTE)
+            viewModel.retryUpload("COMMUNITY_post-1", UploadTargetType.COMMUNITY)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { retryFailedNoteUpload("NOTE_note-1") }
+            coVerify(exactly = 1) { retryFailedCommunityUpload("COMMUNITY_post-1") }
+        }
+
     private fun mainViewModel(
         userIdResult: DataResourceResult<String>,
         isAutoLoginEnabled: Boolean,
         authUseCases: AuthUseCases = mockk(relaxed = true),
         recoverQueuedNoteUploads: RecoverQueuedNoteUploadsUseCase = mockk(relaxed = true),
         recoverQueuedCommunityUploads: RecoverQueuedCommunityUploadsUseCase = mockk(relaxed = true),
+        retryFailedNoteUpload: RetryFailedNoteUploadUseCase = mockk(relaxed = true),
+        retryFailedCommunityUpload: RetryFailedCommunityUploadUseCase = mockk(relaxed = true),
+        uploadQueueDataSource: UploadQueueDataSource = mockk(),
         workManager: WorkManager = mockk(relaxed = true)
     ): MainViewModel {
         val userUseCases = mockk<UserUseCases>(relaxed = true)
@@ -117,6 +158,7 @@ class MainViewModelTest {
 
         every { userUseCases.getCurrentUserId() } returns userIdResult
         every { settingUseCases.manageLoginSetting.getAutoLogin() } returns flowOf(isAutoLoginEnabled)
+        every { uploadQueueDataSource.observeLatestVisible() } returns flowOf(null)
 
         return MainViewModel(
             userUseCases = userUseCases,
@@ -124,6 +166,9 @@ class MainViewModelTest {
             settingUseCases = settingUseCases,
             recoverQueuedNoteUploads = recoverQueuedNoteUploads,
             recoverQueuedCommunityUploads = recoverQueuedCommunityUploads,
+            retryFailedNoteUpload = retryFailedNoteUpload,
+            retryFailedCommunityUpload = retryFailedCommunityUpload,
+            uploadQueueDataSource = uploadQueueDataSource,
             workManager = workManager
         )
     }
