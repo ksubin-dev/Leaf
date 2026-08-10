@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
 import com.leafy.shared.utils.ImageCompressor
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.BrewingRecipe
@@ -56,7 +57,8 @@ class WorkerImageUploadScenarioTest {
             inputData = noteUploadData(imageUris = listOf("file://note-1.jpg", "file://note-2.jpg")),
             noteUseCases = noteUseCases,
             imageUseCases = imageUseCases,
-            imageCompressor = imageCompressor
+            imageCompressor = imageCompressor,
+            uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
         )
 
         val result = worker.doWork()
@@ -343,6 +345,7 @@ class WorkerImageUploadScenarioTest {
         noteUseCases: NoteUseCases = mockk(relaxed = true),
         imageUseCases: ImageUseCases = mockk(relaxed = true),
         imageCompressor: ImageCompressor = mockk(relaxed = true),
+        uploadQueueDataSource: UploadQueueDataSource = mockk(relaxed = true),
         runAttemptCount: Int = 0
     ): UploadWorker {
         return UploadWorker(
@@ -350,7 +353,8 @@ class WorkerImageUploadScenarioTest {
             workerParams = workerParameters(inputData, runAttemptCount),
             noteUseCases = noteUseCases,
             imageUseCases = imageUseCases,
-            imageCompressor = imageCompressor
+            imageCompressor = imageCompressor,
+            uploadQueueDataSource = uploadQueueDataSource
         )
     }
 

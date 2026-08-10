@@ -6,6 +6,7 @@ import com.subin.leafy.data.datasource.local.room.LeafyDatabase
 import com.subin.leafy.data.datasource.local.room.dao.NoteDao
 import com.subin.leafy.data.datasource.local.room.dao.TeaDao
 import com.subin.leafy.data.datasource.local.room.dao.TimerDao
+import com.subin.leafy.data.datasource.local.room.dao.UploadQueueDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,5 +43,10 @@ object DatabaseModule {
     @Provides
     fun provideTeaDao(database: LeafyDatabase): TeaDao {
         return database.teaDao()
+    }
+
+    @Provides
+    fun provideUploadQueueDao(database: LeafyDatabase): UploadQueueDao {
+        return database.uploadQueueDao()
     }
 }

@@ -8,6 +8,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.google.common.truth.Truth.assertThat
 import com.google.common.util.concurrent.Futures
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.UserUseCases
 import io.mockk.coEvery
@@ -156,7 +157,8 @@ class CommunityUploadWorkerForegroundTest {
             ),
             userUseCases = userUseCases,
             uploadProcessor = uploadProcessor,
-            foregroundInfoProvider = foregroundInfoProvider
+            foregroundInfoProvider = foregroundInfoProvider,
+            uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
         )
     }
 

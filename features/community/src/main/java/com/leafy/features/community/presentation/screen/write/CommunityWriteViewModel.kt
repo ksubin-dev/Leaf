@@ -146,21 +146,30 @@ class CommunityWriteViewModel @Inject constructor(
 
         _uiState.update { it.copy(isLoading = true) }
 
-        postUseCases.schedulePostUpload(
-            title = state.title,
-            content = state.content,
-            tags = state.tags,
-            imageUriStrings = state.selectedImageUris.map { it.toString() },
-            linkedNoteId = state.linkedNoteId,
-            linkedTeaType = state.linkedTeaType,
-            linkedRating = state.linkedRating
-        )
+        viewModelScope.launch {
+            try {
+                postUseCases.schedulePostUpload(
+                    title = state.title,
+                    content = state.content,
+                    tags = state.tags,
+                    imageUriStrings = state.selectedImageUris.map { it.toString() },
+                    linkedNoteId = state.linkedNoteId,
+                    linkedTeaType = state.linkedTeaType,
+                    linkedRating = state.linkedRating
+                )
 
-        _uiState.update { it.copy(isLoading = false) }
-        sendEffect(CommunityWriteSideEffect.ShowToast(
-            UiText.StringResource(R.string.msg_save_start_background)
-        ))
-        sendEffect(CommunityWriteSideEffect.PostSuccess)
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(CommunityWriteSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_save_start_background)
+                ))
+                sendEffect(CommunityWriteSideEffect.PostSuccess)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false) }
+                sendEffect(CommunityWriteSideEffect.ShowToast(
+                    UiText.StringResource(R.string.msg_save_error_default)
+                ))
+            }
+        }
     }
 
     private fun sendEffect(effect: CommunityWriteSideEffect) {

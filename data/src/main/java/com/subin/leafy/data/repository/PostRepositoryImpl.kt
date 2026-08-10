@@ -8,6 +8,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkRequest
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.google.gson.Gson
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.worker.CommunityUploadWorker
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.PostDataSource
@@ -27,13 +29,14 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import java.util.UUID
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PostRepositoryImpl @Inject constructor(
     private val authDataSource: AuthDataSource,
+    private val uploadQueueDataSource: UploadQueueDataSource,
     private val postDataSource: PostDataSource,
     private val userDataSource: UserDataSource,
     private val teaMasterDataSource: TeaMasterDataSource,
@@ -267,7 +270,7 @@ class PostRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun schedulePostUpload(
+    override suspend fun schedulePostUpload(
         title: String,
         content: String,
         tags: List<String>,
@@ -276,18 +279,41 @@ class PostRepositoryImpl @Inject constructor(
         linkedTeaType: String?,
         linkedRating: Int?
     ) {
-        val postId = UUID.randomUUID().toString()
-        val draftKey = listOf(
+        val draftKey = createDraftKey(
             title,
             content,
-            tags.joinToString(separator = ","),
-            imageUriStrings.joinToString(separator = ","),
-            linkedNoteId.orEmpty(),
-            linkedTeaType.orEmpty(),
-            linkedRating?.toString().orEmpty()
-        ).joinToString(separator = "|").hashCode().toUInt().toString(16)
+            tags,
+            imageUriStrings,
+            linkedNoteId,
+            linkedTeaType,
+            linkedRating
+        )
+        val postId = "post_$draftKey"
+        val queueId = uploadQueueId(UploadTargetType.COMMUNITY, postId)
+        val payload = mapOf(
+            "postId" to postId,
+            "title" to title,
+            "content" to content,
+            "tags" to tags,
+            "imageUriStrings" to imageUriStrings,
+            "linkedNoteId" to linkedNoteId,
+            "linkedTeaType" to linkedTeaType,
+            "linkedRating" to linkedRating
+        )
+
+        uploadQueueDataSource.upsert(
+            UploadQueue(
+                id = queueId,
+                targetType = UploadTargetType.COMMUNITY,
+                targetId = postId,
+                status = UploadStatus.PENDING,
+                payload = Gson().toJson(payload),
+                message = "백그라운드 업로드 대기 중입니다."
+            )
+        )
 
         val inputData = workDataOf(
+            CommunityUploadWorker.KEY_UPLOAD_QUEUE_ID to queueId,
             CommunityUploadWorker.KEY_TITLE to title,
             CommunityUploadWorker.KEY_CONTENT to content,
             CommunityUploadWorker.KEY_TAGS to tags.toTypedArray(),
@@ -320,6 +346,36 @@ class PostRepositoryImpl @Inject constructor(
             ExistingWorkPolicy.KEEP,
             uploadRequest
         )
+    }
+
+    private fun uploadQueueId(targetType: UploadTargetType, targetId: String): String {
+        return "${targetType.name}_$targetId"
+    }
+
+    private fun createDraftKey(
+        title: String,
+        content: String,
+        tags: List<String>,
+        imageUriStrings: List<String>,
+        linkedNoteId: String?,
+        linkedTeaType: String?,
+        linkedRating: Int?
+    ): String {
+        val source = listOf(
+            title,
+            content,
+            tags.joinToString(separator = ","),
+            imageUriStrings.joinToString(separator = ","),
+            linkedNoteId.orEmpty(),
+            linkedTeaType.orEmpty(),
+            linkedRating?.toString().orEmpty()
+        ).joinToString(separator = "|")
+
+        return MessageDigest
+            .getInstance("SHA-256")
+            .digest(source.toByteArray())
+            .joinToString(separator = "") { "%02x".format(it) }
+            .take(16)
     }
 
     private fun mapPostsWithMyStateInternal(

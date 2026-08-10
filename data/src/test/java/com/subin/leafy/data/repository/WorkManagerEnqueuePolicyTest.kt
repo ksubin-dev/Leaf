@@ -10,6 +10,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
 import com.subin.leafy.data.datasource.local.LocalTeaDataSource
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.PostDataSource
 import com.subin.leafy.data.datasource.remote.RemoteNoteDataSource
@@ -31,6 +32,9 @@ import com.subin.leafy.domain.model.TeaInfo
 import com.subin.leafy.domain.model.TeaItem
 import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.TeawareType
+import com.subin.leafy.domain.model.UploadStatus
+import com.subin.leafy.domain.model.UploadTargetType
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -47,8 +51,10 @@ class WorkManagerEnqueuePolicyTest {
     fun `Note 업로드는 noteId 기준 REPLACE unique work로 예약한다`() = runTest {
         val workManager = mockk<WorkManager>()
         val captured = captureUniqueWork(workManager)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
         val repository = NoteRepositoryImpl(
-            localNoteDataSource = mockk(),
+            localNoteDataSource = mockk(relaxed = true),
+            uploadQueueDataSource = uploadQueueDataSource,
             remoteNoteDataSource = mockk(),
             authDataSource = mockk(),
             userDataSource = mockk(),
@@ -73,6 +79,17 @@ class WorkManagerEnqueuePolicyTest {
 
         assertThat(parsedNote.id).isEqualTo("note-123")
         assertThat(parsedImages).containsExactlyElementsIn(imageUris).inOrder()
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.upsert(
+                match {
+                    it.id == "NOTE_note-123" &&
+                        it.targetType == UploadTargetType.NOTE &&
+                        it.targetId == "note-123" &&
+                        it.status == UploadStatus.PENDING &&
+                        it.message == "백그라운드 업로드 대기 중입니다."
+                }
+            )
+        }
     }
 
     @Test
@@ -151,10 +168,11 @@ class WorkManagerEnqueuePolicyTest {
     }
 
     @Test
-    fun `Community 업로드는 draft 기준 KEEP unique work로 예약하고 postId를 inputData와 tag에 고정한다`() {
+    fun `Community 업로드는 draft 기준 KEEP unique work로 예약하고 postId를 inputData와 tag에 고정한다`() = runTest {
         val workManager = mockk<WorkManager>()
         val captured = captureUniqueWork(workManager)
-        val repository = postRepository(workManager)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        val repository = postRepository(workManager, uploadQueueDataSource)
 
         repository.schedulePostUpload(
             title = "가끔 먹는 커피",
@@ -186,10 +204,21 @@ class WorkManagerEnqueuePolicyTest {
             .inOrder()
         assertThat(request.workSpec.input.getString(CommunityUploadWorker.KEY_LINKED_TEA_TYPE)).isEqualTo(TeaType.ETC.name)
         assertThat(request.workSpec.input.getInt(CommunityUploadWorker.KEY_LINKED_RATING, -1)).isEqualTo(4)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.upsert(
+                match {
+                    it.id == "COMMUNITY_$postId" &&
+                        it.targetType == UploadTargetType.COMMUNITY &&
+                        it.targetId == postId &&
+                        it.status == UploadStatus.PENDING &&
+                        it.message == "백그라운드 업로드 대기 중입니다."
+                }
+            )
+        }
     }
 
     @Test
-    fun `Community 업로드는 같은 draft 요청이면 같은 uniqueName으로 예약한다`() {
+    fun `Community 업로드는 같은 draft 요청이면 같은 uniqueName으로 예약한다`() = runTest {
         val workManager = mockk<WorkManager>()
         val captured = captureUniqueWork(workManager)
         val repository = postRepository(workManager)
@@ -235,9 +264,13 @@ class WorkManagerEnqueuePolicyTest {
         return captured
     }
 
-    private fun postRepository(workManager: WorkManager): PostRepositoryImpl {
+    private fun postRepository(
+        workManager: WorkManager,
+        uploadQueueDataSource: UploadQueueDataSource = mockk(relaxed = true)
+    ): PostRepositoryImpl {
         return PostRepositoryImpl(
             authDataSource = mockk(),
+            uploadQueueDataSource = uploadQueueDataSource,
             postDataSource = mockk(),
             userDataSource = mockk(),
             teaMasterDataSource = mockk(),

@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
 import com.leafy.shared.utils.ImageCompressor
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.BrewingRecipe
@@ -150,7 +151,8 @@ class WorkerDoWorkPolicyTest {
             workerParams = workerParameters(inputData, runAttemptCount),
             noteUseCases = noteUseCases,
             imageUseCases = imageUseCases,
-            imageCompressor = imageCompressor
+            imageCompressor = imageCompressor,
+            uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
         )
     }
 
