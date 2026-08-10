@@ -22,8 +22,12 @@ import com.subin.leafy.data.worker.CommunityUploadWorker
 import com.subin.leafy.data.worker.ProfileUploadWorker
 import com.subin.leafy.data.worker.TeaUploadWorker
 import com.subin.leafy.data.worker.UploadWorker
+import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.BrewingRecipe
+import com.subin.leafy.domain.model.User
+import com.subin.leafy.domain.model.UserRelationState
+import com.subin.leafy.domain.model.UserSocialStatistics
 import com.subin.leafy.domain.model.NoteMetadata
 import com.subin.leafy.domain.model.PostSocialState
 import com.subin.leafy.domain.model.PostStatistics
@@ -356,6 +360,64 @@ class WorkManagerEnqueuePolicyTest {
         }
     }
 
+    @Test
+    fun `Community 앱 재실행 복구는 FAILED와 AUTH_REQUIRED 큐를 자동 재등록 대상에서 제외한다`() = runTest {
+        val workManager = mockk<WorkManager>(relaxed = true)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        val repository = postRepository(workManager, uploadQueueDataSource)
+        coEvery {
+            uploadQueueDataSource.getByTargetTypeAndStatuses(
+                UploadTargetType.COMMUNITY,
+                listOf(UploadStatus.PENDING, UploadStatus.RETRYING)
+            )
+        } returns emptyList()
+
+        val recoveredCount = repository.recoverQueuedCommunityUploads()
+
+        assertThat(recoveredCount).isEqualTo(0)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.getByTargetTypeAndStatuses(
+                UploadTargetType.COMMUNITY,
+                listOf(UploadStatus.PENDING, UploadStatus.RETRYING)
+            )
+        }
+        verify(exactly = 0) {
+            workManager.enqueueUniqueWork(any(), any<ExistingWorkPolicy>(), any<OneTimeWorkRequest>())
+        }
+    }
+
+    @Test
+    fun `Community 원격 저장은 로컬 이미지 URI가 남아 있으면 Firestore 저장을 차단한다`() = runTest {
+        val authDataSource = mockk<AuthDataSource>()
+        val userDataSource = mockk<UserDataSource>()
+        val postDataSource = mockk<PostDataSource>(relaxed = true)
+        val repository = postRepository(
+            workManager = mockk(relaxed = true),
+            authDataSource = authDataSource,
+            userDataSource = userDataSource,
+            postDataSource = postDataSource
+        )
+        every { authDataSource.getCurrentUserId() } returns "user-123"
+        coEvery { userDataSource.getUser("user-123") } returns DataResourceResult.Success(user())
+
+        val result = repository.createPost(
+            postId = "post-local-uri",
+            title = "로컬 이미지 차단",
+            content = "Worker 업로드 전에 원격 저장하면 안 된다",
+            imageUrls = listOf("file://internal-post.jpg"),
+            teaType = TeaType.BLACK.name,
+            rating = 5,
+            tags = listOf("#테스트"),
+            brewingSummary = null,
+            originNoteId = null
+        )
+
+        assertThat(result).isInstanceOf(DataResourceResult.Failure::class.java)
+        assertThat((result as DataResourceResult.Failure).exception.message)
+            .isEqualTo("원격 저장 전 이미지 업로드가 필요합니다.")
+        coVerify(exactly = 0) { postDataSource.createPost(any()) }
+    }
+
     private fun captureUniqueWork(workManager: WorkManager): CapturedUniqueWork {
         val captured = CapturedUniqueWork()
         val operation = mockk<Operation>(relaxed = true)
@@ -374,14 +436,18 @@ class WorkManagerEnqueuePolicyTest {
     private fun postRepository(
         workManager: WorkManager,
         uploadQueueDataSource: UploadQueueDataSource = mockk(relaxed = true),
-        imageCompressor: ImageCompressor = mockk(relaxed = true)
+        imageCompressor: ImageCompressor = mockk(relaxed = true),
+        authDataSource: AuthDataSource = mockk(),
+        postDataSource: PostDataSource = mockk(),
+        userDataSource: UserDataSource = mockk(),
+        teaMasterDataSource: TeaMasterDataSource = mockk()
     ): PostRepositoryImpl {
         return PostRepositoryImpl(
-            authDataSource = mockk(),
+            authDataSource = authDataSource,
             uploadQueueDataSource = uploadQueueDataSource,
-            postDataSource = mockk(),
-            userDataSource = mockk(),
-            teaMasterDataSource = mockk(),
+            postDataSource = postDataSource,
+            userDataSource = userDataSource,
+            teaMasterDataSource = teaMasterDataSource,
             imageCompressor = imageCompressor,
             workManager = workManager
         )
@@ -421,6 +487,21 @@ class WorkManagerEnqueuePolicyTest {
             name = "우롱차",
             brand = "Leafy",
             type = TeaType.OOLONG
+        )
+    }
+
+    private fun user(): User {
+        return User(
+            id = "user-123",
+            nickname = "티타임조아",
+            profileImageUrl = null,
+            bio = null,
+            socialStats = UserSocialStatistics(),
+            relationState = UserRelationState(),
+            followingIds = emptyList(),
+            likedPostIds = emptyList(),
+            bookmarkedPostIds = emptyList(),
+            createdAt = 1L
         )
     }
 
