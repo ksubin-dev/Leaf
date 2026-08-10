@@ -321,6 +321,29 @@ class NoteRepositoryImplTest {
         }
     }
 
+    @Test
+    fun `앱 재실행 복구 시 - FAILED와 AUTH_REQUIRED 노트 큐는 자동 재등록 대상에서 제외한다`() = runTest {
+        coEvery {
+            uploadQueueDataSource.getByTargetTypeAndStatuses(
+                UploadTargetType.NOTE,
+                listOf(UploadStatus.PENDING, UploadStatus.RETRYING)
+            )
+        } returns emptyList()
+
+        val recoveredCount = repository.recoverQueuedNoteUploads()
+
+        assertThat(recoveredCount).isEqualTo(0)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.getByTargetTypeAndStatuses(
+                UploadTargetType.NOTE,
+                listOf(UploadStatus.PENDING, UploadStatus.RETRYING)
+            )
+        }
+        verify(exactly = 0) {
+            workManager.enqueueUniqueWork(any(), any<ExistingWorkPolicy>(), any<OneTimeWorkRequest>())
+        }
+    }
+
     private fun uploadQueue(
         note: BrewingNote,
         status: UploadStatus,
