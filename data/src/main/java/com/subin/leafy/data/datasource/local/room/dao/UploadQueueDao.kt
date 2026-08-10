@@ -19,6 +19,18 @@ interface UploadQueueDao {
     @Query(
         """
         SELECT * FROM upload_queue
+        WHERE targetType = :targetType AND status IN (:statuses)
+        ORDER BY updatedAt ASC
+        """
+    )
+    suspend fun getByTargetTypeAndStatuses(
+        targetType: String,
+        statuses: List<String>
+    ): List<UploadQueueEntity>
+
+    @Query(
+        """
+        SELECT * FROM upload_queue
         WHERE status IN ('UPLOADING', 'RETRYING', 'FAILED', 'AUTH_REQUIRED', 'SYNCED')
         ORDER BY updatedAt DESC
         LIMIT 1

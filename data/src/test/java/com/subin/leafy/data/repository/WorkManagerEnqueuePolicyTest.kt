@@ -8,6 +8,7 @@ import androidx.work.WorkManager
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
 import com.subin.leafy.data.datasource.local.LocalTeaDataSource
 import com.subin.leafy.data.datasource.local.UploadQueueDataSource
@@ -34,6 +35,7 @@ import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.TeawareType
 import com.subin.leafy.domain.model.UploadStatus
 import com.subin.leafy.domain.model.UploadTargetType
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -52,16 +54,22 @@ class WorkManagerEnqueuePolicyTest {
         val workManager = mockk<WorkManager>()
         val captured = captureUniqueWork(workManager)
         val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        val imageCompressor = mockk<ImageCompressor>()
         val repository = NoteRepositoryImpl(
             localNoteDataSource = mockk(relaxed = true),
             uploadQueueDataSource = uploadQueueDataSource,
             remoteNoteDataSource = mockk(),
             authDataSource = mockk(),
             userDataSource = mockk(),
+            imageCompressor = imageCompressor,
             workManager = workManager
         )
         val note = brewingNote(id = "note-123")
         val imageUris = listOf("file://first.jpg", "https://example.com/second.jpg")
+        val durableImageUris = listOf("file://internal-first.jpg", "https://example.com/second.jpg")
+        coEvery {
+            imageCompressor.saveImageToInternalStorage("file://first.jpg", "notes/note-123", "note_0")
+        } returns durableImageUris[0]
 
         repository.scheduleNoteUpload(note, imageUris, isEditMode = true)
 
@@ -78,7 +86,7 @@ class WorkManagerEnqueuePolicyTest {
         val parsedImages: List<String> = gson.fromJson(imagesJson, object : TypeToken<List<String>>() {}.type)
 
         assertThat(parsedNote.id).isEqualTo("note-123")
-        assertThat(parsedImages).containsExactlyElementsIn(imageUris).inOrder()
+        assertThat(parsedImages).containsExactlyElementsIn(durableImageUris).inOrder()
         coVerify(exactly = 1) {
             uploadQueueDataSource.upsert(
                 match {

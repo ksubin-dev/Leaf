@@ -113,5 +113,7 @@ class NoteUseCaseImageValidationTest {
             imageUriStrings: List<String>,
             isEditMode: Boolean
         ) = Unit
+
+        override suspend fun recoverQueuedNoteUploads(): Int = 0
     }
 }

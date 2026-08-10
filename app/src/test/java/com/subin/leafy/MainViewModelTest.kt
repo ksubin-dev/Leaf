@@ -11,6 +11,7 @@ import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
+import com.subin.leafy.domain.usecase.note.RecoverQueuedNoteUploadsUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -34,9 +35,12 @@ class MainViewModelTest {
         runTest(mainDispatcherRule.testDispatcher) {
             val workManager = mockk<WorkManager>()
             val captured = captureUniqueWork(workManager)
+            val recoverQueuedNoteUploads = mockk<RecoverQueuedNoteUploadsUseCase>(relaxed = true)
+            coEvery { recoverQueuedNoteUploads() } returns 2
             val viewModel = mainViewModel(
                 userIdResult = DataResourceResult.Success("user-123"),
                 isAutoLoginEnabled = true,
+                recoverQueuedNoteUploads = recoverQueuedNoteUploads,
                 workManager = workManager
             )
 
@@ -45,6 +49,7 @@ class MainViewModelTest {
             assertThat(captured.names).containsExactly("initial_sync_user-123")
             assertThat(captured.policies).containsExactly(ExistingWorkPolicy.KEEP)
             assertThat(captured.singleRequest().tags).contains(SyncWorker::class.java.name)
+            coVerify(exactly = 1) { recoverQueuedNoteUploads() }
             assertThat(viewModel.startDestination.value).isEqualTo(MainNavigationRoute.HomeTab)
             assertThat(viewModel.isSplashLoading.value).isFalse()
         }
@@ -98,6 +103,7 @@ class MainViewModelTest {
         userIdResult: DataResourceResult<String>,
         isAutoLoginEnabled: Boolean,
         authUseCases: AuthUseCases = mockk(relaxed = true),
+        recoverQueuedNoteUploads: RecoverQueuedNoteUploadsUseCase = mockk(relaxed = true),
         workManager: WorkManager = mockk(relaxed = true)
     ): MainViewModel {
         val userUseCases = mockk<UserUseCases>(relaxed = true)
@@ -110,6 +116,7 @@ class MainViewModelTest {
             userUseCases = userUseCases,
             authUseCases = authUseCases,
             settingUseCases = settingUseCases,
+            recoverQueuedNoteUploads = recoverQueuedNoteUploads,
             workManager = workManager
         )
     }

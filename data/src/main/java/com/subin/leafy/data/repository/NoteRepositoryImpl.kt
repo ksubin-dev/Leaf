@@ -11,6 +11,7 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import com.google.gson.Gson
+import com.leafy.shared.utils.ImageCompressor
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
 import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.worker.UploadWorker
@@ -38,8 +39,11 @@ class NoteRepositoryImpl @Inject constructor(
     private val remoteNoteDataSource: RemoteNoteDataSource,
     private val authDataSource: AuthDataSource,
     private val userDataSource: UserDataSource,
+    private val imageCompressor: ImageCompressor,
     private val workManager: WorkManager
 ) : NoteRepository {
+
+    private val gson = Gson()
 
     override fun getMyNotesFlow(): Flow<List<BrewingNote>> {
         val myUid = authDataSource.getCurrentUserId() ?: return flowOf(emptyList())
@@ -100,6 +104,9 @@ class NoteRepositoryImpl @Inject constructor(
 
         return try {
             localNoteDataSource.insertNote(noteToSave)
+            if (noteToSave.hasLocalImageUris()) {
+                return DataResourceResult.Failure(Exception("원격 저장 전 이미지 업로드가 필요합니다."))
+            }
             remoteNoteDataSource.createNote(noteToSave)
             checkAndGrantBadges(myUid)
             DataResourceResult.Success(Unit)
@@ -115,6 +122,9 @@ class NoteRepositoryImpl @Inject constructor(
 
         return try {
             localNoteDataSource.updateNote(noteToUpdate)
+            if (noteToUpdate.hasLocalImageUris()) {
+                return DataResourceResult.Failure(Exception("원격 저장 전 이미지 업로드가 필요합니다."))
+            }
             remoteNoteDataSource.updateNote(noteToUpdate)
             DataResourceResult.Success(Unit)
         } catch (e: Exception) {
@@ -150,12 +160,17 @@ class NoteRepositoryImpl @Inject constructor(
             val remoteNotes = result.data
 
             try {
+                val queuedNotes = getQueuedNotePayloads(NOTE_SYNC_PROTECTED_STATUSES)
+                val queuedNoteIds = queuedNotes.map { it.id }.toSet()
+                val notesToInsert = remoteNotes
+                    .filterNot { queuedNoteIds.contains(it.id) } + queuedNotes
+
                 localNoteDataSource.deleteMyAllNotes(myUid)
 
-                if (remoteNotes.isNotEmpty()) {
-                    localNoteDataSource.insertNotes(remoteNotes)
+                if (notesToInsert.isNotEmpty()) {
+                    localNoteDataSource.insertNotes(notesToInsert)
                 }
-                Log.d("SYNC_LOG", "동기화 완료: ${remoteNotes.size}개 로드됨")
+                Log.d("SYNC_LOG", "동기화 완료: ${remoteNotes.size}개 로드됨, 보호된 로컬 노트 ${queuedNotes.size}개 유지")
                 DataResourceResult.Success(Unit)
             } catch (e: Exception) {
                 DataResourceResult.Failure(e)
@@ -176,15 +191,21 @@ class NoteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun scheduleNoteUpload(note: BrewingNote, imageUriStrings: List<String>, isEditMode: Boolean) {
-        val gson = Gson()
-        val noteJson = gson.toJson(note)
-        val imagesJson = gson.toJson(imageUriStrings)
         val queueId = uploadQueueId(UploadTargetType.NOTE, note.id)
+        val durableImageUriStrings = imageUriStrings.toDurableNoteImageUris(note.id)
+        val localPreviewNote = note.copy(
+            metadata = note.metadata.copy(imageUrls = durableImageUriStrings)
+        )
+        val payload = NoteUploadPayload(
+            note = localPreviewNote,
+            imageUriStrings = durableImageUriStrings,
+            isEditMode = isEditMode
+        )
 
         if (isEditMode) {
-            localNoteDataSource.updateNote(note)
+            localNoteDataSource.updateNote(localPreviewNote)
         } else {
-            localNoteDataSource.insertNote(note)
+            localNoteDataSource.insertNote(localPreviewNote)
         }
 
         uploadQueueDataSource.upsert(
@@ -193,22 +214,69 @@ class NoteRepositoryImpl @Inject constructor(
                 targetType = UploadTargetType.NOTE,
                 targetId = note.id,
                 status = UploadStatus.PENDING,
-                payload = gson.toJson(
-                    mapOf(
-                        "note" to note,
-                        "imageUriStrings" to imageUriStrings,
-                        "isEditMode" to isEditMode
-                    )
-                ),
+                payload = gson.toJson(payload),
                 message = "백그라운드 업로드 대기 중입니다."
             )
         )
+
+        enqueueNoteUpload(
+            queueId = queueId,
+            payload = payload,
+            existingWorkPolicy = ExistingWorkPolicy.REPLACE
+        )
+    }
+
+    override suspend fun recoverQueuedNoteUploads(): Int {
+        val queues = uploadQueueDataSource.getByTargetTypeAndStatuses(
+            targetType = UploadTargetType.NOTE,
+            statuses = NOTE_AUTO_RECOVERY_STATUSES
+        )
+
+        var recoveredCount = 0
+        queues.forEach { queue ->
+            val payload = queue.toNoteUploadPayload()
+            if (payload == null) {
+                uploadQueueDataSource.updateStatus(
+                    id = queue.id,
+                    status = UploadStatus.FAILED,
+                    attempt = queue.attempt,
+                    message = "업로드 요청 정보가 올바르지 않습니다.",
+                    lastError = "Invalid note upload payload"
+                )
+                return@forEach
+            }
+
+            uploadQueueDataSource.updateStatus(
+                id = queue.id,
+                status = UploadStatus.PENDING,
+                attempt = 0,
+                message = "업로드 대기 중입니다.",
+                lastError = queue.lastError
+            )
+            enqueueNoteUpload(
+                queueId = queue.id,
+                payload = payload,
+                existingWorkPolicy = ExistingWorkPolicy.KEEP
+            )
+            recoveredCount++
+        }
+
+        return recoveredCount
+    }
+
+    private fun enqueueNoteUpload(
+        queueId: String,
+        payload: NoteUploadPayload,
+        existingWorkPolicy: ExistingWorkPolicy
+    ) {
+        val noteJson = gson.toJson(payload.note)
+        val imagesJson = gson.toJson(payload.imageUriStrings)
 
         val inputData = Data.Builder()
             .putString(UploadWorker.KEY_UPLOAD_QUEUE_ID, queueId)
             .putString(UploadWorker.KEY_NOTE_DATA, noteJson)
             .putString(UploadWorker.KEY_IMAGE_URIS, imagesJson)
-            .putBoolean(UploadWorker.KEY_IS_EDIT_MODE, isEditMode)
+            .putBoolean(UploadWorker.KEY_IS_EDIT_MODE, payload.isEditMode)
             .build()
 
         val constraints = Constraints.Builder()
@@ -224,18 +292,51 @@ class NoteRepositoryImpl @Inject constructor(
                 WorkRequest.MIN_BACKOFF_MILLIS,
                 TimeUnit.MILLISECONDS
             )
-            .addTag("upload_note_${note.id}")
+            .addTag("upload_note_${payload.note.id}")
             .build()
 
         workManager.enqueueUniqueWork(
-            "upload_note_${note.id}",
-            ExistingWorkPolicy.REPLACE,
+            "upload_note_${payload.note.id}",
+            existingWorkPolicy,
             uploadWorkRequest
         )
     }
 
     private fun uploadQueueId(targetType: UploadTargetType, targetId: String): String {
         return "${targetType.name}_$targetId"
+    }
+
+    private suspend fun getQueuedNotePayloads(statuses: List<UploadStatus>): List<BrewingNote> {
+        return uploadQueueDataSource.getByTargetTypeAndStatuses(
+            targetType = UploadTargetType.NOTE,
+            statuses = statuses
+        ).mapNotNull { queue ->
+            queue.toNoteUploadPayload()?.note ?: localNoteDataSource.getNote(queue.targetId)
+        }
+    }
+
+    private fun UploadQueue.toNoteUploadPayload(): NoteUploadPayload? {
+        return payload?.let {
+            runCatching { gson.fromJson(it, NoteUploadPayload::class.java) }.getOrNull()
+        }
+    }
+
+    private suspend fun List<String>.toDurableNoteImageUris(noteId: String): List<String> {
+        return mapIndexed { index, uriString ->
+            if (uriString.startsWith("http")) {
+                uriString
+            } else {
+                imageCompressor.saveImageToInternalStorage(
+                    imageUriString = uriString,
+                    folderName = "notes/$noteId",
+                    filePrefix = "note_$index"
+                )
+            }
+        }
+    }
+
+    private fun BrewingNote.hasLocalImageUris(): Boolean {
+        return metadata.imageUrls.any { !it.startsWith("http") }
     }
 
     private suspend fun checkAndGrantBadges(userId: String) {
@@ -268,5 +369,26 @@ class NoteRepositoryImpl @Inject constructor(
                 grant(BadgeLibrary.ONE_LOVE)
             }
         }
+    }
+
+    private data class NoteUploadPayload(
+        val note: BrewingNote,
+        val imageUriStrings: List<String> = emptyList(),
+        val isEditMode: Boolean = false
+    )
+
+    private companion object {
+        val NOTE_AUTO_RECOVERY_STATUSES = listOf(
+            UploadStatus.PENDING,
+            UploadStatus.RETRYING
+        )
+
+        val NOTE_SYNC_PROTECTED_STATUSES = listOf(
+            UploadStatus.PENDING,
+            UploadStatus.UPLOADING,
+            UploadStatus.RETRYING,
+            UploadStatus.FAILED,
+            UploadStatus.AUTH_REQUIRED
+        )
     }
 }

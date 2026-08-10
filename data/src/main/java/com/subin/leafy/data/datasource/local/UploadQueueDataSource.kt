@@ -9,6 +9,10 @@ interface UploadQueueDataSource {
     fun observeById(id: String): Flow<UploadQueue?>
     fun observeLatestVisible(): Flow<UploadQueue?>
     suspend fun getByTarget(targetType: UploadTargetType, targetId: String): UploadQueue?
+    suspend fun getByTargetTypeAndStatuses(
+        targetType: UploadTargetType,
+        statuses: List<UploadStatus>
+    ): List<UploadQueue>
     suspend fun upsert(queue: UploadQueue)
     suspend fun updateStatus(
         id: String,
