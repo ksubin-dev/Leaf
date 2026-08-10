@@ -8,17 +8,20 @@ import androidx.room.TypeConverters
 import com.subin.leafy.data.datasource.local.room.dao.NoteDao
 import com.subin.leafy.data.datasource.local.room.dao.TeaDao
 import com.subin.leafy.data.datasource.local.room.dao.TimerDao
+import com.subin.leafy.data.datasource.local.room.dao.UploadQueueDao
 import com.subin.leafy.data.datasource.local.room.entity.NoteEntity
 import com.subin.leafy.data.datasource.local.room.entity.TeaEntity
 import com.subin.leafy.data.datasource.local.room.entity.TimerPresetEntity
+import com.subin.leafy.data.datasource.local.room.entity.UploadQueueEntity
 
 @Database(
     entities = [
         NoteEntity::class,
         TimerPresetEntity::class,
-        TeaEntity::class
+        TeaEntity::class,
+        UploadQueueEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -27,6 +30,7 @@ abstract class LeafyDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun timerDao(): TimerDao
     abstract fun teaDao(): TeaDao
+    abstract fun uploadQueueDao(): UploadQueueDao
 
     companion object {
         @Volatile

@@ -15,9 +15,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.leafy.shared.common.singleClick
+import com.leafy.shared.ui.theme.LeafyTheme
 
 @Composable
 fun LeafyDialog(
@@ -26,14 +29,17 @@ fun LeafyDialog(
     text: String,
     confirmText: String = "확인",
     dismissText: String = "취소",
+    containerColor: Color? = null,
     onConfirmClick: () -> Unit
 ) {
+    val dialogContainerColor = containerColor ?: MaterialTheme.colorScheme.surfaceContainerHigh
+
     Dialog(onDismissRequest = onDismissRequest) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    color = dialogContainerColor,
                     shape = RoundedCornerShape(16.dp)
                 )
                 .padding(24.dp),
@@ -62,5 +68,21 @@ fun LeafyDialog(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun UploadFailedDialogPreview() {
+    LeafyTheme {
+        LeafyDialog(
+            onDismissRequest = {},
+            title = "업로드에 실패했어요",
+            text = "네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
+            dismissText = "닫기",
+            confirmText = "다시 시도",
+            containerColor = Color.White,
+            onConfirmClick = {}
+        )
     }
 }

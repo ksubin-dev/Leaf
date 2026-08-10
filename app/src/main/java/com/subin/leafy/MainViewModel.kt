@@ -8,16 +8,24 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import com.leafy.shared.navigation.MainNavigationRoute
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.worker.SyncWorker
 import com.subin.leafy.domain.common.DataResourceResult
+import com.subin.leafy.domain.model.UploadTargetType
 import com.subin.leafy.domain.usecase.AuthUseCases
 import com.subin.leafy.domain.usecase.SettingUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
+import com.subin.leafy.domain.usecase.note.RecoverQueuedNoteUploadsUseCase
+import com.subin.leafy.domain.usecase.note.RetryFailedNoteUploadUseCase
+import com.subin.leafy.domain.usecase.post.RecoverQueuedCommunityUploadsUseCase
+import com.subin.leafy.domain.usecase.post.RetryFailedCommunityUploadUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,6 +34,11 @@ class MainViewModel @Inject constructor(
     private val userUseCases: UserUseCases,
     private val authUseCases: AuthUseCases,
     private val settingUseCases: SettingUseCases,
+    private val recoverQueuedNoteUploads: RecoverQueuedNoteUploadsUseCase,
+    private val recoverQueuedCommunityUploads: RecoverQueuedCommunityUploadsUseCase,
+    private val retryFailedNoteUpload: RetryFailedNoteUploadUseCase,
+    private val retryFailedCommunityUpload: RetryFailedCommunityUploadUseCase,
+    uploadQueueDataSource: UploadQueueDataSource,
     private val workManager: WorkManager
 ) : ViewModel() {
 
@@ -34,6 +47,13 @@ class MainViewModel @Inject constructor(
 
     private val _startDestination = MutableStateFlow<Any?>(null)
     val startDestination = _startDestination.asStateFlow()
+
+    val latestUploadQueue = uploadQueueDataSource.observeLatestVisible()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
 
     init {
         initializeApp()
@@ -57,6 +77,9 @@ class MainViewModel @Inject constructor(
                     ExistingWorkPolicy.KEEP,
                     syncRequest
                 )
+
+                runCatching { recoverQueuedNoteUploads() }
+                runCatching { recoverQueuedCommunityUploads() }
 
                 _startDestination.value = MainNavigationRoute.HomeTab
             }
@@ -88,6 +111,15 @@ class MainViewModel @Inject constructor(
                 } catch (e: Exception) {
                     Log.e("FCM_LOG", "토큰 동기화 실패", e)
                 }
+            }
+        }
+    }
+
+    fun retryUpload(queueId: String, targetType: UploadTargetType) {
+        viewModelScope.launch {
+            when (targetType) {
+                UploadTargetType.NOTE -> retryFailedNoteUpload(queueId)
+                UploadTargetType.COMMUNITY -> retryFailedCommunityUpload(queueId)
             }
         }
     }

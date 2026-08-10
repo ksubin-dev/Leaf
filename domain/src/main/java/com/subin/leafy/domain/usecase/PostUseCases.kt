@@ -33,7 +33,9 @@ data class PostUseCases @Inject constructor(
 
     val observePostChanges: ObservePostChangesUseCase,
 
-    val schedulePostUpload: SchedulePostUpload
+    val schedulePostUpload: SchedulePostUpload,
+    val recoverQueuedCommunityUploads: RecoverQueuedCommunityUploadsUseCase,
+    val retryFailedCommunityUpload: RetryFailedCommunityUploadUseCase
 
     //나중에 추가 신고 기능
 )

@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
 import com.leafy.shared.utils.ImageCompressor
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.BrewingRecipe
@@ -18,11 +19,13 @@ import com.subin.leafy.domain.model.TeaInfo
 import com.subin.leafy.domain.model.TeaItem
 import com.subin.leafy.domain.model.TeaType
 import com.subin.leafy.domain.model.TeawareType
+import com.subin.leafy.domain.model.UploadStatus
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.NoteUseCases
 import com.subin.leafy.domain.usecase.TeaUseCases
 import com.subin.leafy.domain.usecase.UserUseCases
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,6 +84,66 @@ class WorkerDoWorkPolicyTest {
     }
 
     @Test
+    fun `Note Worker는 업로드 성공 시 Queue 상태를 UPLOADING 이후 SYNCED로 갱신한다`() = runTest {
+        val noteUseCases = mockk<NoteUseCases>(relaxed = true)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        coEvery { noteUseCases.saveNote(any()) } returns DataResourceResult.Success(Unit)
+        val worker = uploadWorker(
+            inputData = noteUploadData(queueId = "NOTE_note-123"),
+            noteUseCases = noteUseCases,
+            uploadQueueDataSource = uploadQueueDataSource
+        )
+
+        val result = worker.doWork()
+
+        assertThat(result).isInstanceOf(ListenableWorker.Result.success()::class.java)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "NOTE_note-123",
+                status = UploadStatus.UPLOADING,
+                attempt = 0,
+                message = "업로드 중입니다.",
+                lastError = null
+            )
+        }
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "NOTE_note-123",
+                status = UploadStatus.SYNCED,
+                attempt = 0,
+                message = "업로드 완료",
+                lastError = null
+            )
+        }
+    }
+
+    @Test
+    fun `Note Worker는 재시도 가능한 실패 시 Queue 상태를 RETRYING으로 갱신한다`() = runTest {
+        val noteUseCases = mockk<NoteUseCases>(relaxed = true)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        coEvery { noteUseCases.saveNote(any()) } returns DataResourceResult.Failure(Exception("Firebase timeout"))
+        val worker = uploadWorker(
+            inputData = noteUploadData(queueId = "NOTE_note-123"),
+            noteUseCases = noteUseCases,
+            uploadQueueDataSource = uploadQueueDataSource,
+            runAttemptCount = 0
+        )
+
+        val result = worker.doWork()
+
+        assertThat(result).isInstanceOf(ListenableWorker.Result.retry()::class.java)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "NOTE_note-123",
+                status = UploadStatus.RETRYING,
+                attempt = 1,
+                message = "업로드 재시도 중 1/$MAX_RETRY_COUNT",
+                lastError = "Firebase timeout"
+            )
+        }
+    }
+
+    @Test
     fun `Note Worker는 이미지 업로드 실패가 최대 재시도에 도달하면 failure를 반환한다`() = runTest {
         val imageUseCases = mockk<ImageUseCases>(relaxed = true)
         val imageCompressor = mockk<ImageCompressor>(relaxed = true)
@@ -99,6 +162,57 @@ class WorkerDoWorkPolicyTest {
         val result = worker.doWork()
 
         assertThat(result).isInstanceOf(ListenableWorker.Result.failure()::class.java)
+    }
+
+    @Test
+    fun `Note Worker는 최대 재시도 도달 시 Queue 상태를 FAILED로 갱신한다`() = runTest {
+        val noteUseCases = mockk<NoteUseCases>(relaxed = true)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        coEvery { noteUseCases.saveNote(any()) } returns DataResourceResult.Failure(Exception("Firebase timeout"))
+        val worker = uploadWorker(
+            inputData = noteUploadData(queueId = "NOTE_note-123"),
+            noteUseCases = noteUseCases,
+            uploadQueueDataSource = uploadQueueDataSource,
+            runAttemptCount = MAX_RETRY_COUNT
+        )
+
+        val result = worker.doWork()
+
+        assertThat(result).isInstanceOf(ListenableWorker.Result.failure()::class.java)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "NOTE_note-123",
+                status = UploadStatus.FAILED,
+                attempt = MAX_RETRY_COUNT,
+                message = "업로드에 실패했어요.",
+                lastError = "Firebase timeout"
+            )
+        }
+    }
+
+    @Test
+    fun `Note Worker는 로그인 또는 권한 실패 시 Queue 상태를 AUTH_REQUIRED로 갱신한다`() = runTest {
+        val noteUseCases = mockk<NoteUseCases>(relaxed = true)
+        val uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
+        coEvery { noteUseCases.saveNote(any()) } returns DataResourceResult.Failure(Exception("로그인이 필요합니다."))
+        val worker = uploadWorker(
+            inputData = noteUploadData(queueId = "NOTE_note-123"),
+            noteUseCases = noteUseCases,
+            uploadQueueDataSource = uploadQueueDataSource
+        )
+
+        val result = worker.doWork()
+
+        assertThat(result).isInstanceOf(ListenableWorker.Result.failure()::class.java)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "NOTE_note-123",
+                status = UploadStatus.AUTH_REQUIRED,
+                attempt = 0,
+                message = "로그인이 필요해요.",
+                lastError = "로그인이 필요합니다."
+            )
+        }
     }
 
     @Test
@@ -143,6 +257,7 @@ class WorkerDoWorkPolicyTest {
         noteUseCases: NoteUseCases = mockk(relaxed = true),
         imageUseCases: ImageUseCases = mockk(relaxed = true),
         imageCompressor: ImageCompressor = mockk(relaxed = true),
+        uploadQueueDataSource: UploadQueueDataSource = mockk(relaxed = true),
         runAttemptCount: Int = 0
     ): UploadWorker {
         return UploadWorker(
@@ -150,7 +265,8 @@ class WorkerDoWorkPolicyTest {
             workerParams = workerParameters(inputData, runAttemptCount),
             noteUseCases = noteUseCases,
             imageUseCases = imageUseCases,
-            imageCompressor = imageCompressor
+            imageCompressor = imageCompressor,
+            uploadQueueDataSource = uploadQueueDataSource
         )
     }
 
@@ -197,13 +313,19 @@ class WorkerDoWorkPolicyTest {
     private fun noteUploadData(
         note: BrewingNote = brewingNote(),
         imageUris: List<String> = emptyList(),
-        isEditMode: Boolean = false
+        isEditMode: Boolean = false,
+        queueId: String? = null
     ): Data {
-        return Data.Builder()
+        val builder = Data.Builder()
             .putString(UploadWorker.KEY_NOTE_DATA, gson.toJson(note))
             .putString(UploadWorker.KEY_IMAGE_URIS, gson.toJson(imageUris))
             .putBoolean(UploadWorker.KEY_IS_EDIT_MODE, isEditMode)
-            .build()
+
+        if (queueId != null) {
+            builder.putString(UploadWorker.KEY_UPLOAD_QUEUE_ID, queueId)
+        }
+
+        return builder.build()
     }
 
     private fun brewingNote(): BrewingNote {
