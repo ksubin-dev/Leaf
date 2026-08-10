@@ -22,6 +22,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -341,6 +342,45 @@ class NoteRepositoryImplTest {
         }
         verify(exactly = 0) {
             workManager.enqueueUniqueWork(any(), any<ExistingWorkPolicy>(), any<OneTimeWorkRequest>())
+        }
+    }
+
+    @Test
+    fun `수동 재시도 시 - FAILED 노트 큐를 PENDING으로 되돌리고 기존 payload로 REPLACE 재등록한다`() = runTest {
+        val queuedNote = dummyNote.copy(id = "retry_note")
+        val failedQueue = uploadQueue(
+            note = queuedNote,
+            status = UploadStatus.FAILED,
+            imageUriStrings = listOf("file://internal-note.jpg"),
+            isEditMode = false
+        )
+        every {
+            workManager.enqueueUniqueWork(
+                any(),
+                any<ExistingWorkPolicy>(),
+                any<OneTimeWorkRequest>()
+            )
+        } returns mockk<Operation>(relaxed = true)
+        every { uploadQueueDataSource.observeById("NOTE_retry_note") } returns flowOf(failedQueue)
+
+        val result = repository.retryFailedNoteUpload("NOTE_retry_note")
+
+        assertThat(result).isInstanceOf(DataResourceResult.Success::class.java)
+        coVerify(exactly = 1) {
+            uploadQueueDataSource.updateStatus(
+                id = "NOTE_retry_note",
+                status = UploadStatus.PENDING,
+                attempt = 0,
+                message = "업로드 대기 중입니다.",
+                lastError = null
+            )
+        }
+        verify(exactly = 1) {
+            workManager.enqueueUniqueWork(
+                "upload_note_retry_note",
+                ExistingWorkPolicy.REPLACE,
+                any<OneTimeWorkRequest>()
+            )
         }
     }
 

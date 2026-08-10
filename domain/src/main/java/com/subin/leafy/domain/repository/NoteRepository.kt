@@ -21,4 +21,5 @@ interface NoteRepository {
 
     suspend fun scheduleNoteUpload(note: BrewingNote, imageUriStrings: List<String>, isEditMode: Boolean)
     suspend fun recoverQueuedNoteUploads(): Int
+    suspend fun retryFailedNoteUpload(queueId: String): DataResourceResult<Unit>
 }

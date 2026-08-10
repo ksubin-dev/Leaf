@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -364,6 +365,46 @@ class PostRepositoryImpl @Inject constructor(
         }
 
         return recoveredCount
+    }
+
+    override suspend fun retryFailedCommunityUpload(queueId: String): DataResourceResult<Unit> {
+        val queue = uploadQueueDataSource.observeById(queueId).first()
+            ?: return DataResourceResult.Failure(Exception("재시도할 업로드 요청을 찾을 수 없습니다."))
+
+        if (queue.targetType != UploadTargetType.COMMUNITY) {
+            return DataResourceResult.Failure(Exception("커뮤니티 업로드 요청이 아닙니다."))
+        }
+
+        if (queue.status != UploadStatus.FAILED && queue.status != UploadStatus.AUTH_REQUIRED) {
+            return DataResourceResult.Failure(Exception("수동 재시도가 필요한 상태가 아닙니다."))
+        }
+
+        val payload = queue.toCommunityUploadPayload()
+        if (payload == null) {
+            uploadQueueDataSource.updateStatus(
+                id = queue.id,
+                status = UploadStatus.FAILED,
+                attempt = queue.attempt,
+                message = "업로드 요청 정보가 올바르지 않습니다.",
+                lastError = "Invalid community upload payload"
+            )
+            return DataResourceResult.Failure(Exception("업로드 요청 정보가 올바르지 않습니다."))
+        }
+
+        uploadQueueDataSource.updateStatus(
+            id = queue.id,
+            status = UploadStatus.PENDING,
+            attempt = 0,
+            message = "업로드 대기 중입니다.",
+            lastError = null
+        )
+        enqueueCommunityUpload(
+            queueId = queue.id,
+            payload = payload,
+            existingWorkPolicy = ExistingWorkPolicy.REPLACE
+        )
+
+        return DataResourceResult.Success(Unit)
     }
 
     private fun enqueueCommunityUpload(

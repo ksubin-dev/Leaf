@@ -90,4 +90,6 @@ interface PostRepository {
     )
 
     suspend fun recoverQueuedCommunityUploads(): Int
+
+    suspend fun retryFailedCommunityUpload(queueId: String): DataResourceResult<Unit>
 }

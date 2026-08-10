@@ -115,5 +115,9 @@ class NoteUseCaseImageValidationTest {
         ) = Unit
 
         override suspend fun recoverQueuedNoteUploads(): Int = 0
+
+        override suspend fun retryFailedNoteUpload(queueId: String): DataResourceResult<Unit> {
+            return DataResourceResult.Success(Unit)
+        }
     }
 }
