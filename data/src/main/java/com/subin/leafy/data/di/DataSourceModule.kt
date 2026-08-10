@@ -74,4 +74,8 @@ abstract class DataSourceModule {
     @Binds
     @Singleton
     abstract fun bindLocalTeaDataSource(impl: LocalTeaDataSourceImpl): LocalTeaDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindUploadQueueDataSource(impl: UploadQueueDataSourceImpl): UploadQueueDataSource
 }

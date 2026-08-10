@@ -5,6 +5,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.google.common.truth.Truth.assertThat
 import com.leafy.shared.utils.ImageCompressor
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.usecase.ImageUseCases
 import com.subin.leafy.domain.usecase.PostUseCases
@@ -255,7 +256,8 @@ class CommunityUploadProcessorTest {
             workerParams = workerParameters(inputData, runAttemptCount),
             userUseCases = userUseCases,
             uploadProcessor = uploadProcessor,
-            foregroundInfoProvider = foregroundInfoProvider
+            foregroundInfoProvider = foregroundInfoProvider,
+            uploadQueueDataSource = mockk<UploadQueueDataSource>(relaxed = true)
         )
     }
 

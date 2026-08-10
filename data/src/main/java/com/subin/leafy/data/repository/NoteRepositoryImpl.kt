@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import com.google.gson.Gson
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.worker.UploadWorker
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.RemoteNoteDataSource
@@ -20,6 +21,9 @@ import com.subin.leafy.data.util.BadgeLibrary
 import com.subin.leafy.domain.common.DataResourceResult
 import com.subin.leafy.domain.model.BrewingNote
 import com.subin.leafy.domain.model.PostSocialState
+import com.subin.leafy.domain.model.UploadQueue
+import com.subin.leafy.domain.model.UploadStatus
+import com.subin.leafy.domain.model.UploadTargetType
 import com.subin.leafy.domain.model.UserBadge
 import com.subin.leafy.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +34,7 @@ import javax.inject.Inject
 
 class NoteRepositoryImpl @Inject constructor(
     private val localNoteDataSource: LocalNoteDataSource,
+    private val uploadQueueDataSource: UploadQueueDataSource,
     private val remoteNoteDataSource: RemoteNoteDataSource,
     private val authDataSource: AuthDataSource,
     private val userDataSource: UserDataSource,
@@ -174,8 +179,33 @@ class NoteRepositoryImpl @Inject constructor(
         val gson = Gson()
         val noteJson = gson.toJson(note)
         val imagesJson = gson.toJson(imageUriStrings)
+        val queueId = uploadQueueId(UploadTargetType.NOTE, note.id)
+
+        if (isEditMode) {
+            localNoteDataSource.updateNote(note)
+        } else {
+            localNoteDataSource.insertNote(note)
+        }
+
+        uploadQueueDataSource.upsert(
+            UploadQueue(
+                id = queueId,
+                targetType = UploadTargetType.NOTE,
+                targetId = note.id,
+                status = UploadStatus.PENDING,
+                payload = gson.toJson(
+                    mapOf(
+                        "note" to note,
+                        "imageUriStrings" to imageUriStrings,
+                        "isEditMode" to isEditMode
+                    )
+                ),
+                message = "백그라운드 업로드 대기 중입니다."
+            )
+        )
 
         val inputData = Data.Builder()
+            .putString(UploadWorker.KEY_UPLOAD_QUEUE_ID, queueId)
             .putString(UploadWorker.KEY_NOTE_DATA, noteJson)
             .putString(UploadWorker.KEY_IMAGE_URIS, imagesJson)
             .putBoolean(UploadWorker.KEY_IS_EDIT_MODE, isEditMode)
@@ -202,6 +232,10 @@ class NoteRepositoryImpl @Inject constructor(
             ExistingWorkPolicy.REPLACE,
             uploadWorkRequest
         )
+    }
+
+    private fun uploadQueueId(targetType: UploadTargetType, targetId: String): String {
+        return "${targetType.name}_$targetId"
     }
 
     private suspend fun checkAndGrantBadges(userId: String) {

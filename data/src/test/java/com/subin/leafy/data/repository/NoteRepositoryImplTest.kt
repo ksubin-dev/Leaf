@@ -6,6 +6,7 @@ import androidx.work.Operation
 import androidx.work.WorkManager
 import com.google.common.truth.Truth.assertThat
 import com.subin.leafy.data.datasource.local.LocalNoteDataSource
+import com.subin.leafy.data.datasource.local.UploadQueueDataSource
 import com.subin.leafy.data.datasource.remote.AuthDataSource
 import com.subin.leafy.data.datasource.remote.RemoteNoteDataSource
 import com.subin.leafy.data.datasource.remote.UserDataSource
@@ -27,6 +28,7 @@ import org.junit.Test
 class NoteRepositoryImplTest {
 
     private lateinit var localNoteDataSource: LocalNoteDataSource
+    private lateinit var uploadQueueDataSource: UploadQueueDataSource
     private lateinit var remoteNoteDataSource: RemoteNoteDataSource
     private lateinit var authDataSource: AuthDataSource
     private lateinit var userDataSource: UserDataSource
@@ -37,6 +39,7 @@ class NoteRepositoryImplTest {
     @Before
     fun setUp() {
         localNoteDataSource = mockk()
+        uploadQueueDataSource = mockk(relaxed = true)
         remoteNoteDataSource = mockk()
         authDataSource = mockk()
         userDataSource = mockk()
@@ -44,6 +47,7 @@ class NoteRepositoryImplTest {
 
         repository = NoteRepositoryImpl(
             localNoteDataSource = localNoteDataSource,
+            uploadQueueDataSource = uploadQueueDataSource,
             remoteNoteDataSource = remoteNoteDataSource,
             authDataSource = authDataSource,
             userDataSource = userDataSource,
@@ -151,6 +155,7 @@ class NoteRepositoryImplTest {
                 any<OneTimeWorkRequest>()
             )
         } returns mockk<Operation>(relaxed = true)
+        coEvery { localNoteDataSource.insertNote(dummyNote) } just Runs
 
         repository.scheduleNoteUpload(dummyNote, imageUris, isEditMode = false)
 

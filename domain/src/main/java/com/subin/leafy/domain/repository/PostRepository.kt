@@ -79,7 +79,7 @@ interface PostRepository {
 
     fun getMyBookmarkedPosts(): Flow<DataResourceResult<List<CommunityPost>>>
 
-    fun schedulePostUpload(
+    suspend fun schedulePostUpload(
         title: String,
         content: String,
         tags: List<String>,

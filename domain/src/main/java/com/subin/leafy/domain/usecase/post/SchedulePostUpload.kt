@@ -6,7 +6,7 @@ import javax.inject.Inject
 class SchedulePostUpload @Inject constructor(
     private val repository: PostRepository
 ) {
-    operator fun invoke(
+    suspend operator fun invoke(
         title: String,
         content: String,
         tags: List<String>,
