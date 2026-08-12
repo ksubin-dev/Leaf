@@ -6,14 +6,16 @@
 
 이 분석의 목적은 단순히 커버리지가 낮은 클래스를 나열하는 것이 아니라, 제한된 테스트 작성 자원을 사용자 영향과 실패 위험이 큰 영역에 먼저 배분하는 것입니다.
 
-- Prompt version: `1.0`
+- Prompt version: `1.1`
 - Output schema version: `1.0`
 
 ## 사용 방식과 적용 범위
 
-이 문서는 CI에서 AI API를 직접 호출하기 위한 설정 파일이 아닙니다.
+이 문서는 사람이 직접 붙여넣는 반자동 분석과 수동 GitHub Actions workflow의 AI API 호출에서 공통으로 사용하는 분석 기준입니다.
 
-현재 적용 범위는 사람이 GitHub Actions Summary 또는 `jacoco-coverage-summary` artifact에서 `coverage-summary.md` 내용을 확인한 뒤, 아래 프롬프트에 붙여넣어 AI 분석을 받는 반자동 방식입니다.
+PR CI에서는 비용과 secret 노출 위험을 줄이기 위해 AI API를 자동 호출하지 않습니다.
+
+AI 분석 artifact가 필요하면 `AI Coverage Analysis` workflow를 수동으로 실행합니다. 이 workflow는 `OPENAI_API_KEY` secret이 설정된 경우에만 API를 호출하고, 실패하거나 secret이 없으면 커스텀 HTML 리포트의 AI placeholder로 돌아갑니다.
 
 사용 흐름:
 
@@ -21,12 +23,13 @@
 PR CI 실행
 -> coverage-summary.md 자동 생성
 -> GitHub Actions Summary 또는 artifact에서 요약 확인
--> 이 문서의 프롬프트에 coverage-summary.md 내용 붙여넣기
--> AI가 테스트 우선순위와 위험 영역 분석
+-> 필요하면 AI Coverage Analysis workflow 수동 실행
+-> AI가 테스트 우선순위와 위험 영역 JSON 생성
+-> 커스텀 HTML artifact에서 AI 분석 요약 확인
 -> 다음 테스트 이슈 또는 PR 계획에 반영
 ```
 
-향후 #121 커스텀 HTML 리포트에서는 이 프롬프트의 JSON 출력을 HTML 카드와 표로 렌더링할 수 있도록 연결합니다.
+로컬에서 직접 AI 분석을 받은 경우에도 동일한 JSON 구조로 `docs/ai-coverage-analysis-result.json`에 저장하면 커스텀 HTML 리포트에서 렌더링할 수 있습니다.
 
 ## 입력 데이터의 한계
 
@@ -39,6 +42,10 @@ PR CI 실행
 - 라인 커버리지 0% 클래스 수
 - 라인 커버리지가 낮은 클래스 목록
 - 클래스별 커버된 라인과 누락 라인
+- 핵심 품질 계층 커버리지 요약
+- 핵심 품질 계층 낮은 커버리지 영역
+- UI/Compose 별도 검토 영역
+- AI 분석 입력 요약
 
 다음 정보는 별도로 제공되지 않을 수 있습니다.
 
@@ -66,6 +73,8 @@ PR CI 실행
 8. 커버리지 목표 수치가 제공되지 않았다면 특정 수치 달성을 품질 기준으로 단정하지 마세요.
 9. 동일한 0% 커버리지라도 누락 라인 수와 기능의 실패 영향을 함께 고려하세요.
 10. 분석 결과에 사용한 가정과 한계를 반드시 기록하세요.
+11. 전체 커버리지는 참고 지표로 보고, 테스트 우선순위는 `핵심 품질 계층 커버리지 요약`과 `핵심 품질 계층 낮은 영역`을 먼저 사용하세요.
+12. `UI/Compose 별도 검토 영역`은 단순 렌더링 가능성이 큰 보류 영역으로 분리하되, 입력 검증, 저장/삭제 트리거, 복잡한 상태 분기가 확인되는 경우에만 테스트 후보로 올리세요.
 
 ## Leafy 테스트 우선순위 기준
 
@@ -83,6 +92,8 @@ PR CI 실행
 - ViewModel의 상태 전환 및 오류 처리
 - 비동기 처리와 예외 복구
 - 인증 및 권한 처리
+- UploadQueue 상태 전이와 복구 정책
+- 동기화 재등록, 중복 enqueue, idempotency 정책
 
 ### 별도 검토 영역
 
@@ -97,6 +108,8 @@ Compose UI 클래스는 다른 계층과 분리하여 검토해주세요.
 - 데이터 저장 또는 삭제 트리거
 - 장애가 발생했던 화면
 
+`UI/Compose 별도 검토 영역`에 있는 클래스는 기본적으로 보류 영역에 정리하고, 위 조건이 확인될 때만 위험 영역 또는 테스트 후보로 이동하세요.
+
 ## 계층 분류
 
 각 클래스는 가능한 경우 다음 중 하나로 분류해주세요.
@@ -110,6 +123,7 @@ Compose UI 클래스는 다른 계층과 분리하여 검토해주세요.
 - StateHolder
 - Compose UI
 - Database
+- Sync/Upload Queue
 - Network
 - Utility
 - 분류 불가
@@ -165,6 +179,8 @@ JSON에서는 반드시 `high`, `medium`, `low` 중 하나를 사용해주세요
 | Method |  |  |  |
 
 Branch 커버리지가 Line 커버리지보다 현저히 낮다면 조건문과 예외 흐름 검증 부족 가능성을 언급하되, 실제 원인으로 단정하지 마세요.
+
+전체 커버리지와 핵심 품질 계층 커버리지가 함께 제공된 경우에는 두 값을 구분해서 설명해주세요. 전체 커버리지는 앱 전체 자동 검증 수준, 핵심 품질 계층 커버리지는 저장/업로드/동기화 안정성 테스트의 우선 신호로 해석합니다.
 
 ### 3. 위험도가 높은 미검증 영역
 
@@ -251,7 +267,7 @@ JSON은 반드시 유효한 JSON이어야 하며 주석, Markdown 문법, 후행
 ```json
 {
   "schemaVersion": "1.0",
-  "promptVersion": "1.0",
+  "promptVersion": "1.1",
   "overallSummary": {
     "plainLanguageSummary": "",
     "technicalSummary": "",
@@ -335,6 +351,8 @@ JSON은 반드시 유효한 JSON이어야 하며 주석, Markdown 문법, 후행
 - WorkManager retry와 중복 실행 가능성을 우선 검증한다.
 - Repository, DataSource, Worker, Mapper, ViewModel을 우선 검토한다.
 - 단순 Compose UI는 별도 그룹으로 분리한다.
+- 전체 커버리지보다 핵심 품질 계층 커버리지와 낮은 영역을 우선 판단한다.
+- UI/Compose 별도 검토 영역은 핵심 사용자 흐름 조건이 확인될 때만 테스트 후보로 올린다.
 
 ### PR 정보
 
