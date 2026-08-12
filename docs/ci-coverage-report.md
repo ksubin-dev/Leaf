@@ -36,6 +36,8 @@ CI 환경에서는 보안상 실제 `app/google-services.json`을 커밋하지 �
 
 AI 분석을 자동으로 artifact까지 연결하고 싶을 때는 `AI Coverage Analysis` workflow를 수동으로 실행한다. 이 workflow는 `workflow_dispatch` 전용이며, `OPENAI_API_KEY` repository secret이 설정된 경우에만 OpenAI Responses API를 호출한다. 모델은 workflow 입력값으로 바꿀 수 있고 기본값은 `gpt-5-mini`다.
 
+GitHub Actions의 수동 실행 workflow는 repository 기본 브랜치에 workflow 파일이 반영된 뒤 Actions 목록에서 선택할 수 있다. Leafy의 기본 브랜치는 `main`이므로, develop에만 머지된 상태에서는 `AI Coverage Analysis`가 Actions 목록에 표시되지 않을 수 있다. 이 경우 develop을 main에 반영한 뒤 workflow 노출과 수동 실행을 확인한다.
+
 운영 기준은 다음과 같다.
 
 - `pull_request` 이벤트에서는 AI API를 호출하지 않는다.
