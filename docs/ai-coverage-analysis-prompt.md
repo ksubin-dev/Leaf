@@ -11,9 +11,11 @@
 
 ## 사용 방식과 적용 범위
 
-이 문서는 CI에서 AI API를 직접 호출하기 위한 설정 파일이 아닙니다.
+이 문서는 사람이 직접 붙여넣는 반자동 분석과 수동 GitHub Actions workflow의 AI API 호출에서 공통으로 사용하는 분석 기준입니다.
 
-현재 적용 범위는 사람이 GitHub Actions Summary 또는 `jacoco-coverage-summary` artifact에서 `coverage-summary.md` 내용을 확인한 뒤, 아래 프롬프트에 붙여넣어 AI 분석을 받는 반자동 방식입니다.
+PR CI에서는 비용과 secret 노출 위험을 줄이기 위해 AI API를 자동 호출하지 않습니다.
+
+AI 분석 artifact가 필요하면 `AI Coverage Analysis` workflow를 수동으로 실행합니다. 이 workflow는 `OPENAI_API_KEY` secret이 설정된 경우에만 API를 호출하고, 실패하거나 secret이 없으면 커스텀 HTML 리포트의 AI placeholder로 돌아갑니다.
 
 사용 흐름:
 
@@ -21,12 +23,13 @@
 PR CI 실행
 -> coverage-summary.md 자동 생성
 -> GitHub Actions Summary 또는 artifact에서 요약 확인
--> 이 문서의 프롬프트에 coverage-summary.md 내용 붙여넣기
--> AI가 테스트 우선순위와 위험 영역 분석
+-> 필요하면 AI Coverage Analysis workflow 수동 실행
+-> AI가 테스트 우선순위와 위험 영역 JSON 생성
+-> 커스텀 HTML artifact에서 AI 분석 요약 확인
 -> 다음 테스트 이슈 또는 PR 계획에 반영
 ```
 
-향후 #121 커스텀 HTML 리포트에서는 이 프롬프트의 JSON 출력을 HTML 카드와 표로 렌더링할 수 있도록 연결합니다.
+로컬에서 직접 AI 분석을 받은 경우에도 동일한 JSON 구조로 `docs/ai-coverage-analysis-result.json`에 저장하면 커스텀 HTML 리포트에서 렌더링할 수 있습니다.
 
 ## 입력 데이터의 한계
 
