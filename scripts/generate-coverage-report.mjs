@@ -17,6 +17,10 @@ const context = parseContext(summaryMarkdown);
 const metrics = parseMetrics(summaryMarkdown);
 const lowCoverageAreas = parseLowCoverageAreas(summaryMarkdown);
 const layerSummary = summarizeLayers(lowCoverageAreas);
+const coreLayerSummaries = parseLayerSummaries(summaryMarkdown, "핵심 품질 계층 커버리지 요약");
+const coreLowCoverageAreas = parseCoverageAreaSection(summaryMarkdown, "핵심 품질 계층 낮은 영역");
+const uiLayerSummaries = parseLayerSummaries(summaryMarkdown, "UI/Compose 별도 검토 영역");
+const uiCoverageAreas = parseCoverageAreaSection(summaryMarkdown, "UI/Compose 별도 검토 영역");
 const aiAnalysis = loadAiAnalysis(args["ai-json"] ?? "docs/ai-coverage-analysis-result.json");
 
 fs.mkdirSync(outDir, { recursive: true });
@@ -27,8 +31,14 @@ fs.writeFileSync(
     metrics,
     lowCoverageAreas,
     layerSummary,
+    coreLayerSummaries,
+    coreLowCoverageAreas,
+    uiLayerSummaries,
+    uiCoverageAreas,
     aiAnalysis,
     zeroCoverageCount: parseZeroCoverageCount(summaryMarkdown),
+    coreZeroCoverageCount: parseNamedZeroCoverageCount(summaryMarkdown, "핵심 품질 계층"),
+    uiZeroCoverageCount: parseNamedZeroCoverageCount(summaryMarkdown, "UI/Compose 별도 검토 계층"),
     classCount: csvRows.length,
   }),
   "utf8",
@@ -80,24 +90,46 @@ function parseMetrics(markdown) {
 }
 
 function parseLowCoverageAreas(markdown) {
-  const section = getSection(markdown, "커버리지가 낮은 영역");
-  const rows = parseMarkdownTable(section);
+  return parseCoverageAreaSection(markdown, "커버리지가 낮은 영역");
+}
+
+function parseCoverageAreaSection(markdown, heading) {
+  const section = getSection(markdown, heading);
+  const rows = parseMarkdownTableByHeaders(section, ["클래스"]);
   return rows.map((row) => {
     const name = stripCode(row["클래스"] ?? "");
+    const layer = row["계층"] ?? classifyLayer(name);
     return {
       name,
-      layer: classifyLayer(name),
+      layer,
       lineCoverage: row["라인 커버리지"] ?? "",
       coveredLines: row["커버된 라인"] ?? "",
       missedLines: row["누락 라인"] ?? "",
-      priority: recommendPriority(name),
-      userImpact: describeImpact(name),
+      priority: recommendPriority(name, layer),
+      userImpact: describeImpact(name, layer),
     };
   }).filter((row) => row.name && row.name !== "라인 커버리지 데이터 없음");
 }
 
+function parseLayerSummaries(markdown, heading) {
+  const section = getSection(markdown, heading);
+  const rows = parseMarkdownTableByHeaders(section, ["계층", "0% 클래스"]);
+  return rows.map((row) => ({
+    layer: row["계층"] ?? "",
+    lineCoverage: row["라인 커버리지"] ?? "",
+    coveredLines: row["커버된 라인"] ?? "",
+    missedLines: row["누락 라인"] ?? "",
+    zeroCoverageClasses: row["0% 클래스"] ?? "",
+  })).filter((row) => row.layer && row.layer !== "데이터 없음");
+}
+
 function parseZeroCoverageCount(markdown) {
   const match = markdown.match(/라인 커버리지 0% 클래스 수:\s*(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+function parseNamedZeroCoverageCount(markdown, label) {
+  const match = markdown.match(new RegExp(`${escapeRegExp(label)} 0% 클래스 수:\\s*(\\d+)`));
   return match ? Number(match[1]) : null;
 }
 
@@ -135,32 +167,73 @@ function stripCode(value) {
 
 function classifyLayer(className) {
   const lower = className.toLowerCase();
+  if (lower.includes("uploadqueue")) return "Sync/Upload Queue";
+  if (lower.includes("worker")) return "Worker";
   if (lower.includes("repository")) return "Repository";
   if (lower.includes("datasource")) return "DataSource";
-  if (lower.includes("worker")) return "Worker";
   if (lower.includes("mapper")) return "Mapper";
-  if (lower.includes("usecase")) return "UseCase";
   if (lower.includes("viewmodel")) return "ViewModel";
-  if (lower.includes("screen") || lower.includes("component") || lower.endsWith("kt")) return "Compose UI";
-  if (lower.includes("dao") || lower.includes("database")) return "Database";
+  if (lower.includes("usecase")) return "UseCase";
+  if (lower.includes(".dao.") || lower.includes("database") || lower.includes(".room.")) return "Database";
+  if (lower.includes("sync")) return "Sync/Upload Queue";
+  if (lower.includes("uistate") || lower.includes("stateholder")) return "StateHolder";
+  if (lower.includes("navigation") || lower.includes("navgraph") || lower.includes("route")) return "Navigation";
+  if (lower.includes("screen") || lower.includes("component") || lower.includes(".ui.") || lower.includes(".presentation.")) return "Compose UI";
+  if (lower.includes("util") || lower.includes("utils") || lower.includes("policy")) return "Utility";
   return "분류 필요";
 }
 
-function recommendPriority(className) {
-  const layer = classifyLayer(className);
-  if (["DataSource", "Repository", "Worker", "Mapper", "ViewModel"].includes(layer)) return "P1";
-  if (["UseCase", "Database"].includes(layer)) return "P2";
+function parseMarkdownTableByHeaders(section, requiredHeaders) {
+  const lines = section
+    .split(/\r?\n/)
+    .map((line) => line.trim());
+
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const line = lines[index];
+    const separator = lines[index + 1];
+    if (!line.startsWith("|") || !line.endsWith("|")) continue;
+    if (!separator.startsWith("|") || !separator.endsWith("|")) continue;
+
+    const headers = splitTableLine(line);
+    if (!requiredHeaders.every((header) => headers.includes(header))) continue;
+
+    const tableLines = [];
+    for (let tableIndex = index + 2; tableIndex < lines.length; tableIndex += 1) {
+      const tableLine = lines[tableIndex];
+      if (!tableLine.startsWith("|") || !tableLine.endsWith("|")) break;
+      tableLines.push(tableLine);
+    }
+
+    return tableLines.map((tableLine) => {
+      const values = splitTableLine(tableLine);
+      return Object.fromEntries(headers.map((header, valueIndex) => [header, values[valueIndex] ?? ""]));
+    });
+  }
+
+  return [];
+}
+
+function recommendPriority(className, providedLayer) {
+  const layer = providedLayer ?? classifyLayer(className);
+  if (["DataSource", "Repository", "Worker", "Mapper", "ViewModel", "Sync/Upload Queue"].includes(layer)) return "P1";
+  if (["UseCase", "Database", "Utility"].includes(layer)) return "P2";
   return "P3";
 }
 
-function describeImpact(className) {
-  const layer = classifyLayer(className);
+function describeImpact(className, providedLayer) {
+  const layer = providedLayer ?? classifyLayer(className);
   if (layer === "DataSource") return "저장/조회 실패 시 사용자 데이터가 누락되거나 잘못 표시될 수 있어 먼저 확인이 필요합니다.";
   if (layer === "Repository") return "데이터 흐름의 성공/실패 전달이 흔들리면 여러 화면에 영향이 퍼질 수 있습니다.";
   if (layer === "Worker") return "백그라운드 저장, 재시도, 중복 실행 정책이 의도대로 동작하는지 검증이 필요합니다.";
   if (layer === "Mapper") return "데이터 변환 오류가 있으면 화면과 저장소의 값이 다르게 보일 수 있습니다.";
   if (layer === "ViewModel") return "상태 전환 오류가 있으면 사용자가 저장 결과를 잘못 인지할 수 있습니다.";
+  if (layer === "UseCase") return "비즈니스 규칙의 성공/실패 분기가 의도대로 유지되는지 확인이 필요합니다.";
+  if (layer === "Database") return "로컬 저장과 조회 정책이 흔들리면 오프라인 데이터와 복구 흐름에 영향을 줄 수 있습니다.";
+  if (layer === "Sync/Upload Queue") return "대기, 재시도, 실패 상태 전이가 사용자 데이터 복구 흐름과 직접 연결됩니다.";
+  if (layer === "Utility") return "공통 정책이나 유틸리티 오류가 여러 저장/업로드 흐름에 반복 영향을 줄 수 있습니다.";
   if (layer === "Compose UI") return "현재 정보만으로는 높은 위험으로 단정하기 어려워 핵심 사용자 흐름 중심으로 보류합니다.";
+  if (layer === "Navigation") return "단순 이동 정의는 보류하되 인증/저장 결과에 따른 분기가 있으면 다시 확인합니다.";
+  if (layer === "StateHolder") return "상태 모델 자체는 보류하되 오류/저장 상태 분기가 복잡하면 테스트 후보로 다시 봅니다.";
   return "클래스명만으로 역할을 확정하기 어려워 추가 코드 확인이 필요합니다.";
 }
 
@@ -182,7 +255,21 @@ function loadAiAnalysis(filePath) {
   }
 }
 
-function renderHtml({ context, metrics, lowCoverageAreas, layerSummary, aiAnalysis, zeroCoverageCount, classCount }) {
+function renderHtml({
+  context,
+  metrics,
+  lowCoverageAreas,
+  layerSummary,
+  coreLayerSummaries,
+  coreLowCoverageAreas,
+  uiLayerSummaries,
+  uiCoverageAreas,
+  aiAnalysis,
+  zeroCoverageCount,
+  coreZeroCoverageCount,
+  uiZeroCoverageCount,
+  classCount,
+}) {
   const generatedAt = context.find((item) => item.label === "Generated At")?.value ?? new Date().toISOString();
   const lineMetric = metrics.find((metric) => metric.label === "Line");
   const branchMetric = metrics.find((metric) => metric.label === "Branch");
@@ -399,9 +486,28 @@ function renderHtml({ context, metrics, lowCoverageAreas, layerSummary, aiAnalys
       </article>
     </section>
 
+    <section class="grid two-col">
+      ${renderLayerSummaryPanel(
+        "핵심 품질 계층",
+        `Worker, Repository, DataSource, Mapper, ViewModel 등 사용자 데이터 흐름과 직접 맞닿은 계층입니다. 0% 클래스 ${formatNumber(coreZeroCoverageCount)}개를 우선 신호로 봅니다.`,
+        coreLayerSummaries,
+      )}
+      ${renderLayerSummaryPanel(
+        "UI/Compose 별도 검토",
+        `Screen, Navigation, Component 등은 핵심 계층과 분리해 해석합니다. 0% 클래스 ${formatNumber(uiZeroCoverageCount)}개는 단순 렌더링 여부를 먼저 확인합니다.`,
+        uiLayerSummaries,
+      )}
+    </section>
+
+    ${renderCoverageAreaPanel(
+      "핵심 품질 계층 낮은 영역",
+      "AI 분석과 다음 테스트 후보 산정에서 먼저 볼 영역입니다. 저장, 업로드, 동기화, 데이터 변환, 상태 전환 실패 가능성을 중심으로 해석합니다.",
+      coreLowCoverageAreas,
+    )}
+
     <section class="panel">
       <h2>커버리지가 낮은 영역</h2>
-      <p class="note">라인 커버리지 오름차순, 누락 라인 내림차순 기준 상위 영역입니다. 우선순위는 클래스명과 계층을 기준으로 한 보수적 추정입니다.</p>
+      <p class="note">전체 앱 기준 상위 영역입니다. UI 코드가 섞일 수 있으므로 테스트 우선순위는 핵심 품질 계층 표를 먼저 확인합니다.</p>
       <table>
         <thead>
           <tr>
@@ -426,6 +532,12 @@ function renderHtml({ context, metrics, lowCoverageAreas, layerSummary, aiAnalys
         </tbody>
       </table>
     </section>
+
+    ${renderCoverageAreaPanel(
+      "UI/Compose 별도 검토 영역",
+      "단순 렌더링 코드는 보류하되 입력 검증, 저장/삭제 트리거, 복잡한 상태 분기, 장애 이력이 확인되면 다시 테스트 후보로 올립니다.",
+      uiCoverageAreas,
+    )}
 
     ${renderAiSection(aiAnalysis)}
 
@@ -562,6 +674,62 @@ function renderAiSection(aiAnalysis) {
     </section>`;
 }
 
+function renderLayerSummaryPanel(title, note, summaries) {
+  return `<article class="panel">
+        <h2>${escapeHtml(title)}</h2>
+        <p class="note">${escapeHtml(note)}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>계층</th>
+              <th class="numeric">라인 커버리지</th>
+              <th class="numeric">누락 라인</th>
+              <th class="numeric">0% 클래스</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${summaries.length ? summaries.map((summary) => `
+            <tr>
+              <td>${escapeHtml(summary.layer)}</td>
+              <td class="numeric">${escapeHtml(summary.lineCoverage)}</td>
+              <td class="numeric">${escapeHtml(summary.missedLines)}</td>
+              <td class="numeric">${escapeHtml(summary.zeroCoverageClasses)}</td>
+            </tr>`).join("\n") : emptyRow(4, "계층 요약 정보가 없습니다.")}
+          </tbody>
+        </table>
+      </article>`;
+}
+
+function renderCoverageAreaPanel(title, note, areas) {
+  return `<section class="panel">
+      <h2>${escapeHtml(title)}</h2>
+      <p class="note">${escapeHtml(note)}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>우선순위</th>
+            <th>계층</th>
+            <th>대상</th>
+            <th class="numeric">라인 커버리지</th>
+            <th class="numeric">누락 라인</th>
+            <th>확인 관점</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${areas.length ? areas.map((area) => `
+          <tr>
+            <td><span class="badge ${area.priority.toLowerCase()}">${escapeHtml(area.priority)}</span></td>
+            <td>${escapeHtml(area.layer)}</td>
+            <td><code>${escapeHtml(area.name)}</code></td>
+            <td class="numeric">${escapeHtml(area.lineCoverage)}</td>
+            <td class="numeric">${escapeHtml(area.missedLines)}</td>
+            <td>${escapeHtml(area.userImpact)}</td>
+          </tr>`).join("\n") : emptyRow(6, "라인 커버리지 데이터가 없습니다.")}
+        </tbody>
+      </table>
+    </section>`;
+}
+
 function emptyRow(colspan, message) {
   return `<tr><td class="empty-row" colspan="${colspan}">${escapeHtml(message)}</td></tr>`;
 }
@@ -592,4 +760,8 @@ function escapeHtml(value) {
 function formatNumber(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "정보 없음";
   return Number(value).toLocaleString("ko-KR");
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

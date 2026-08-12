@@ -44,12 +44,41 @@ val coverageExclusions = listOf(
 
 data class CoverageArea(
     val name: String,
+    val layer: String,
     val missed: Int,
     val covered: Int
 ) {
     val coverage: Double
         get() = coveragePercent(missed, covered)
 }
+
+data class CoverageLayerSummary(
+    val layer: String,
+    val missed: Int,
+    val covered: Int,
+    val zeroCoverageCount: Int
+) {
+    val coverage: Double
+        get() = coveragePercent(missed, covered)
+}
+
+val coreQualityLayers = listOf(
+    "Worker",
+    "Repository",
+    "DataSource",
+    "Mapper",
+    "ViewModel",
+    "UseCase",
+    "Database",
+    "Sync/Upload Queue",
+    "Utility"
+)
+
+val uiCoverageLayers = listOf(
+    "Compose UI",
+    "Navigation",
+    "StateHolder"
+)
 
 fun coveragePercent(missed: Int, covered: Int): Double {
     val total = missed + covered
@@ -64,6 +93,49 @@ fun displayCoverageName(row: Map<String, String>): String {
     val packageName = row["PACKAGE"].orEmpty().replace("/", ".")
     val className = row["CLASS"].orEmpty()
     return if (packageName.isBlank()) className else "$packageName.$className"
+}
+
+fun classifyCoverageLayer(name: String): String {
+    val lower = name.lowercase(Locale.US)
+    return when {
+        lower.contains("uploadqueue") -> "Sync/Upload Queue"
+        lower.contains("worker") -> "Worker"
+        lower.contains("repository") -> "Repository"
+        lower.contains("datasource") -> "DataSource"
+        lower.contains("mapper") -> "Mapper"
+        lower.contains("viewmodel") -> "ViewModel"
+        lower.contains("usecase") -> "UseCase"
+        lower.contains(".dao.") || lower.contains("database") || lower.contains(".room.") -> "Database"
+        lower.contains("sync") -> "Sync/Upload Queue"
+        lower.contains("uistate") || lower.contains("stateholder") -> "StateHolder"
+        lower.contains("navigation") || lower.contains("navgraph") || lower.contains("route") -> "Navigation"
+        lower.contains("screen") ||
+            lower.contains("component") ||
+            lower.contains(".ui.") ||
+            lower.contains(".presentation.") -> "Compose UI"
+        lower.contains("util") || lower.contains("utils") || lower.contains("policy") -> "Utility"
+        else -> "분류 필요"
+    }
+}
+
+fun isCoreQualityLayer(layer: String): Boolean = layer in coreQualityLayers
+
+fun isUiCoverageLayer(layer: String): Boolean = layer in uiCoverageLayers
+
+fun summarizeCoverageLayers(areas: List<CoverageArea>, layers: List<String>): List<CoverageLayerSummary> {
+    return layers.mapNotNull { layer ->
+        val layerAreas = areas.filter { it.layer == layer }
+        if (layerAreas.isEmpty()) {
+            null
+        } else {
+            CoverageLayerSummary(
+                layer = layer,
+                missed = layerAreas.sumOf { it.missed },
+                covered = layerAreas.sumOf { it.covered },
+                zeroCoverageCount = layerAreas.count { it.covered == 0 && it.missed + it.covered > 0 }
+            )
+        }
+    }
 }
 
 fun isGeneratedCoverageName(name: String): Boolean {
@@ -116,6 +188,36 @@ fun readJacocoCsvRows(csvFile: File): List<Map<String, String>> {
         }
 }
 
+fun StringBuilder.appendCoverageAreaTable(areas: List<CoverageArea>) {
+    appendLine("| 계층 | 클래스 | 라인 커버리지 | 커버된 라인 | 누락 라인 |")
+    appendLine("|---|---|---:|---:|---:|")
+
+    if (areas.isEmpty()) {
+        appendLine("| 데이터 없음 | 라인 커버리지 데이터 없음 | - | - | - |")
+    } else {
+        areas.forEach { area ->
+            appendLine(
+                "| ${area.layer} | `${area.name}` | ${formatCoverage(area.coverage)} | ${area.covered} | ${area.missed} |"
+            )
+        }
+    }
+}
+
+fun StringBuilder.appendLayerSummaryTable(summaries: List<CoverageLayerSummary>) {
+    appendLine("| 계층 | 라인 커버리지 | 커버된 라인 | 누락 라인 | 0% 클래스 |")
+    appendLine("|---|---:|---:|---:|---:|")
+
+    if (summaries.isEmpty()) {
+        appendLine("| 데이터 없음 | - | - | - | - |")
+    } else {
+        summaries.forEach { summary ->
+            appendLine(
+                "| ${summary.layer} | ${formatCoverage(summary.coverage)} | ${summary.covered} | ${summary.missed} | ${summary.zeroCoverageCount} |"
+            )
+        }
+    }
+}
+
 subprojects {
     apply(plugin = "jacoco")
 
@@ -153,7 +255,7 @@ tasks.register("jacocoCoverageSummary") {
             "Method" to "METHOD"
         )
 
-        val lowCoverageRows = rows.mapNotNull { row ->
+        val coverageAreas = rows.mapNotNull { row ->
             val missed = row.metric("LINE_MISSED")
             val covered = row.metric("LINE_COVERED")
             val name = displayCoverageName(row)
@@ -164,22 +266,39 @@ tasks.register("jacocoCoverageSummary") {
             } else {
                 CoverageArea(
                     name = name,
+                    layer = classifyCoverageLayer(name),
                     missed = missed,
                     covered = covered
                 )
             }
-        }.sortedWith(
+        }
+
+        val lowCoverageRows = coverageAreas.sortedWith(
             compareBy<CoverageArea> { it.coverage }
                 .thenByDescending { it.missed }
                 .thenBy { it.name }
         ).take(10)
 
-        val zeroCoverageCount = rows.count { row ->
-            val missed = row.metric("LINE_MISSED")
-            val covered = row.metric("LINE_COVERED")
-            val name = displayCoverageName(row)
-            missed + covered > 0 && covered == 0 && !isGeneratedCoverageName(name)
+        val coreQualityAreas = coverageAreas.filter { isCoreQualityLayer(it.layer) }
+        val uiCoverageAreas = coverageAreas.filter { isUiCoverageLayer(it.layer) }
+        val coreQualitySummaries = summarizeCoverageLayers(coreQualityAreas, coreQualityLayers)
+        val uiCoverageSummaries = summarizeCoverageLayers(uiCoverageAreas, uiCoverageLayers)
+        val lowCoreQualityRows = coreQualityAreas.sortedWith(
+            compareBy<CoverageArea> { it.coverage }
+                .thenByDescending { it.missed }
+                .thenBy { it.name }
+        ).take(10)
+        val lowUiCoverageRows = uiCoverageAreas.sortedWith(
+            compareBy<CoverageArea> { it.coverage }
+                .thenByDescending { it.missed }
+                .thenBy { it.name }
+        ).take(10)
+
+        val zeroCoverageCount = coverageAreas.count {
+            it.missed + it.covered > 0 && it.covered == 0
         }
+        val coreZeroCoverageCount = coreQualityAreas.count { it.missed + it.covered > 0 && it.covered == 0 }
+        val uiZeroCoverageCount = uiCoverageAreas.count { it.missed + it.covered > 0 && it.covered == 0 }
 
         val markdown = buildString {
             appendLine("## Report Context")
@@ -205,20 +324,44 @@ tasks.register("jacocoCoverageSummary") {
             appendLine("## 커버리지가 낮은 영역")
             appendLine()
             appendLine("- 라인 커버리지 0% 클래스 수: $zeroCoverageCount")
+            appendLine("- 핵심 품질 계층 0% 클래스 수: $coreZeroCoverageCount")
+            appendLine("- UI/Compose 별도 검토 계층 0% 클래스 수: $uiZeroCoverageCount")
             appendLine("- Room/Hilt/Compose generated helper class는 목록에서 제외했습니다.")
             appendLine()
-            appendLine("| 클래스 | 라인 커버리지 | 커버된 라인 | 누락 라인 |")
-            appendLine("|---|---:|---:|---:|")
+            appendCoverageAreaTable(lowCoverageRows)
 
-            if (lowCoverageRows.isEmpty()) {
-                appendLine("| 라인 커버리지 데이터 없음 | - | - | - |")
-            } else {
-                lowCoverageRows.forEach { area ->
-                    appendLine(
-                        "| `${area.name}` | ${formatCoverage(area.coverage)} | ${area.covered} | ${area.missed} |"
-                    )
-                }
-            }
+            appendLine()
+            appendLine("## 핵심 품질 계층 커버리지 요약")
+            appendLine()
+            appendLine("Worker, Repository, DataSource, Mapper, ViewModel, UseCase 등 저장/업로드 안정성과 직접 연결되는 계층을 전체 커버리지와 분리해 표시합니다.")
+            appendLine()
+            appendLayerSummaryTable(coreQualitySummaries)
+
+            appendLine()
+            appendLine("## 핵심 품질 계층 낮은 영역")
+            appendLine()
+            appendLine("- 라인 커버리지 오름차순, 누락 라인 내림차순 기준 상위 10개입니다.")
+            appendLine("- AI 분석과 다음 테스트 후보 산정에서는 이 영역을 우선 입력으로 사용합니다.")
+            appendLine()
+            appendCoverageAreaTable(lowCoreQualityRows)
+
+            appendLine()
+            appendLine("## UI/Compose 별도 검토 영역")
+            appendLine()
+            appendLine("- 단순 렌더링, Screen, Navigation, Component 코드는 핵심 품질 계층과 분리해 해석합니다.")
+            appendLine("- 입력 검증, 저장/삭제 트리거, 복잡한 상태 분기, 장애 이력이 확인된 UI는 별도 테스트 후보로 다시 검토합니다.")
+            appendLine()
+            appendLayerSummaryTable(uiCoverageSummaries)
+            appendLine()
+            appendCoverageAreaTable(lowUiCoverageRows)
+
+            appendLine()
+            appendLine("## AI 분석 입력 요약")
+            appendLine()
+            appendLine("- 전체 커버리지는 앱 전체 자동 검증 수준을 보는 참고 지표입니다.")
+            appendLine("- 테스트 우선순위 판단은 `핵심 품질 계층 커버리지 요약`과 `핵심 품질 계층 낮은 영역`을 먼저 사용합니다.")
+            appendLine("- `UI/Compose 별도 검토 영역`은 단순 UI 렌더링으로 보류하되, 사용자 입력 검증이나 저장/삭제 트리거가 확인되면 다시 검토합니다.")
+            appendLine("- 낮은 커버리지만으로 버그를 단정하지 않고, 사용자 데이터 영향과 실패 복구 가능성을 함께 봅니다.")
 
             appendLine()
             appendLine("## 리포트 파일")
